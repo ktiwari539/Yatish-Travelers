@@ -83,6 +83,91 @@ const indicativePricing = {
   maxRate: 25,
 };
 
+
+function StoriesPage() {
+  const storySlots = [
+    { title: 'Family Journeys', text: 'Road-trip photos and verified family travel experiences will live here.', car: fleet[1] },
+    { title: 'Airport & Business', text: 'Approved airport and corporate travel stories can be published here.', car: fleet[2] },
+    { title: 'Group Adventures', text: 'Tempo Traveller and group-tour memories can be shared after moderation.', car: fleet[5] },
+  ];
+
+  return (
+    <main className="stories-page">
+      <header className="stories-nav">
+        <a className="brand" href="/">YATISH <span>TRAVELERS</span></a>
+        <a className="secondary" href="/">Back to Home <ArrowRight size={16} /></a>
+      </header>
+
+      <section className="stories-hero">
+        <div className="stories-hero-glow" />
+        <span className="kicker">Stories from the Road</span>
+        <h1>Every trip has a story worth keeping.</h1>
+        <p>
+          A dedicated space for real customer journeys, travel photos and verified feedback.
+          Content will be published only after review from the admin side.
+        </p>
+        <div className="stories-hero-actions">
+          <a className="primary" href="#share-story">Share your journey <ArrowRight size={16}/></a>
+          <a className="secondary" href="/">Explore the fleet</a>
+        </div>
+      </section>
+
+      <section className="stories-gallery" aria-label="Future customer story gallery">
+        {storySlots.map((story, index) => (
+          <article className="story-feature" key={story.title}>
+            <div className="story-feature-image">
+              <img src={story.car.image} alt={story.car.name} />
+              <div className="story-feature-shade" />
+              <span>0{index + 1}</span>
+            </div>
+            <div className="story-feature-copy">
+              <small>Verified story space</small>
+              <h2>{story.title}</h2>
+              <p>{story.text}</p>
+              <strong>Awaiting approved customer content</strong>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="story-submit" id="share-story">
+        <div>
+          <span className="kicker">Share Your Journey</span>
+          <h2>Customer submissions will connect directly to the admin workflow.</h2>
+          <p>
+            The final version will allow a traveler to add trip details, a short story and photos.
+            The submission will remain private until approved by Yatish Travelers.
+          </p>
+        </div>
+        <form onSubmit={(event) => event.preventDefault()} className="story-submit-form">
+          <label>Your name<input type="text" placeholder="Name" /></label>
+          <label>Journey type
+            <select defaultValue="">
+              <option value="" disabled>Select journey type</option>
+              <option>Family / Outstation</option>
+              <option>Airport</option>
+              <option>Corporate</option>
+              <option>Wedding / Event</option>
+              <option>Group Travel</option>
+            </select>
+          </label>
+          <label>Your story<textarea rows={5} placeholder="Tell us about your journey..." /></label>
+          <label>Photos<input type="file" accept="image/*" multiple /></label>
+          <button type="button" className="story-submit-disabled" disabled>
+            Submission opens after backend connection
+          </button>
+          <small>No story is published automatically. Admin approval will be required.</small>
+        </form>
+      </section>
+
+      <footer className="stories-footer">
+        <div><strong>Yatish Travelers</strong><p>Real journeys. Verified stories. Premium travel.</p></div>
+        <div><a href="/">Home</a><a href="/#fleet">Fleet</a><a href="/#contact">Contact</a></div>
+      </footer>
+    </main>
+  );
+}
+
 export function App() {
   const [vehicle, setVehicle] = useState(fleet[1].name);
   const [km, setKm] = useState(250);
@@ -123,6 +208,9 @@ export function App() {
       maxTotal: maxBase + driver,
     };
   }, [days, km, nightStay]);
+
+  const isStoriesPage = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/stories';
+  if (isStoriesPage) return <StoriesPage />;
 
   return (
     <main>
@@ -234,6 +322,39 @@ export function App() {
       </section>
 
 
+      <section className="fleet-reel-section" id="reels">
+        <div className="fleet-reel-heading">
+          <div>
+            <span className="kicker">Car Reels</span>
+            <h2>Our fleet, always in motion.</h2>
+          </div>
+          <p>
+            A continuous cinematic reel of the vehicles available across our travel categories.
+            Actual fleet photos and additional model/color variants can plug into the same reel from the admin portal later.
+          </p>
+        </div>
+
+        <div className="fleet-reel-mask">
+          <div className="fleet-reel-track">
+            {[...fleet, ...fleet].map((car, index) => (
+              <article className="reel-card" key={`${car.name}-${index}`} aria-hidden={index >= fleet.length}>
+                <img src={car.image} alt={index < fleet.length ? car.name : ''} loading="lazy" />
+                <div className="reel-card-shade" />
+                <div className="reel-card-copy">
+                  <small>{car.category}</small>
+                  <strong>{car.name}</strong>
+                  <span>{car.seats} seats</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="fleet-reel-footer">
+          <span>Dzire · Ertiga · Innova · TUV · Bolero · Tempo Traveller</span>
+          <a href="#fleet">Explore fleet details <ArrowRight size={15}/></a>
+        </div>
+      </section>
 
       <section
         ref={driveByRef}
@@ -346,49 +467,34 @@ export function App() {
       </section>
 
 
-      <section className="feedback-section" id="feedback">
-        <div className="feedback-copy">
-          <span className="kicker">Guest Stories</span>
-          <h2>Good journeys should leave a good impression.</h2>
+      <section className="stories-teaser" id="stories">
+        <div className="stories-teaser-copy">
+          <span className="kicker">Stories from the Road</span>
+          <h2>Real journeys deserve more than a small review card.</h2>
           <p>
-            This prototype shows the review experience only. Real customer feedback will be published here after
-            verification or admin approval, so the website does not display invented testimonials.
+            Customer photos, trip moments and verified feedback will live on a dedicated stories page,
+            keeping the homepage clean while giving every journey enough space to be seen properly.
           </p>
-          <div className="feedback-note">Verified reviews can later be managed from the backend with trip type, city, rating and visibility controls.</div>
+          <a className="primary" href="/stories">Explore Stories <ArrowRight size={17}/></a>
         </div>
 
-        <div className="feedback-stage">
-          <div className="feedback-car-wrap" aria-hidden="true">
-            <img src={fleet[2].image} alt="" />
-            <div className="feedback-car-glow" />
-          </div>
-
-          <article className="review-card review-one">
-            <span className="review-badge">Family travel</span>
-            <strong>Verified customer review</strong>
-            <p>Customer feedback will appear here once a real review is approved from the admin portal.</p>
-            <small>Review slot · awaiting verified content</small>
-          </article>
-
-          <article className="review-card review-two">
-            <span className="review-badge">Corporate mobility</span>
-            <strong>Business travel feedback</strong>
-            <p>Corporate review cards can highlight punctuality, coordination and multi-city support after verification.</p>
-            <small>Review slot · awaiting verified content</small>
-          </article>
-
-          <article className="review-card review-three">
-            <span className="review-badge">Airport / Outstation</span>
-            <strong>Trip experience</strong>
-            <p>Approved customer comments can rotate here with a subtle stacked-card animation.</p>
-            <small>Review slot · awaiting verified content</small>
-          </article>
+        <div className="stories-teaser-stack" aria-hidden="true">
+          {fleet.slice(1, 4).map((car, index) => (
+            <article className={`story-stack-card story-stack-${index + 1}`} key={car.name}>
+              <img src={car.image} alt="" />
+              <div>
+                <small>Story space</small>
+                <strong>{car.name}</strong>
+                <span>Verified customer journeys coming here</span>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
       <footer id="contact">
         <div><strong>Yatish Travelers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
-        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="tel:+910000000000">Call us</a></div>
+        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><a href="tel:+910000000000">Call us</a></div>
         <div><span>Next Phase</span><p>Actual fleet photos · WhatsApp integration · Corporate enquiry workflow · City coverage management · Backend tracking</p></div>
         <div className="image-credits">
           <span>Prototype image credits</span>
