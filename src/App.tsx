@@ -18,7 +18,7 @@ export function App() {
   const selected = fleet.find((item) => item.name === vehicle) ?? fleet[1];
   const estimate = useMemo(() => {
     const base = Math.max(km, days * 250) * selected.rate;
-    const driver = days * 500 + (nightStay ? 500 : 0);
+    const driver = nightStay ? 500 : 0;
     return { base, driver, total: base + driver };
   }, [days, km, nightStay, selected.rate]);
 
@@ -104,7 +104,7 @@ export function App() {
         <div className="fare-copy">
           <span className="kicker">Trip Estimator</span>
           <h2>Know the approximate cost before you call.</h2>
-          <p>Estimate includes the vehicle rate and driver allowance. Toll, parking, state tax and applicable GST can be added to the final quote.</p>
+          <p>Estimate includes the vehicle rate. Driver allowance is added only when a night stay is required. Toll, parking, state tax and applicable GST can be added to the final quote.</p>
         </div>
         <div className="calculator">
           <label>Vehicle
@@ -119,10 +119,10 @@ export function App() {
           <label className="checkline"><input type="checkbox" checked={nightStay} onChange={(e) => setNightStay(e.target.checked)}/> Driver night stay required</label>
           <div className="breakdown">
             <div><span>Vehicle estimate</span><strong>₹{estimate.base.toLocaleString('en-IN')}</strong></div>
-            <div><span>Driver allowance</span><strong>₹{estimate.driver.toLocaleString('en-IN')}</strong></div>
+            {nightStay && <div><span>Driver night-stay allowance</span><strong>₹{estimate.driver.toLocaleString('en-IN')}</strong></div>}
             <div className="total"><span>Estimated trip cost</span><strong>₹{estimate.total.toLocaleString('en-IN')}</strong></div>
           </div>
-          <p className="note">Minimum 250 km/day used for this prototype estimate. Final commercial rules will be configurable from the backend.</p>
+          <p className="note">Minimum 250 km/day is used for this prototype estimate. Driver allowance is added only for night stay. Final commercial rules will be configurable from the backend.</p>
           <div className="calc-actions">
             <a className="primary" href="#contact"><MessageCircle size={18}/> Request Final Quote</a>
             <a className="secondary" href="tel:+910000000000"><Phone size={17}/> Call</a>
