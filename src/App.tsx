@@ -303,6 +303,47 @@ export function App() {
         </div>
       </section>
 
+
+      <section className="feedback-section" id="feedback">
+        <div className="feedback-copy">
+          <span className="kicker">Guest Stories</span>
+          <h2>Good journeys should leave a good impression.</h2>
+          <p>
+            This prototype shows the review experience only. Real customer feedback will be published here after
+            verification or admin approval, so the website does not display invented testimonials.
+          </p>
+          <div className="feedback-note">Verified reviews can later be managed from the backend with trip type, city, rating and visibility controls.</div>
+        </div>
+
+        <div className="feedback-stage">
+          <div className="feedback-car-wrap" aria-hidden="true">
+            <img src={fleet[2].image} alt="" />
+            <div className="feedback-car-glow" />
+          </div>
+
+          <article className="review-card review-one">
+            <span className="review-badge">Family travel</span>
+            <strong>Verified customer review</strong>
+            <p>Customer feedback will appear here once a real review is approved from the admin portal.</p>
+            <small>Review slot · awaiting verified content</small>
+          </article>
+
+          <article className="review-card review-two">
+            <span className="review-badge">Corporate mobility</span>
+            <strong>Business travel feedback</strong>
+            <p>Corporate review cards can highlight punctuality, coordination and multi-city support after verification.</p>
+            <small>Review slot · awaiting verified content</small>
+          </article>
+
+          <article className="review-card review-three">
+            <span className="review-badge">Airport / Outstation</span>
+            <strong>Trip experience</strong>
+            <p>Approved customer comments can rotate here with a subtle stacked-card animation.</p>
+            <small>Review slot · awaiting verified content</small>
+          </article>
+        </div>
+      </section>
+
       <footer id="contact">
         <div><strong>Yatish Travelers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
         <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="tel:+910000000000">Call us</a></div>
