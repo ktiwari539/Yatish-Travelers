@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Calculator, Check, MapPin, MessageCircle, Phone, ShieldCheck, Sparkles } from 'lucide-react';
 
 type FleetVehicle = {
@@ -88,9 +88,26 @@ export function App() {
   const [km, setKm] = useState(250);
   const [days, setDays] = useState(1);
   const [nightStay, setNightStay] = useState(false);
+  const [driveByVisible, setDriveByVisible] = useState(false);
+  const driveByRef = useRef<HTMLElement | null>(null);
 
   const selected = fleet.find((item) => item.name === vehicle) ?? fleet[1];
   const heroVehicle = fleet[2];
+
+  useEffect(() => {
+    const node = driveByRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setDriveByVisible(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.35 });
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const estimate = useMemo(() => {
     const chargeableKm = Math.max(km, days * 250);
@@ -216,6 +233,31 @@ export function App() {
         </div>
       </section>
 
+
+
+      <section
+        ref={driveByRef}
+        className={`driveby-section ${driveByVisible ? 'is-visible' : ''}`}
+        aria-label="Cinematic vehicle transition"
+      >
+        <div className="driveby-copy">
+          <span className="kicker">The Road Moment</span>
+          <h2>Not just a fleet. A journey in motion.</h2>
+          <p>As you move through the site, the experience should feel like travel itself — calm, premium and unexpectedly alive.</p>
+        </div>
+
+        <div className="driveby-scene" aria-hidden="true">
+          <div className="driveby-horizon" />
+          <div className="driveby-road">
+            <span/><span/><span/><span/>
+          </div>
+          <div className="driveby-light-streak driveby-light-one" />
+          <div className="driveby-light-streak driveby-light-two" />
+          <div className="driveby-car">
+            <img src={fleet[0].image} alt="" />
+          </div>
+        </div>
+      </section>
 
       <section className="corporate-section" id="corporate">
         <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
