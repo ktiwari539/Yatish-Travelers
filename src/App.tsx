@@ -7,6 +7,7 @@ const fleet = [
   { name: 'Toyota Innova', rate: 21, seats: '6+1', tag: 'Premium Comfort' },
   { name: 'Mahindra TUV', rate: 15, seats: '6+1', tag: 'Strong & Spacious' },
   { name: 'Mahindra Bolero', rate: 15, seats: '6+1', tag: 'Reliable Traveller' },
+  { name: 'Tempo Traveller', rate: null, seats: '12+1 / 17+1', tag: 'Group Travel' },
 ];
 
 export function App() {
@@ -17,9 +18,10 @@ export function App() {
 
   const selected = fleet.find((item) => item.name === vehicle) ?? fleet[1];
   const estimate = useMemo(() => {
-    const base = Math.max(km, days * 250) * selected.rate;
+    const hasPublishedRate = selected.rate !== null;
+    const base = hasPublishedRate ? Math.max(km, days * 250) * selected.rate : null;
     const driver = nightStay ? 500 : 0;
-    return { base, driver, total: base + driver };
+    return { base, driver, total: base === null ? null : base + driver, hasPublishedRate };
   }, [days, km, nightStay, selected.rate]);
 
   return (
@@ -78,7 +80,7 @@ export function App() {
               <div className="fleet-meta">
                 <span>{car.tag}</span>
                 <h3>{car.name}</h3>
-                <div className="rate"><strong>₹{car.rate}</strong><small>/ km with driver</small></div>
+                <div className="rate">{car.rate === null ? <><strong>Custom</strong><small>quote with driver</small></> : <><strong>₹{car.rate}</strong><small>/ km with driver</small></>}</div>
                 <div className="fleet-bottom"><span>{car.seats} seats</span><button onClick={() => { setVehicle(car.name); document.getElementById('fare')?.scrollIntoView({behavior:'smooth'}); }}>Calculate <ArrowRight size={15}/></button></div>
               </div>
             </article>
@@ -118,11 +120,11 @@ export function App() {
           </div>
           <label className="checkline"><input type="checkbox" checked={nightStay} onChange={(e) => setNightStay(e.target.checked)}/> Driver night stay required</label>
           <div className="breakdown">
-            <div><span>Vehicle estimate</span><strong>₹{estimate.base.toLocaleString('en-IN')}</strong></div>
+            <div><span>Vehicle estimate</span><strong>{estimate.base === null ? 'Final quote required' : `₹${estimate.base.toLocaleString('en-IN')}`}</strong></div>
             {nightStay && <div><span>Driver night-stay allowance</span><strong>₹{estimate.driver.toLocaleString('en-IN')}</strong></div>}<div><span>Toll / FASTag</span><strong>Actuals extra</strong></div><div><span>Parking / state permit</span><strong>Actuals extra</strong></div>
-            <div className="total"><span>Estimated trip cost</span><strong>₹{estimate.total.toLocaleString('en-IN')}</strong></div>
+            <div className="total"><span>Estimated trip cost</span><strong>{estimate.total === null ? 'Contact for quote' : `₹${estimate.total.toLocaleString('en-IN')}`}</strong></div>
           </div>
-          <p className="note">Minimum 250 km/day is used for this prototype estimate. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals. Final commercial rules will be configurable from the backend.</p>
+          <p className="note">Minimum 250 km/day is used for this prototype estimate where a published per-km rate exists. Tempo Traveller is included in the fleet, with its final per-km commercial rate intentionally left as a custom quote until the business rate is confirmed. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals. Final commercial rules will be configurable from the backend.</p>
           <div className="calc-actions">
             <a className="primary" href="#contact"><MessageCircle size={18}/> Request Final Quote</a>
             <a className="secondary" href="tel:+910000000000"><Phone size={17}/> Call</a>
