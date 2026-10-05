@@ -114,6 +114,7 @@ export function App() {
         <nav>
           <a href="#fleet">Fleet</a>
           <a href="#services">Services</a>
+          <a href="#corporate">Corporate</a>
           <a href="#fare">Fare Calculator</a>
           <a href="#contact">Contact</a>
         </nav>
@@ -215,6 +216,55 @@ export function App() {
         </div>
       </section>
 
+
+      <section className="corporate-section" id="corporate">
+        <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
+        <div className="corporate-orbit corporate-orbit-two" aria-hidden="true" />
+        <div className="corporate-copy">
+          <span className="kicker">Corporate Mobility</span>
+          <h2>One travel partner for your teams, guests and business journeys.</h2>
+          <p>
+            From daily business movement to airport pickups, executive travel, events and multi-city requirements,
+            Yatish Travelers can coordinate corporate transport based on fleet and city availability.
+          </p>
+          <div className="corporate-actions">
+            <a className="primary" href="#contact">Discuss Corporate Requirement <ArrowRight size={17}/></a>
+            <a className="secondary" href="#coverage">See Coverage Model</a>
+          </div>
+        </div>
+
+        <div className="corporate-panel">
+          <div className="corporate-panel-head">
+            <span>Business travel solutions</span>
+            <strong>Flexible coordination for single-city & multi-city needs</strong>
+          </div>
+          <div className="corporate-grid">
+            {[
+              ['Employee Travel', 'Planned office travel, shifts and recurring mobility requirements.'],
+              ['Executive & Airport', 'Professional airport transfers, meetings and leadership travel.'],
+              ['Multi-City Coordination', 'One point of coordination for requirements across supported cities.'],
+              ['Events & Guests', 'Guest movement, conferences, weddings and business events.'],
+              ['Billing Ready', 'Corporate invoicing and account-based pricing can be managed from the backend.'],
+              ['Dedicated Coordination', 'A structured contact path for recurring or high-volume requirements.'],
+            ].map(([title, text], index) => (
+              <article key={title}>
+                <span className="corporate-index">0{index + 1}</span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="coverage-strip" id="coverage">
+            <div>
+              <span className="coverage-label">Coverage model</span>
+              <strong>City → Multi-city → Corporate network</strong>
+            </div>
+            <p>We will show only cities actually enabled in the admin portal. Multi-city requests can be coordinated based on availability instead of making a blanket nationwide claim.</p>
+          </div>
+        </div>
+      </section>
+
       <section className="fare-section" id="fare">
         <div className="fare-copy">
           <span className="kicker">Trip Estimator</span>
@@ -256,7 +306,7 @@ export function App() {
       <footer id="contact">
         <div><strong>Yatish Travelers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
         <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="tel:+910000000000">Call us</a></div>
-        <div><span>Next Phase</span><p>Actual fleet photos · WhatsApp integration · SEO landing pages · Backend tracking</p></div>
+        <div><span>Next Phase</span><p>Actual fleet photos · WhatsApp integration · Corporate enquiry workflow · City coverage management · Backend tracking</p></div>
         <div className="image-credits">
           <span>Prototype image credits</span>
           <p>
