@@ -21,28 +21,28 @@ const fleet: FleetVehicle[] = [
     seats: '4+1',
     tag: 'Smart & Efficient',
     category: 'Sedan',
-    image: commonsImage('Maruti%20Suzuki%20Dzire%20VXi%20VVT.JPG'),
-    imageSource: 'https://commons.wikimedia.org/wiki/File:Maruti_Suzuki_Dzire_VXi_VVT.JPG',
-    imageCredit: 'Biswarup Ganguly',
-    license: 'CC BY 3.0',
+    image: commonsImage('Suzuki%20Dzire%20II%201.2%20GLX%20Hybrid%20Arctic%20White%20Pearl.jpg'),
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Suzuki_Dzire_II_1.2_GLX_Hybrid_Arctic_White_Pearl.jpg',
+    imageCredit: 'Ethan Llamas',
+    license: 'CC BY-SA 4.0',
   },
   {
     name: 'Maruti Ertiga',
     seats: '6+1',
     tag: 'Family Favourite',
     category: 'MPV',
-    image: commonsImage('Suzuki%20Ertiga%201.5%20Gl%20Auto%20%282022%29%20%2852715751121%29.jpg'),
-    imageSource: 'https://commons.wikimedia.org/wiki/File:Suzuki_Ertiga_1.5_Gl_Auto_(2022)_(52715751121).jpg',
-    imageCredit: 'Charles',
-    license: 'CC BY 2.0',
+    image: commonsImage('Suzuki%20Ertiga%20%28Front%29%2C%20Jakarta%2C%20Indonesia.jpg'),
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Suzuki_Ertiga_(Front),_Jakarta,_Indonesia.jpg',
+    imageCredit: 'RichardSummersault',
+    license: 'CC0 1.0',
   },
   {
     name: 'Toyota Innova',
     seats: '6+1',
     tag: 'Premium Comfort',
     category: 'Premium MPV',
-    image: commonsImage('Toyota%20Innova%20Crysta%202.4%20Z%20front%20right.jpg'),
-    imageSource: 'https://commons.wikimedia.org/wiki/File:Toyota_Innova_Crysta_2.4_Z_front_right.jpg',
+    image: commonsImage('Toyota%20Innova%20Crysta%202.4%20Z%20side.jpg'),
+    imageSource: 'https://commons.wikimedia.org/wiki/File:Toyota_Innova_Crysta_2.4_Z_side.jpg',
     imageCredit: 'Premnath Kudva',
     license: 'CC BY-SA 4.0',
   },
@@ -266,7 +266,6 @@ export function App() {
               alt="Toyota Innova Crysta"
               fetchPriority="high"
             />
-            <span className="plate-veil hero-plate-veil" aria-hidden="true" />
             <div className="hero-car-shade" />
             <div className="poster-corner" aria-hidden="true"><span>01</span><strong>Signature journeys</strong></div>
             <div className="hero-car-label">
@@ -303,13 +302,9 @@ export function App() {
             <article className="fleet-card" key={car.name} style={{ animationDelay: `${index * 90}ms` }}>
               <div className="fleet-visual">
                 <img src={car.image} alt={car.name} loading="lazy" decoding="async" />
-                <span className="plate-veil" aria-hidden="true" />
                 <div className="fleet-shade" />
                 <div className="fleet-number">0{index + 1}</div>
                 <span className="fleet-type">{car.category}</span>
-                <a className="photo-credit" href={car.imageSource} target="_blank" rel="noreferrer" aria-label={`Image credit for ${car.name}`}>
-                  Image: {car.imageCredit}
-                </a>
               </div>
               <div className="fleet-meta">
                 <span>{car.tag}</span>
@@ -359,7 +354,6 @@ export function App() {
             {[...fleet, ...fleet].map((car, index) => (
               <article className="reel-card" key={`${car.name}-${index}`} aria-hidden={index >= fleet.length}>
                 <img src={car.image} alt={index < fleet.length ? car.name : ''} loading="lazy" />
-                <span className="plate-veil reel-plate-veil" aria-hidden="true" />
                 <div className="reel-card-shade" />
                 <div className="reel-card-copy">
                   <small>{car.category}</small>
@@ -455,7 +449,7 @@ export function App() {
           <h2>Know the approximate cost before you call.</h2>
           <p>Use the estimator for an indicative ₹15–₹25/km range. Final pricing can vary by vehicle, route, trip duration and travel requirements. Driver allowance is added only when a night stay is required. Toll/FASTag, parking, state permit and applicable GST are charged separately as applicable.</p>
           <div className="selected-vehicle">
-            <div className="selected-vehicle-image"><img src={selected.image} alt="" /><span className="plate-veil selected-plate-veil" aria-hidden="true" /></div>
+            <div className="selected-vehicle-image"><img src={selected.image} alt="" /></div>
             <div><span>Selected vehicle</span><strong>{selected.name}</strong><small>{selected.seats} · {selected.category}</small></div>
           </div>
         </div>
