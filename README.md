@@ -1,46 +1,74 @@
-# Mateshwari Travellers
+# Mateshwari Travellers — local review
 
-A premium customer-facing travel website and local booking CRM preview, developed in the existing Yatish-Travelers repository.
+This work remains on the draft PR branch `feature/mateshwari-cinematic-crm`. It is **not deployed or merged into main**.
 
-## Local preview (no Netlify or production deployment)
+## Start the full local website + CRM
 
-Requires Node.js 22+.
+Requires Node.js 22 or higher.
 
 ```bash
+cd ~/Projects/Yatish-Travelers
+git fetch origin
+git checkout feature/mateshwari-cinematic-crm
+git pull origin feature/mateshwari-cinematic-crm
 npm install
-CRM_ADMIN_TOKEN="use-a-unique-long-local-password" npm run dev:full
+npm run test:api
+npm run build
+CRM_ADMIN_TOKEN="YOUR_OWN_LONG_PRIVATE_TOKEN" npm run dev:full
 ```
 
-On the same computer open:
+Keep the terminal open and enter your **private** token at http://localhost:5173/admin. Do not share the token or commit it in the repo.
 
-- http://localhost:5173 — customer website, cinematic showroom, fleet and trip calculator
-- http://localhost:5173/stories — customer stories
-- http://localhost:5173/admin — CRM dashboard
+| URL | Purpose |
+| --- | --- |
+| http://localhost:5173 | Customer website, showroom, travel inspiration and quotation |
+| http://localhost:5173/stories | Story submission placeholder and scenic inspiration (not fake testimonials) |
+| http://localhost:5173/admin | CRM: enquiries, activity tracking, vehicle configuration |
 
-For the CRM login, enter the same token you set in `CRM_ADMIN_TOKEN`. The dashboard is hidden from anonymous users, and API access requires the token. **This is not full user-account authentication.**
+### Test the booking funnel
 
-## Local booking flow
+1. Visit the homepage and click **Request Final Quote**, **Request Callback**, or **Plan this trip**.
+2. The visitor-activity tab records anonymous quote opens and clicks if the local backend is running. **A click is not an identified customer.**
+3. Submit the form using test details; a server-generated enquiry reference appears **only after the backend saves it**.
+4. In `/admin`, choose **Enquiries & follow-ups** and refresh. Confirm the customer, phone, optional email, route, vehicle, travel date, notes, estimated fare and source are present.
+5. Change the status: `new → contacted → quoted → confirmed → closed`, and reload to verify persistence.
+6. Visit **Visitor activity** for anonymous quote opens, WhatsApp clicks, sources and submission events. Analytics only starts collecting from this version forward; it cannot reconstruct past clicks.
 
-1. Submit a Request Final Quote, Request Callback or corporate enquiry on the homepage.
-2. Once the API saves the request, the customer sees a short enquiry reference.
-3. Visit `/admin` and enter the token to review, search, filter and update statuses:
-   `new → contacted → quoted → confirmed → closed`.
-4. Records persist in `.data/enquiries.jsonl` on your computer, excluded from Git.
+### Update vehicles / pricing / images
 
-All submissions stay **local**. No email, WhatsApp message, payment or external CRM record is sent or created. **Do not use the development server for live customer traffic.** For production, replace local JSONL storage and admin-token access with a managed database, staff authentication/roles, backups, spam protection, retention rules and audit logging.
+1. In `/admin`, choose **Cars & pricing**.
+2. Edit vehicle name, category, seating capacity, tag, minimum and maximum indicative rate, or visibility.
+3. Upload an authorized JPG, PNG or WebP photo (max **3 MB**) from your Mac or paste an **HTTPS** image URL.
+4. Add another vehicle, remove a vehicle, or toggle whether it is displayed.
+5. Click **Save changes**, then refresh the public website. The public fleet and selected vehicle's indicative estimate read the new configuration.
 
-## Development and checks
+**Images, catalog and enquiries are stored on your Mac** under `.data/`, which is gitignored. Uploaded photo URLs such as `/api/uploads/...` only work while the local CRM server is running.
+
+### Contacts
+
+- WhatsApp and phone: **+91 93400 98177**
+- Temporary email: **ktiwari539@gmail.com**
+
+WhatsApp opens a user-controlled external chat; it does **not** guarantee an enquiry record or message has been sent. The local CRM tracks the click, but a customer is identified only when submitting the form.
+
+### Travel content
+
+Road-trip and mountain-drive cards use attributed Wikimedia Commons scenery as **editorial inspiration**. They do not claim the trips were performed by the business, and they are not fabricated customer reviews. Vehicle pictures are still temporary and should be replaced with approved, consistent premium photography before release.
+
+### Important limitations
+
+- Local prototype; not approved for public customer traffic or Netlify backend hosting.
+- The CRM uses a single admin token, JSONL event storage, local catalog JSON and image files; production requires real staff accounts and RBAC, a managed DB, protected uploads, audit logs, backups, abuse controls and privacy/retention policies.
+- Prices remain **indicative**, with a current 250 km/day minimum and optional driver night-stay allowance. Final pricing, GST and extras require approval. Price editing doesn't currently change the 250 km/day rule.
+- Requests do not send staff email notifications automatically. Direct WhatsApp and email links are available for customers.
+- The showroom uses layered CSS perspective and scroll-based transitions, **not actual 3D car models**.
+
+## Developer commands
 
 ```bash
+npm run dev:full  # website and CRM API (set CRM_ADMIN_TOKEN)
+npm run dev       # frontend only, not enough for submissions
+npm run test:api
 npm run check
 npm run build
-npm run test:api
 ```
-
-`npm run dev` starts **only the frontend**; for working booking requests you need `npm run dev:full`, or run `npm run api` and `npm run dev` in two terminals.
-
-## Business rules requiring confirmation
-
-Fare calculator pricing is indicative (₹15–₹25/km, minimum 250 km/day). Driver allowance is added only for overnight stays; toll, parking, permits and GST are separate where applicable. Neither exact vehicles nor partner-vehicle availability can be guaranteed without a live fleet inventory backend.
-
-Fleet photos currently use credited reference imagery and should be replaced with approved professional photography before launching.
