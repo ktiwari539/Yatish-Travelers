@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Blur, CheckCircle2, RotateCcw, X } from 'lucide-react';
+import { ScanLine, CheckCircle2, RotateCcw, X } from 'lucide-react';
 
 type Rect={x:number;y:number;w:number;h:number};
 type Props={file:File;onCancel:()=>void;onComplete:(file:File)=>Promise<void>};
@@ -89,7 +89,7 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
      <div className="privacy-toolbar">
        <span>{applied} region{applied===1?'':'s'} pixelated</span>
        <div><button type="button" onClick={reset}><RotateCcw size={15}/> Reset</button>
-       <button type="button" disabled={!selection||selection.w<6||selection.h<6} onClick={mosaic}><Blur size={15}/> Pixelate selected area</button>
+       <button type="button" disabled={!selection||selection.w<6||selection.h<6} onClick={mosaic}><ScanLine size={15}/> Pixelate selected area</button>
        <button type="button" className="fleet-save" disabled={saving||loading||!!selection} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Uploading...':'Save sanitized photo'}</button></div>
      </div>
      <small>Review the whole image before saving. This permanently pixelates the selected area in the uploaded copy; there is no conspicuous grey bar. The original on your Mac is unchanged.</small>
