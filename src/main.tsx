@@ -5,6 +5,7 @@ import './styles.css';
 import './experience.css';
 import './premium-v3.css';
 import './cinematic.css';
+import './crm.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
