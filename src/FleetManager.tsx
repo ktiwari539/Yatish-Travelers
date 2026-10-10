@@ -4,10 +4,10 @@ import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
 
 export type CatalogVehicle = {
  id:string;name:string;seats:string;capacity:number;tag:string;category:string;image:string;
- rateMin:number;rateMax:number;enabled:boolean;
+ rateMin:number;rateMax:number;enabled:boolean;gallery?:string[];
 };
 type Props={token:string};
-const blank=():CatalogVehicle=>({id:'',name:'',seats:'4+1',capacity:4,tag:'Comfortable travel',category:'Sedan',image:'',rateMin:15,rateMax:25,enabled:false});
+const blank=():CatalogVehicle=>({id:'',name:'',seats:'4+1',capacity:4,tag:'Comfortable travel',category:'Sedan',image:'',rateMin:15,rateMax:25,enabled:false,gallery:[]});
 
 export function FleetManager({token}:Props) {
  const [vehicles,setVehicles]=useState<CatalogVehicle[]>([]);
@@ -49,7 +49,7 @@ export function FleetManager({token}:Props) {
      const body=await response.json();
      if(!response.ok)throw new Error(body.error||'Image upload failed');
      change(index,{image:body.url});setSuccess('Image uploaded locally. Press Save Changes to publish the new vehicle photo in the local preview.');
-   }catch(e){setError(e instanceof Error?e.message:'Upload failed');}
+   }catch(e){setError(e instanceof Error?e.message:'Upload failed');throw e;}
    finally{setUploading(null);}
  };
  const save=async()=>{
@@ -85,7 +85,10 @@ export function FleetManager({token}:Props) {
           <label>Short description<input value={v.tag} onChange={e=>change(index,{tag:e.target.value})}/></label>
         </div>
         <label>Photo URL or uploaded local path<input type="text" value={v.image} onChange={e=>change(index,{image:e.target.value})} placeholder="https://.../vehicle.jpg"/></label>
-        <label className="fleet-photo-upload">Upload / edit vehicle photo · blur plates (JPG/PNG/WebP up to 3 MB)
+        <label>Additional vehicle angles (up to 5 URLs, one per line)
+          <textarea rows={3} value={(v.gallery||[]).join('\n')} placeholder="https://.../side-view.jpg" onChange={e=>change(index,{gallery:e.target.value.split('\n').map(x=>x.trim()).filter(Boolean)})}/>
+        </label>
+                <label className="fleet-photo-upload">Upload / edit vehicle photo · blur plates (JPG/PNG/WebP up to 3 MB)
           <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{const selected=e.target.files?.[0];if(selected)setEditingPhoto({index,file:selected});e.target.value='';}}/>
           {uploading===index&&<span>Uploading image locally...</span>}
         </label>
