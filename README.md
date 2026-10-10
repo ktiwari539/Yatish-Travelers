@@ -1,6 +1,8 @@
-# Yatish Travelers
+# Mateshwari Travellers
 
-Customer-facing website for Yatish Travelers.
+Work in progress: local preview branch `feature/mateshwari-cinematic-crm`.
+
+Customer-facing website for Mateshwari Travellers.
 
 ## Current scope
 - Premium responsive landing page
