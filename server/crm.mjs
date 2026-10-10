@@ -110,6 +110,7 @@ const server = http.createServer(async (req,res)=>{
         vehicle:trim(incoming.vehicle,100),
         passengers:Math.max(1,Math.min(40,Number(incoming.passengers)||1)),
         days:Math.max(1,Math.min(90,Number(incoming.days)||1)),
+        nightStay:incoming.nightStay===true,
         distanceKm:Math.max(0,Math.min(100000,Number(incoming.distanceKm)||0)),
         estimatedMin:Math.max(0,Number(incoming.estimatedMin)||0),
         estimatedMax:Math.max(0,Number(incoming.estimatedMax)||0),
@@ -120,8 +121,9 @@ const server = http.createServer(async (req,res)=>{
       const configured=readCatalog().vehicles.find(v=>v.name===record.vehicle && v.enabled);
       if(configured) {
         const totalKm=Math.max(record.distanceKm,record.days*250);
-        record.estimatedMin=totalKm*configured.rateMin;
-        record.estimatedMax=totalKm*configured.rateMax;
+        const allowance=record.nightStay?500:0;
+        record.estimatedMin=totalKm*configured.rateMin+allowance;
+        record.estimatedMax=totalKm*configured.rateMax+allowance;
       }
       writeEvent({type:'created',value:record});
       logEvent({event:'quote_submit',sessionId:record.sessionId,vehicle:record.vehicle,source:record.source,createdAt:date});
