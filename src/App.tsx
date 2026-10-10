@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CinematicShowroom } from './CinematicShowroom';
+import { AdminDashboard } from './AdminDashboard';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
@@ -193,6 +194,9 @@ export function App() {
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false);
+  const [quoteError, setQuoteError] = useState('');
+  const [quoteId, setQuoteId] = useState('');
   const [copied, setCopied] = useState(false);
   const [heroIndex, setHeroIndex] = useState(2);
 
@@ -258,6 +262,8 @@ export function App() {
   const openQuote = (mode: QuoteMode = 'quote') => {
     setQuoteMode(mode);
     setQuoteSubmitted(false);
+    setQuoteError('');
+    setQuoteId('');
     setCopied(false);
     setQuoteOpen(true);
   };
@@ -291,12 +297,14 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
   const isStoriesPage = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/stories';
   if (isStoriesPage) return <StoriesPage />;
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <AdminDashboard />;
 
   return (
     <main>
       <header className="nav">
         <a className="brand" href="#top">MATESHWARI <span>TRAVELLERS</span></a>
         <nav>
+          <a href="#showroom">Experience</a>
           <a href="#fleet">Fleet</a>
           <a href="#services">Services</a>
           <a href="#corporate">Corporate</a>
@@ -652,9 +660,42 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                   <strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong>
                 </div>
 
-                <form className="quote-form" onSubmit={(event) => {
+                <form className="quote-form" onSubmit={async (event) => {
                   event.preventDefault();
-                  setQuoteSubmitted(true);
+                  if (quoteSubmitting) return;
+                  const data = new FormData(event.currentTarget);
+                  setQuoteSubmitting(true);
+                  setQuoteError('');
+                  try {
+                    const response = await fetch('/api/enquiries', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        mode: quoteMode,
+                        name: data.get('name'),
+                        phone: data.get('phone'),
+                        pickup: data.get('pickup') || '',
+                        destination: data.get('destination') || '',
+                        tripDate: data.get('date') || '',
+                        tripType: data.get('tripType') || '',
+                        notes: data.get('notes') || '',
+                        vehicle: selected.name,
+                        passengers,
+                        days,
+                        distanceKm: estimate.chargeableKm,
+                        estimatedMin: estimate.minTotal,
+                        estimatedMax: estimate.maxTotal,
+                      }),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Unable to save your request.');
+                    setQuoteId(result.id);
+                    setQuoteSubmitted(true);
+                  } catch (error) {
+                    setQuoteError(error instanceof Error ? error.message : 'Unable to save your request. Check that the local CRM API is running.');
+                  } finally {
+                    setQuoteSubmitting(false);
+                  }
                 }}>
                   <div className="quote-fields-two">
                     <label>Name<input name="name" required placeholder="Your name" /></label>
@@ -684,19 +725,20 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
                   <label>Anything we should know?<textarea name="notes" rows={3} placeholder="Timing, luggage, stops, special requirement..." /></label>
 
+                  {quoteError && <p className="quote-api-error" role="alert">{quoteError}</p>}
                   <div className="quote-actions">
-                    <button className="primary" type="submit">{quoteMode === 'callback' ? 'Prepare Callback Request' : 'Prepare Trip Request'} <ArrowRight size={16}/></button>
+                    <button className="primary" type="submit" disabled={quoteSubmitting}>{quoteSubmitting ? 'Saving request...' : quoteMode === 'callback' ? 'Request a Callback' : 'Send Trip Enquiry'} <ArrowRight size={16}/></button>
                     <button className="secondary" type="button" onClick={copyQuoteSummary}>{copied ? <CheckCircle2 size={16}/> : <Copy size={16}/>} {copied ? 'Copied' : 'Copy Trip Summary'}</button>
                   </div>
-                  <small className="quote-disclaimer">Local preview: the interaction is complete, but external delivery is intentionally not enabled yet.</small>
+                  <small className="quote-disclaimer">Requests are saved to your local CRM during testing. No external notifications are sent.</small>
                 </form>
               </>
             ) : (
               <div className="quote-success">
                 <CheckCircle2 size={42}/>
-                <span className="kicker">Request Prepared</span>
-                <h2>Your trip details are ready.</h2>
-                <p>You can copy the trip summary during local review. External submission will be connected when the booking channel is finalized.</p>
+                <span className="kicker">Request Saved</span>
+                <h2>Your enquiry has been recorded.</h2>
+                <p>Reference: {quoteId.slice(0, 8).toUpperCase()}. The request is stored in the local CRM for staff review. No email or WhatsApp message was sent.</p>
                 <div className="quote-actions">
                   <button className="primary" type="button" onClick={copyQuoteSummary}>{copied ? 'Summary Copied' : 'Copy Trip Summary'} <Copy size={16}/></button>
                   <button className="secondary" type="button" onClick={() => setQuoteOpen(false)}>Close</button>
