@@ -11,7 +11,12 @@ export const defaultCatalog=[
  {name:'Mahindra TUV',seats:'6+1',capacity:6,tag:'Strong & Spacious',category:'SUV',image:commons('Mahindra%20TUV%20300%20%282016%29%20%2852715226367%29.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Mahindra Bolero',seats:'6+1',capacity:6,tag:'Reliable Traveller',category:'SUV',image:commons('Mahindra%20Bolero%20ZLX.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Tempo Traveller',seats:'12+1 / 17+1',capacity:17,tag:'Group Travel',category:'Traveller',image:commons('Force%20Traveller%20Luxury.jpg'),rateMin:15,rateMax:25,enabled:true}
-].map((v)=>({...v,id:v.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}));
+].map((v)=>({...v,id:v.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
+ gallery:v.name==='Maruti Dzire' ? [commons('MIAS%202025%20-%20All-new%20Suzuki%20Dzire%20Hybrid%2004.jpg')]
+ :v.name==='Maruti Ertiga' ? [commons('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Rear%20view%20-%20April%2026%202018.jpg')]
+ :v.name==='Toyota Innova' ? [commons('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg')]
+ :[]
+}));
 const text=(value,max=120)=>typeof value==='string'?value.trim().slice(0,max):'';
 const validImage=(url)=>{if(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(url))return true;try{const u=new URL(url);return u.protocol==='https:'&&url.length<=900&&!u.username&&!u.password;}catch{return false;}};
 export function validateVehicle(input,previous={}) {
@@ -20,7 +25,9 @@ export function validateVehicle(input,previous={}) {
   if(!name || !seats || !tag || !category || !validImage(image)) throw new Error('Provide name, seats, tag, category and a valid HTTPS image URL.');
   if(!Number.isInteger(capacity)||capacity<1||capacity>50) throw new Error('Capacity must be 1–50.');
   if(!Number.isFinite(rateMin)||!Number.isFinite(rateMax)||rateMin<1||rateMax>10000||rateMin>rateMax) throw new Error('Invalid per-km pricing.');
-  return {id:previous.id||randomUUID(),name,seats,tag,category,image,capacity,rateMin,rateMax,enabled:input.enabled!==false};
+  const gallery=Array.isArray(input.gallery)?input.gallery.filter(v=>typeof v==='string'&&v.length).slice(0,5):[];
+  if(gallery.some(v=>!validImage(v)))throw new Error('All alternate images must be HTTPS or local uploads.');
+  return {id:previous.id||randomUUID(),name,seats,tag,category,image,capacity,rateMin,rateMax,enabled:input.enabled!==false,gallery};
 }
 export function readCatalog(){
   if(!existsSync(catalogPath)) return {vehicles:defaultCatalog.map(x=>({...x})),updatedAt:null};
