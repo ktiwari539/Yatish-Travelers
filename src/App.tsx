@@ -372,7 +372,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="hero-copy">
           <div className="eyebrow"><Sparkles size={16} /> Chauffeur-driven travel, done right.</div>
           <h1>Every journey should feel <em>effortless.</em></h1>
-          <p>Local rides, outstation trips, airport transfers and multi-day travel with transparent pricing and trusted drivers.</p>
+          <p>Local rides, outstation trips, airport transfers and multi-day travel with transparent pricing and planned chauffeur-led travel.</p>
           <div className="hero-actions">
             <a className="primary" href="#fare"><Calculator size={18} /> Calculate Fare</a>
             <WhatsappLink source="hero" label="Chat on WhatsApp" className="secondary hero-whatsapp"/>
@@ -380,7 +380,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           </div>
           <div className="trust-row">
             <span><Check size={16}/> Transparent per-km pricing</span>
-            <span><ShieldCheck size={16}/> Verified drivers</span>
+            <span><ShieldCheck size={16}/> Dedicated journey coordination</span>
             <span><MessageCircle size={16}/> Direct WhatsApp enquiries</span>
           </div>
         </div>
@@ -404,7 +404,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           </div>
           <div className="floating-card">
             <span>Indicative fares</span>
-            <strong>₹15–₹25/km</strong>
+            <strong>₹{heroVehicle.rateMin ?? 15}–₹{heroVehicle.rateMax ?? 25}/km</strong>
             <small>Final fare confirmed before booking</small>
           </div>
           <div className="motion-pill"><span/> Every journey, beautifully considered.</div>
@@ -741,6 +741,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                         passengers,
                         days,
                         distanceKm: estimate.chargeableKm,
+                        nightStay,
                         estimatedMin: estimate.minTotal,
                         estimatedMax: estimate.maxTotal,
                       }),
