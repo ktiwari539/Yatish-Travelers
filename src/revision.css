@@ -161,3 +161,23 @@ footer .image-credits{line-height:1.65}
 .crm-saved-quote strong{color:#b17a3a}
 @media(max-width:900px){.crm-delivery-config{grid-template-columns:1fr}}
 @media(max-width:660px){.floating-contact{right:12px;bottom:12px}.floating-email{padding:13px}.floating-email span{display:none}.hero-email-link{font-size:12px}.crm-outbox article{align-items:start;flex-direction:column}.crm-quote-actions{display:grid}.crm-quote-actions>*{justify-content:center}}
+
+/* Interactive local vehicle photo sanitization: actual pixels, no overlay bars */
+.privacy-modal{position:fixed;z-index:2000;inset:0;padding:24px;display:grid;place-items:center;background:rgba(8,22,16,.79);backdrop-filter:blur(13px)}
+.privacy-sheet{width:min(1050px,96vw);max-height:94vh;overflow:auto;background:#fffdf7;color:#1d4635;border-radius:24px;padding:24px;box-shadow:0 35px 100px rgba(2,16,11,.4)}
+.privacy-sheet>header{display:flex;justify-content:space-between;align-items:start;gap:18px}
+.privacy-sheet h2{font-size:clamp(27px,4vw,46px);line-height:1.05;letter-spacing:-.055em;margin:10px 0}
+.privacy-sheet p{font-size:12px;line-height:1.6;color:#5b6b5f;max-width:740px}
+.privacy-sheet>header>button{flex:0 0 38px;height:38px;width:38px;border-radius:50%;border:1px solid #d4d7c9;background:#f8f4ea;color:#34573e;display:grid;place-items:center}
+.privacy-canvas-wrap{position:relative;margin:12px 0;overflow:hidden;border:1px solid #d4d8cb;border-radius:16px;background:#d9e2d6}
+.privacy-selected{position:absolute;border:2px dashed #ecc284;background:rgba(237,195,112,.14);pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.17)}
+.privacy-loading{position:absolute;inset:0;display:grid;place-items:center;color:#234f38;font-weight:800}
+.privacy-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.privacy-toolbar>span{font-size:11px;color:#566a5b}
+.privacy-toolbar>div{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.privacy-toolbar button{display:inline-flex;align-items:center;gap:6px;border:1px solid #cbd3c6;background:#eef2e9;color:#28513a;border-radius:99px;padding:11px 15px;font-size:11px;font-weight:800}
+.privacy-toolbar button:disabled{opacity:.4;cursor:not-allowed}
+.privacy-toolbar button.fleet-save{background:#1d4838;color:#fff;border-color:#1d4838}
+.privacy-sheet>small{font-size:10px;line-height:1.6;color:#72796d;display:block;margin-top:12px}
+.fleet-photo-upload{background:#edf3e9;padding:11px;border-radius:13px;color:#26523b!important}
+@media(max-width:760px){.privacy-modal{padding:8px}.privacy-sheet{padding:16px;max-height:97vh}.privacy-toolbar>div{width:100%}.privacy-toolbar button{flex:1}.privacy-sheet h2{font-size:30px}}
