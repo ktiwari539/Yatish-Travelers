@@ -108,6 +108,7 @@ export function AdminDashboard() {
         {item.notes&&<p className="crm-card-notes">{item.notes}</p>}
         <div className="crm-card-foot"><span>Reference: {item.id.slice(0,8).toUpperCase()}</span>{item.estimatedMax>0&&<span>Indicative: ₹{item.estimatedMin.toLocaleString('en-IN')}–₹{item.estimatedMax.toLocaleString('en-IN')}</span>}</div>
       </article>)}</div>
+      </div>
       )}
     </section>}
   </main>;
