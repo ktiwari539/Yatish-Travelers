@@ -163,7 +163,7 @@ const server = http.createServer(async (req,res)=>{
       }
       if(url.pathname==='/api/admin/enquiries' && req.method==='POST') {
         const input=await readBody(req),name=trim(input.name,100),phone=trim(input.phone,24);
-        if(name.length<2||!/^\\+?[0-9 ()-]{8,24}$/.test(phone))return reply(res,400,{error:'Enter valid name and phone number.'});
+        if(name.length<2||!/^\+?[0-9 ()-]{8,24}$/.test(phone))return reply(res,400,{error:'Enter valid name and phone number.'});
         const now=new Date().toISOString();
         const record={
           id:randomUUID(),createdAt:now,updatedAt:now,status:'new',mode:'callback',name,phone,
