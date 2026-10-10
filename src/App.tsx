@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Calculator, Check, MapPin, MessageCircle, Phone, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, Calculator, CalendarDays, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
   name: string;
@@ -83,6 +83,19 @@ const indicativePricing = {
   maxRate: 25,
 };
 
+const vehicleProfiles: Record<string, { capacity: number; useCases: string[]; priority: number }> = {
+  'Maruti Dzire': { capacity: 4, useCases: ['Business', 'Family'], priority: 4 },
+  'Maruti Ertiga': { capacity: 6, useCases: ['Family', 'Business'], priority: 2 },
+  'Toyota Innova': { capacity: 6, useCases: ['Premium', 'Family', 'Business'], priority: 1 },
+  'Mahindra TUV': { capacity: 6, useCases: ['Family', 'Group'], priority: 5 },
+  'Mahindra Bolero': { capacity: 6, useCases: ['Family', 'Group'], priority: 6 },
+  'Tempo Traveller': { capacity: 17, useCases: ['Group', 'Business'], priority: 3 },
+};
+
+const fleetFilters = ['All', 'Family', 'Premium', 'Group', 'Business'] as const;
+type FleetFilter = typeof fleetFilters[number];
+type QuoteMode = 'quote' | 'callback' | 'corporate';
+
 
 function StoriesPage() {
   const storySlots = [
@@ -163,6 +176,83 @@ function StoriesPage() {
         <div><strong>Yatish Travelers</strong><p>Real journeys. Verified stories. Premium travel.</p></div>
         <div><a href="/">Home</a><a href="/#fleet">Fleet</a><a href="/#contact">Contact</a></div>
       </footer>
+
+      {quoteOpen && (
+        <div className="quote-modal" role="dialog" aria-modal="true" aria-labelledby="quote-title" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setQuoteOpen(false);
+        }}>
+          <div className="quote-sheet">
+            <button className="quote-close" type="button" aria-label="Close" onClick={() => setQuoteOpen(false)}><X size={19}/></button>
+
+            {!quoteSubmitted ? (
+              <>
+                <div className="quote-head">
+                  <span className="kicker">{quoteMode === 'corporate' ? 'Corporate Enquiry' : quoteMode === 'callback' ? 'Callback Request' : 'Final Quote Request'}</span>
+                  <h2 id="quote-title">{quoteMode === 'callback' ? 'Tell us where to call you.' : 'Turn your estimate into a proper trip request.'}</h2>
+                  <p>No fake phone number or dead link — this form works locally now and is ready to connect to the booking backend/WhatsApp later.</p>
+                </div>
+
+                <div className="quote-trip-card">
+                  <div><CarFront size={18}/><span>{selected.name}</span></div>
+                  <div><Users size={18}/><span>{passengers} traveler{passengers === 1 ? '' : 's'}</span></div>
+                  <div><Route size={18}/><span>{estimate.chargeableKm.toLocaleString('en-IN')} km</span></div>
+                  <strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong>
+                </div>
+
+                <form className="quote-form" onSubmit={(event) => {
+                  event.preventDefault();
+                  setQuoteSubmitted(true);
+                }}>
+                  <div className="quote-fields-two">
+                    <label>Name<input name="name" required placeholder="Your name" /></label>
+                    <label>Phone<input name="phone" required inputMode="tel" placeholder="+91..." /></label>
+                  </div>
+
+                  {quoteMode !== 'callback' && (
+                    <>
+                      <div className="quote-fields-two">
+                        <label>Pickup<input name="pickup" required placeholder="Pickup city / location" /></label>
+                        <label>Destination<input name="destination" required placeholder="Destination" /></label>
+                      </div>
+                      <div className="quote-fields-two">
+                        <label>Travel date<input name="date" type="date" required /></label>
+                        <label>Trip type
+                          <select name="tripType" defaultValue="Outstation">
+                            <option>Local City</option>
+                            <option>Outstation</option>
+                            <option>Airport</option>
+                            <option>Wedding / Event</option>
+                            <option>Corporate</option>
+                          </select>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  <label>Anything we should know?<textarea name="notes" rows={3} placeholder="Timing, luggage, stops, special requirement..." /></label>
+
+                  <div className="quote-actions">
+                    <button className="primary" type="submit">{quoteMode === 'callback' ? 'Save Callback Request' : 'Save Trip Request'} <ArrowRight size={16}/></button>
+                    <button className="secondary" type="button" onClick={copyQuoteSummary}>{copied ? <CheckCircle2 size={16}/> : <Copy size={16}/>} {copied ? 'Copied' : 'Copy Trip Summary'}</button>
+                  </div>
+                  <small className="quote-disclaimer">Preview mode: this request is captured in the interface only. Backend/WhatsApp delivery will be connected before launch.</small>
+                </form>
+              </>
+            ) : (
+              <div className="quote-success">
+                <CheckCircle2 size={42}/>
+                <span className="kicker">Request Ready</span>
+                <h2>Trip details captured.</h2>
+                <p>The interaction is working. In production, this is the point where the request will be sent to your booking backend or WhatsApp workflow.</p>
+                <div className="quote-actions">
+                  <button className="primary" type="button" onClick={copyQuoteSummary}>{copied ? 'Summary Copied' : 'Copy Trip Summary'} <Copy size={16}/></button>
+                  <button className="secondary" type="button" onClick={() => setQuoteOpen(false)}>Close</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -172,26 +262,17 @@ export function App() {
   const [km, setKm] = useState(250);
   const [days, setDays] = useState(1);
   const [nightStay, setNightStay] = useState(false);
-  const [driveByVisible, setDriveByVisible] = useState(false);
-  const driveByRef = useRef<HTMLElement | null>(null);
+  const [fleetFilter, setFleetFilter] = useState<FleetFilter>('All');
+  const [fleetSort, setFleetSort] = useState('smart');
+  const [passengers, setPassengers] = useState(4);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
+  const [quoteSubmitted, setQuoteSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const journeyRef = useRef<HTMLElement | null>(null);
 
   const selected = fleet.find((item) => item.name === vehicle) ?? fleet[1];
   const heroVehicle = fleet[2];
-
-  useEffect(() => {
-    const node = driveByRef.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setDriveByVisible(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.35 });
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>('.reveal-3d'));
@@ -205,6 +286,34 @@ export function App() {
 
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const section = journeyRef.current;
+    if (!section) return;
+
+    let frame = 0;
+    const update = () => {
+      const rect = section.getBoundingClientRect();
+      const range = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / range));
+      section.style.setProperty('--journey-progress', progress.toFixed(3));
+      section.dataset.step = progress < 0.34 ? '1' : progress < 0.68 ? '2' : '3';
+      frame = 0;
+    };
+
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   const estimate = useMemo(() => {
@@ -221,6 +330,65 @@ export function App() {
       maxTotal: maxBase + driver,
     };
   }, [days, km, nightStay]);
+
+  const filteredFleet = useMemo(() => {
+    const filtered = fleet.filter((car) => (
+      fleetFilter === 'All' || vehicleProfiles[car.name].useCases.includes(fleetFilter)
+    ));
+
+    return [...filtered].sort((a, b) => {
+      const aProfile = vehicleProfiles[a.name];
+      const bProfile = vehicleProfiles[b.name];
+
+      if (fleetSort === 'seats-desc') return bProfile.capacity - aProfile.capacity;
+      if (fleetSort === 'compact') return aProfile.capacity - bProfile.capacity;
+      if (fleetSort === 'premium') {
+        const aPremium = aProfile.useCases.includes('Premium') ? 0 : 1;
+        const bPremium = bProfile.useCases.includes('Premium') ? 0 : 1;
+        return aPremium - bPremium || aProfile.priority - bProfile.priority;
+      }
+
+      const aFits = aProfile.capacity >= passengers ? 0 : 1;
+      const bFits = bProfile.capacity >= passengers ? 0 : 1;
+      const aGap = aFits === 0 ? aProfile.capacity - passengers : 99;
+      const bGap = bFits === 0 ? bProfile.capacity - passengers : 99;
+      return aFits - bFits || aGap - bGap || aProfile.priority - bProfile.priority;
+    });
+  }, [fleetFilter, fleetSort, passengers]);
+
+  const openQuote = (mode: QuoteMode = 'quote') => {
+    setQuoteMode(mode);
+    setQuoteSubmitted(false);
+    setCopied(false);
+    setQuoteOpen(true);
+  };
+
+  const quoteSummary = `Yatish Travelers enquiry
+Vehicle: ${selected.name}
+Passengers: ${passengers}
+Distance: ${estimate.chargeableKm.toLocaleString('en-IN')} km
+Trip days: ${days}
+Indicative range: ₹${estimate.minTotal.toLocaleString('en-IN')}–₹${estimate.maxTotal.toLocaleString('en-IN')}
+Night stay: ${nightStay ? 'Yes' : 'No'}`;
+
+  const copyQuoteSummary = async () => {
+    try {
+      await navigator.clipboard.writeText(quoteSummary);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!quoteOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setQuoteOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [quoteOpen]);
 
   const isStoriesPage = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/stories';
   if (isStoriesPage) return <StoriesPage />;
@@ -297,8 +465,52 @@ export function App() {
           <p>Clean, comfortable vehicles for solo travel, families, business trips and long-distance journeys.</p>
         </div>
 
+        <div className="fleet-tools">
+          <div className="fleet-filter-block">
+            <span><SlidersHorizontal size={15}/> Best for</span>
+            <div className="filter-chips">
+              {fleetFilters.map((filter) => (
+                <button
+                  key={filter}
+                  className={fleetFilter === filter ? 'is-active' : ''}
+                  onClick={() => setFleetFilter(filter)}
+                  type="button"
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="passenger-control">
+            <span><Users size={15}/> Travelers</span>
+            <input
+              type="number"
+              min="1"
+              max="17"
+              value={passengers}
+              onChange={(event) => setPassengers(Math.max(1, Math.min(17, Number(event.target.value) || 1)))}
+            />
+          </label>
+
+          <label className="sort-control">
+            <span>Sort</span>
+            <select value={fleetSort} onChange={(event) => setFleetSort(event.target.value)}>
+              <option value="smart">Smart Match</option>
+              <option value="premium">Premium First</option>
+              <option value="seats-desc">Most Seats</option>
+              <option value="compact">Compact First</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="fleet-match-note">
+          <strong>{filteredFleet.length} vehicles</strong>
+          <span>sorted for {passengers} traveler{passengers === 1 ? '' : 's'}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''}</span>
+        </div>
+
         <div className="fleet-grid">
-          {fleet.map((car, index) => (
+          {filteredFleet.map((car, index) => (
             <article className="fleet-card" key={car.name} style={{ animationDelay: `${index * 90}ms` }}>
               <div className="fleet-visual">
                 <img src={car.image} alt={car.name} loading="lazy" decoding="async" />
@@ -328,11 +540,19 @@ export function App() {
         </div>
         <div className="service-grid">
           {[
-            ['Local City Travel','Point-to-point rides and hourly packages for everyday travel.'],
-            ['Outstation','One-way, round-trip and multi-day intercity journeys.'],
-            ['Airport Transfer','Reliable pickup and drop with scheduled reporting time.'],
-            ['Wedding & Events','Coordinated vehicle support for guests, families and events.'],
-          ].map(([title, text]) => <article key={title}><MapPin size={24}/><h3>{title}</h3><p>{text}</p></article>)}
+            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides' },
+            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity' },
+            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport' },
+            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events' },
+          ].map((item) => (
+            <article key={item.title}>
+              <div className="service-icon">{item.icon}</div>
+              <small>{item.meta}</small>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+              <button type="button" onClick={() => openQuote('quote')}>Plan this trip <ArrowRight size={14}/></button>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -371,27 +591,37 @@ export function App() {
         </div>
       </section>
 
-      <section
-        ref={driveByRef}
-        className={`driveby-section reveal-3d ${driveByVisible ? 'is-visible' : ''}`}
-        aria-label="Cinematic vehicle transition"
-      >
-        <div className="driveby-copy">
-          <span className="kicker">The Road Moment</span>
-          <h2>Not just a fleet. A journey in motion.</h2>
-          <p>As you move through the site, the experience should feel like travel itself — calm, premium and unexpectedly alive.</p>
-        </div>
+      <section ref={journeyRef} className="journey-motion" aria-label="Interactive journey animation">
+        <div className="journey-sticky">
+          <div className="journey-copy">
+            <span className="kicker">A Journey in Motion</span>
+            <h2>Scroll the road. Feel the depth.</h2>
+            <p>This section reacts directly to your scroll — the vehicle moves from the horizon into the foreground while the route progresses with it.</p>
 
-        <div className="driveby-scene" aria-hidden="true">
-          <div className="driveby-horizon" />
-          <div className="driveby-road">
-            <span/><span/><span/><span/>
+            <div className="journey-steps">
+              <div className="journey-step step-one"><small>01</small><strong>Choose</strong><span>Match the right vehicle to your trip.</span></div>
+              <div className="journey-step step-two"><small>02</small><strong>Confirm</strong><span>Review route, timing and major charges.</span></div>
+              <div className="journey-step step-three"><small>03</small><strong>Travel</strong><span>Your chauffeur-led journey begins.</span></div>
+            </div>
           </div>
-          <div className="driveby-light-streak driveby-light-one" />
-          <div className="driveby-light-streak driveby-light-two" />
-          <div className="driveby-car">
-            <img src={fleet[0].image} alt="" />
+
+          <div className="journey-world" aria-hidden="true">
+            <div className="journey-sun" />
+            <div className="journey-mountain mountain-a" />
+            <div className="journey-mountain mountain-b" />
+            <div className="journey-road">
+              <i/><i/><i/><i/><i/>
+            </div>
+            <div className="journey-route route-a"><MapPin size={15}/><span>Pickup</span></div>
+            <div className="journey-route route-b"><Route size={15}/><span>On the road</span></div>
+            <div className="journey-route route-c"><CheckCircle2 size={15}/><span>Arrive</span></div>
+            <div className="journey-vehicle">
+              <img src={fleet[2].image} alt="" />
+            </div>
+            <div className="journey-shadow" />
           </div>
+
+          <div className="journey-progress"><span/></div>
         </div>
       </section>
 
@@ -406,7 +636,7 @@ export function App() {
             Yatish Travelers can coordinate corporate transport based on fleet and city availability.
           </p>
           <div className="corporate-actions">
-            <a className="primary" href="#contact">Discuss Corporate Requirement <ArrowRight size={17}/></a>
+            <button className="primary" type="button" onClick={() => openQuote('corporate')}>Discuss Corporate Requirement <ArrowRight size={17}/></button>
             <a className="secondary" href="#coverage">See Coverage Model</a>
           </div>
         </div>
@@ -475,8 +705,8 @@ export function App() {
           </div>
           <p className="note">This estimate currently uses a 250 km/day minimum. The ₹15–₹25/km band is indicative only; your final quote is confirmed before booking. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals.</p>
           <div className="calc-actions">
-            <a className="primary" href="#contact"><MessageCircle size={18}/> Request Final Quote</a>
-            <a className="secondary" href="tel:+910000000000"><Phone size={17}/> Call</a>
+            <button className="primary" type="button" onClick={() => openQuote('quote')}><MessageCircle size={18}/> Request Final Quote</button>
+            <button className="secondary" type="button" onClick={() => openQuote('callback')}><Phone size={17}/> Request Callback</button>
           </div>
         </div>
       </section>
@@ -508,7 +738,7 @@ export function App() {
 
       <footer id="contact">
         <div><strong>Yatish Travelers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
-        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><a href="tel:+910000000000">Call us</a></div>
+        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><button className="footer-action" type="button" onClick={() => openQuote('callback')}>Request a callback</button></div>
         <div><span>Travel</span><p>Local city rides · Outstation trips · Airport transfers · Family journeys · Corporate mobility</p></div>
         <div className="image-credits">
           <span>Image credits</span>
