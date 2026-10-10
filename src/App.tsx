@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, BriefcaseBusiness, Calculator, CalendarDays, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
   name: string;
@@ -177,82 +177,6 @@ function StoriesPage() {
         <div><a href="/">Home</a><a href="/#fleet">Fleet</a><a href="/#contact">Contact</a></div>
       </footer>
 
-      {quoteOpen && (
-        <div className="quote-modal" role="dialog" aria-modal="true" aria-labelledby="quote-title" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setQuoteOpen(false);
-        }}>
-          <div className="quote-sheet">
-            <button className="quote-close" type="button" aria-label="Close" onClick={() => setQuoteOpen(false)}><X size={19}/></button>
-
-            {!quoteSubmitted ? (
-              <>
-                <div className="quote-head">
-                  <span className="kicker">{quoteMode === 'corporate' ? 'Corporate Enquiry' : quoteMode === 'callback' ? 'Callback Request' : 'Final Quote Request'}</span>
-                  <h2 id="quote-title">{quoteMode === 'callback' ? 'Tell us where to call you.' : 'Turn your estimate into a proper trip request.'}</h2>
-                  <p>No fake phone number or dead link — this form works locally now and is ready to connect to the booking backend/WhatsApp later.</p>
-                </div>
-
-                <div className="quote-trip-card">
-                  <div><CarFront size={18}/><span>{selected.name}</span></div>
-                  <div><Users size={18}/><span>{passengers} traveler{passengers === 1 ? '' : 's'}</span></div>
-                  <div><Route size={18}/><span>{estimate.chargeableKm.toLocaleString('en-IN')} km</span></div>
-                  <strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong>
-                </div>
-
-                <form className="quote-form" onSubmit={(event) => {
-                  event.preventDefault();
-                  setQuoteSubmitted(true);
-                }}>
-                  <div className="quote-fields-two">
-                    <label>Name<input name="name" required placeholder="Your name" /></label>
-                    <label>Phone<input name="phone" required inputMode="tel" placeholder="+91..." /></label>
-                  </div>
-
-                  {quoteMode !== 'callback' && (
-                    <>
-                      <div className="quote-fields-two">
-                        <label>Pickup<input name="pickup" required placeholder="Pickup city / location" /></label>
-                        <label>Destination<input name="destination" required placeholder="Destination" /></label>
-                      </div>
-                      <div className="quote-fields-two">
-                        <label>Travel date<input name="date" type="date" required /></label>
-                        <label>Trip type
-                          <select name="tripType" defaultValue="Outstation">
-                            <option>Local City</option>
-                            <option>Outstation</option>
-                            <option>Airport</option>
-                            <option>Wedding / Event</option>
-                            <option>Corporate</option>
-                          </select>
-                        </label>
-                      </div>
-                    </>
-                  )}
-
-                  <label>Anything we should know?<textarea name="notes" rows={3} placeholder="Timing, luggage, stops, special requirement..." /></label>
-
-                  <div className="quote-actions">
-                    <button className="primary" type="submit">{quoteMode === 'callback' ? 'Save Callback Request' : 'Save Trip Request'} <ArrowRight size={16}/></button>
-                    <button className="secondary" type="button" onClick={copyQuoteSummary}>{copied ? <CheckCircle2 size={16}/> : <Copy size={16}/>} {copied ? 'Copied' : 'Copy Trip Summary'}</button>
-                  </div>
-                  <small className="quote-disclaimer">Preview mode: this request is captured in the interface only. Backend/WhatsApp delivery will be connected before launch.</small>
-                </form>
-              </>
-            ) : (
-              <div className="quote-success">
-                <CheckCircle2 size={42}/>
-                <span className="kicker">Request Ready</span>
-                <h2>Trip details captured.</h2>
-                <p>The interaction is working. In production, this is the point where the request will be sent to your booking backend or WhatsApp workflow.</p>
-                <div className="quote-actions">
-                  <button className="primary" type="button" onClick={copyQuoteSummary}>{copied ? 'Summary Copied' : 'Copy Trip Summary'} <Copy size={16}/></button>
-                  <button className="secondary" type="button" onClick={() => setQuoteOpen(false)}>Close</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </main>
   );
 }
@@ -752,6 +676,84 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           </p>
         </div>
       </footer>
+
+      {quoteOpen && (
+        <div className="quote-modal" role="dialog" aria-modal="true" aria-labelledby="quote-title" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setQuoteOpen(false);
+        }}>
+          <div className="quote-sheet">
+            <button className="quote-close" type="button" aria-label="Close" onClick={() => setQuoteOpen(false)}><X size={19}/></button>
+
+            {!quoteSubmitted ? (
+              <>
+                <div className="quote-head">
+                  <span className="kicker">{quoteMode === 'corporate' ? 'Corporate Enquiry' : quoteMode === 'callback' ? 'Callback Request' : 'Final Quote Request'}</span>
+                  <h2 id="quote-title">{quoteMode === 'callback' ? 'Tell us where to call you.' : 'Share the trip details that matter.'}</h2>
+                  <p>{quoteMode === 'callback' ? 'Leave your contact details and preferred context for the call.' : 'Use your current estimate as the starting point, then add pickup, destination and travel date.'}</p>
+                </div>
+
+                <div className="quote-trip-card">
+                  <div><CarFront size={18}/><span>{selected.name}</span></div>
+                  <div><Users size={18}/><span>{passengers} traveler{passengers === 1 ? '' : 's'}</span></div>
+                  <div><Route size={18}/><span>{estimate.chargeableKm.toLocaleString('en-IN')} km</span></div>
+                  <strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong>
+                </div>
+
+                <form className="quote-form" onSubmit={(event) => {
+                  event.preventDefault();
+                  setQuoteSubmitted(true);
+                }}>
+                  <div className="quote-fields-two">
+                    <label>Name<input name="name" required placeholder="Your name" /></label>
+                    <label>Phone<input name="phone" required inputMode="tel" placeholder="+91..." /></label>
+                  </div>
+
+                  {quoteMode !== 'callback' && (
+                    <>
+                      <div className="quote-fields-two">
+                        <label>Pickup<input name="pickup" required placeholder="Pickup city / location" /></label>
+                        <label>Destination<input name="destination" required placeholder="Destination" /></label>
+                      </div>
+                      <div className="quote-fields-two">
+                        <label>Travel date<input name="date" type="date" required /></label>
+                        <label>Trip type
+                          <select name="tripType" defaultValue={quoteMode === 'corporate' ? 'Corporate' : 'Outstation'}>
+                            <option>Local City</option>
+                            <option>Outstation</option>
+                            <option>Airport</option>
+                            <option>Wedding / Event</option>
+                            <option>Corporate</option>
+                          </select>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  <label>Anything we should know?<textarea name="notes" rows={3} placeholder="Timing, luggage, stops, special requirement..." /></label>
+
+                  <div className="quote-actions">
+                    <button className="primary" type="submit">{quoteMode === 'callback' ? 'Prepare Callback Request' : 'Prepare Trip Request'} <ArrowRight size={16}/></button>
+                    <button className="secondary" type="button" onClick={copyQuoteSummary}>{copied ? <CheckCircle2 size={16}/> : <Copy size={16}/>} {copied ? 'Copied' : 'Copy Trip Summary'}</button>
+                  </div>
+                  <small className="quote-disclaimer">Local preview: the interaction is complete, but external delivery is intentionally not enabled yet.</small>
+                </form>
+              </>
+            ) : (
+              <div className="quote-success">
+                <CheckCircle2 size={42}/>
+                <span className="kicker">Request Prepared</span>
+                <h2>Your trip details are ready.</h2>
+                <p>You can copy the trip summary during local review. External submission will be connected when the booking channel is finalized.</p>
+                <div className="quote-actions">
+                  <button className="primary" type="button" onClick={copyQuoteSummary}>{copied ? 'Summary Copied' : 'Copy Trip Summary'} <Copy size={16}/></button>
+                  <button className="secondary" type="button" onClick={() => setQuoteOpen(false)}>Close</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
