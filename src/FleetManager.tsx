@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
 
 export type CatalogVehicle = {
  id:string;name:string;seats:string;capacity:number;tag:string;category:string;image:string;
@@ -15,6 +16,7 @@ export function FleetManager({token}:Props) {
  const [success,setSuccess]=useState('');
  const [loaded,setLoaded]=useState(false);
  const [uploading,setUploading]=useState<number|null>(null);
+ const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File}|null>(null);
  const load=useCallback(async()=>{
    setError('');
    try {
@@ -83,8 +85,8 @@ export function FleetManager({token}:Props) {
           <label>Short description<input value={v.tag} onChange={e=>change(index,{tag:e.target.value})}/></label>
         </div>
         <label>Photo URL or uploaded local path<input type="text" value={v.image} onChange={e=>change(index,{image:e.target.value})} placeholder="https://.../vehicle.jpg"/></label>
-        <label className="fleet-photo-upload">Upload vehicle photo (JPG/PNG/WebP up to 3 MB)
-          <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{void uploadPhoto(index,e.target.files?.[0]);e.target.value='';}}/>
+        <label className="fleet-photo-upload">Upload / edit vehicle photo · blur plates (JPG/PNG/WebP up to 3 MB)
+          <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{const selected=e.target.files?.[0];if(selected)setEditingPhoto({index,file:selected});e.target.value='';}}/>
           {uploading===index&&<span>Uploading image locally...</span>}
         </label>
         <div className="fleet-editor-row">
@@ -101,6 +103,7 @@ export function FleetManager({token}:Props) {
      <button type="button" className="fleet-add" onClick={()=>setVehicles(current=>[...current,blank()])}><Plus size={16}/> Add another vehicle</button>
      <button type="button" className="fleet-save" disabled={saving} onClick={()=>void save()}><Save size={16}/> {saving?'Saving...':'Save fleet & pricing'}</button>
    </div>
+   {editingPhoto&&<PhotoPrivacyEditor file={editingPhoto.file} onCancel={()=>setEditingPhoto(null)} onComplete={f=>uploadPhoto(editingPhoto.index,f)}/>}
    <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored only on your Mac) or linked using HTTPS URLs. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
  </section>;
 }
