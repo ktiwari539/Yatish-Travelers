@@ -181,3 +181,21 @@ footer .image-credits{line-height:1.65}
 .privacy-sheet>small{font-size:10px;line-height:1.6;color:#72796d;display:block;margin-top:12px}
 .fleet-photo-upload{background:#edf3e9;padding:11px;border-radius:13px;color:#26523b!important}
 @media(max-width:760px){.privacy-modal{padding:8px}.privacy-sheet{padding:16px;max-height:97vh}.privacy-toolbar>div{width:100%}.privacy-toolbar button{flex:1}.privacy-sheet h2{font-size:30px}}
+
+/* v4: editorial showroom depth and multi-angle vehicle photography */
+.cinema-stage{--pointer-x:0;--pointer-y:0;transform-style:preserve-3d}
+.cinema-stage-halo{transform:translate3d(calc(var(--pointer-x)*-16px),calc(var(--pointer-y)*-12px),0) rotateY(calc(var(--pointer-x)*-3deg));transition:transform .24s ease}
+.cinema-vehicle{transform:translate3d(calc((var(--cinema-progress,0) - .5)*-18px + var(--pointer-x)*18px),calc((var(--cinema-progress,0) - .5)*40px + var(--pointer-y)*-14px),45px) rotateY(calc(-5deg + var(--pointer-x)*7deg)) rotateX(calc(1deg - var(--pointer-y)*5deg));transition:box-shadow .3s ease;box-shadow:0 48px 110px rgba(2,20,13,.44),inset 0 0 0 1px rgba(255,255,255,.25)}
+.cinema-vehicle:hover{box-shadow:0 55px 128px rgba(2,20,13,.54),0 0 70px rgba(231,172,106,.16)}
+.cinema-angle{position:absolute;z-index:12;bottom:11%;left:15%;display:flex;align-items:center;gap:8px;padding:11px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.32);background:rgba(17,47,35,.7);backdrop-filter:blur(10px);color:#fff1dc;font-size:11px;font-weight:800}
+.cinema-angle:hover{background:rgba(236,203,162,.24);transform:translateY(-2px)}
+/* Tint backgrounds rather than drawing rectangles on car plates */
+.fleet-visual,.reel-card{background:linear-gradient(145deg,#d7dbd1 0%,#f2e9db 52%,#c8d7cb 100%)}
+.fleet-visual img,.reel-card img{filter:saturate(.96) contrast(1.02) brightness(1.02)}
+.fleet-card:hover .fleet-visual img,.reel-card:hover img{filter:saturate(1.12) contrast(1.07) brightness(1.04)}
+.hero-poster{border:1px solid rgba(172,131,80,.31);box-shadow:0 32px 90px rgba(20,47,32,.18),0 0 0 8px rgba(255,249,236,.6)}
+.hero-car-image{filter:saturate(1.08) contrast(1.02) brightness(1.01)}
+/* Disable the old faux privacy rectangles and artificial blurred lower third. Pixelation belongs to uploaded image pixels. */
+.plate-veil,.hero-car-frame:after,.fleet-visual:after,.reel-card:after,.selected-vehicle-image:after{display:none!important}
+@media(max-width:760px){.cinema-angle{bottom:8%;left:12%;font-size:10px;padding:8px 10px}.cinema-vehicle{transform:none}}
+@media(prefers-reduced-motion:reduce){.cinema-vehicle,.cinema-stage-halo{transform:none!important;transition:none!important}}
