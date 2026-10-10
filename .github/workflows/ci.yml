@@ -20,5 +20,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: CRM API tests
+        run: npm run test:api
+
       - name: Type check and production build
         run: npm run build
