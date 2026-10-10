@@ -3,6 +3,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { dirname, resolve } from 'node:path';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readCatalog, writeCatalog, validateVehicle } from './catalog.mjs';
+import { notifications, notificationConfig, notifyNewEnquiry, prepareQuote } from './notifications.mjs';
 
 const port = Number(process.env.CRM_PORT || 8787);
 const dataPath = resolve(process.env.CRM_DATA_FILE || '.data/enquiries.jsonl');
@@ -42,6 +43,9 @@ function records() {
     try {
       const event = JSON.parse(line);
       if (event.type === 'created') byId.set(event.value.id,event.value);
+      if (event.type === 'quotation' && byId.has(event.id)) {
+        Object.assign(byId.get(event.id), {quote:event.quote,status:'quoted',updatedAt:event.updatedAt});
+      }
       if (event.type === 'status' && byId.has(event.id)) {
         Object.assign(byId.get(event.id), { status:event.status,updatedAt:event.updatedAt });
       }
@@ -127,7 +131,8 @@ const server = http.createServer(async (req,res)=>{
       }
       writeEvent({type:'created',value:record});
       logEvent({event:'quote_submit',sessionId:record.sessionId,vehicle:record.vehicle,source:record.source,createdAt:date});
-      return reply(res,201,{id:record.id,status:record.status});
+      const delivery=await notifyNewEnquiry(record);
+      return reply(res,201,{id:record.id,status:record.status,delivery:delivery.map(x=>({channel:x.channel,purpose:x.purpose,status:x.status}))});
     }
     if (url.pathname.startsWith('/api/admin/')) {
       if(!secret) return reply(res,503,{error:'Admin access not configured. Set CRM_ADMIN_TOKEN.'});
@@ -149,7 +154,10 @@ const server = http.createServer(async (req,res)=>{
         writeFileSync(resolve(uploadsPath,filename),binary,{mode:0o600,flag:'wx'});
         return reply(res,201,{url:'/api/uploads/'+filename});
       }
-      if(url.pathname==='/api/admin/engagement' && req.method==='GET') return reply(res,200,engagement());
+      if(url.pathname==='/api/admin/notifications'&&req.method==='GET') {
+        return reply(res,200,{config:notificationConfig(),items:notifications()});
+      }
+            if(url.pathname==='/api/admin/engagement' && req.method==='GET') return reply(res,200,engagement());
       if(url.pathname==='/api/admin/catalog' && req.method==='GET') return reply(res,200,readCatalog());
       if(url.pathname==='/api/admin/catalog' && req.method==='PUT') {
         const incoming=await readBody(req,120_000);
@@ -180,7 +188,20 @@ const server = http.createServer(async (req,res)=>{
         const items=records();
         return reply(res,200,{total:items.length,byStatus:Object.fromEntries([...VALID_STATUS].map(s=>[s,items.filter(i=>i.status===s).length])),engagement:engagement()});
       }
-      const matched=url.pathname.match(/^\/api\/admin\/enquiries\/([0-9a-f-]{36})$/);
+      const quoteRoute=url.pathname.match(/^\/api\/admin\/enquiries\/([0-9a-f-]{36})\/quotation$/);
+      if(quoteRoute&&req.method==='POST'){
+        const incoming=await readBody(req);
+        const record=records().find(x=>x.id===quoteRoute[1]);
+        if(!record)return reply(res,404,{error:'Enquiry not found'});
+        const amount=Number(incoming.amount);
+        const notes=trim(incoming.notes,900);
+        if(!Number.isFinite(amount)||amount<=0||amount>10000000)return reply(res,400,{error:'Provide a valid final quoted amount.'});
+        const quote={id:randomUUID(),amount,notes,createdAt:new Date().toISOString()};
+        writeEvent({type:'quotation',id:record.id,quote,updatedAt:quote.createdAt});
+        const deliveries=await prepareQuote(record,quote);
+        return reply(res,201,{quote,delivery:deliveries.map(x=>({channel:x.channel,purpose:x.purpose,status:x.status}))});
+      }
+            const matched=url.pathname.match(/^\/api\/admin\/enquiries\/([0-9a-f-]{36})$/);
       if(matched && req.method==='PATCH') {
         const incoming=await readBody(req);
         if(!VALID_STATUS.has(incoming.status)) return reply(res,400,{error:'Invalid status.'});
