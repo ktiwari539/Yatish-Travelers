@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readCatalog, writeCatalog, validateVehicle } from './catalog.mjs';
@@ -8,6 +8,7 @@ const port = Number(process.env.CRM_PORT || 8787);
 const dataPath = resolve(process.env.CRM_DATA_FILE || '.data/enquiries.jsonl');
 const secret = process.env.CRM_ADMIN_TOKEN || '';
 const eventsPath=resolve(process.env.CRM_EVENTS_FILE || '.data/events.jsonl');
+const uploadsPath=resolve(process.env.CRM_UPLOADS_DIR || '.data/uploads');
 const ALLOWED_EVENTS=new Set(['quote_open','callback_open','corporate_open','whatsapp_click','email_click','vehicle_explore','quote_submit']);
 const VALID_STATUS = new Set(['new','contacted','quoted','confirmed','closed']);
 const rate = new Map();
@@ -52,11 +53,11 @@ function writeEvent(event) {
   mkdirSync(dirname(dataPath), { recursive:true, mode:0o700 });
   appendFileSync(dataPath,JSON.stringify(event)+'\n',{encoding:'utf8',mode:0o600});
 }
-async function readBody(req) {
+async function readBody(req,limit=8192) {
   let body = '';
   for await (const chunk of req) {
     body += chunk;
-    if (body.length > 8192) throw new Error('Request too large.');
+    if (body.length > limit) throw new Error('Request too large.');
   }
   return JSON.parse(body || '{}');
 }
@@ -66,6 +67,13 @@ const server = http.createServer(async (req,res)=>{
   try {
     const url = new URL(req.url || '/', 'http://localhost');
     if (url.pathname === '/api/health' && req.method === 'GET') return reply(res,200,{ok:true,storage:'local',adminConfigured:Boolean(secret)});
+    const uploadMatch=url.pathname.match(/^\/api\/uploads\/([a-f0-9-]{36})\.(jpg|png|webp)$/);
+    if(uploadMatch && req.method==='GET') {
+      const file=resolve(uploadsPath,uploadMatch[1]+'.'+uploadMatch[2]);
+      if(!existsSync(file)) return reply(res,404,{error:'Image not found.'});
+      res.writeHead(200,{'Content-Type':uploadMatch[2]==='jpg'?'image/jpeg':uploadMatch[2]==='png'?'image/png':'image/webp','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+      return res.end(readFileSync(file));
+    }
     if (url.pathname === '/api/catalog' && req.method === 'GET') {
       const config=readCatalog();
       return reply(res,200,{vehicles:config.vehicles.filter(v=>v.enabled),updatedAt:config.updatedAt});
@@ -123,10 +131,26 @@ const server = http.createServer(async (req,res)=>{
       if(!secret) return reply(res,503,{error:'Admin access not configured. Set CRM_ADMIN_TOKEN.'});
       const provided=req.headers.authorization?.replace(/^Bearer /,'')||'';
       if (!compareToken(provided)) return reply(res,401,{error:'Invalid admin token.'});
+      if(url.pathname==='/api/admin/images' && req.method==='POST') {
+        const incoming=await readBody(req,4_300_000);
+        const mime=trim(incoming.mime,40),payload=incoming.data;
+        if(typeof payload!=='string'||payload.length>4_200_000||!/^[a-zA-Z0-9+/]+={0,2}$/.test(payload))return reply(res,400,{error:'Invalid image data.'});
+        const binary=Buffer.from(payload,'base64');
+        if(binary.length<100||binary.length>3_000_000) return reply(res,400,{error:'Image must be under 3 MB.'});
+        const jpeg=mime==='image/jpeg'&&binary[0]===0xff&&binary[1]===0xd8&&binary[2]===0xff;
+        const png=mime==='image/png'&&binary.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+        const webp=mime==='image/webp'&&binary.toString('ascii',0,4)==='RIFF'&&binary.toString('ascii',8,12)==='WEBP';
+        const ext=jpeg?'jpg':png?'png':webp?'webp':'';
+        if(!ext)return reply(res,415,{error:'Upload a valid JPG, PNG or WebP image.'});
+        mkdirSync(uploadsPath,{recursive:true,mode:0o700});
+        const id=randomUUID(),filename=id+'.'+ext;
+        writeFileSync(resolve(uploadsPath,filename),binary,{mode:0o600,flag:'wx'});
+        return reply(res,201,{url:'/api/uploads/'+filename});
+      }
       if(url.pathname==='/api/admin/engagement' && req.method==='GET') return reply(res,200,engagement());
       if(url.pathname==='/api/admin/catalog' && req.method==='GET') return reply(res,200,readCatalog());
       if(url.pathname==='/api/admin/catalog' && req.method==='PUT') {
-        const incoming=await readBody(req);
+        const incoming=await readBody(req,120_000);
         if(!Array.isArray(incoming.vehicles)||incoming.vehicles.length>80) return reply(res,400,{error:'Expected up to 80 vehicles.'});
         const current=readCatalog().vehicles;
         try {
