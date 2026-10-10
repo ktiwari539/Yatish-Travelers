@@ -13,7 +13,7 @@ export const defaultCatalog=[
  {name:'Tempo Traveller',seats:'12+1 / 17+1',capacity:17,tag:'Group Travel',category:'Traveller',image:commons('Force%20Traveller%20Luxury.jpg'),rateMin:15,rateMax:25,enabled:true}
 ].map((v)=>({...v,id:v.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}));
 const text=(value,max=120)=>typeof value==='string'?value.trim().slice(0,max):'';
-const validImage=(url)=>{try{const u=new URL(url);return u.protocol==='https:'&&url.length<=900&&!u.username&&!u.password;}catch{return false;}};
+const validImage=(url)=>{if(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(url))return true;try{const u=new URL(url);return u.protocol==='https:'&&url.length<=900&&!u.username&&!u.password;}catch{return false;}};
 export function validateVehicle(input,previous={}) {
   const name=text(input.name,80),seats=text(input.seats,30),tag=text(input.tag,80),category=text(input.category,50),image=text(input.image,900);
   const capacity=Number(input.capacity),rateMin=Number(input.rateMin),rateMax=Number(input.rateMax);
