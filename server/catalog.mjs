@@ -5,8 +5,8 @@ import { randomUUID } from 'node:crypto';
 export const catalogPath=resolve(process.env.CRM_CATALOG_FILE || '.data/catalog.json');
 const commons=(file)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+file+'?width=1600';
 export const defaultCatalog=[
- {name:'Maruti Dzire',seats:'4+1',capacity:4,tag:'Smart & Efficient',category:'Sedan',image:commons('Suzuki%20Dzire%20II%201.2%20GLX%20Hybrid%20Arctic%20White%20Pearl.jpg'),rateMin:15,rateMax:25,enabled:true},
- {name:'Maruti Ertiga',seats:'6+1',capacity:6,tag:'Family Favourite',category:'MPV',image:commons('Suzuki%20Ertiga%20%28Front%29%2C%20Jakarta%2C%20Indonesia.jpg'),rateMin:15,rateMax:25,enabled:true},
+ {name:'Maruti Dzire',seats:'4+1',capacity:4,tag:'Smart & Efficient',category:'Sedan',image:commons('MIAS%202025%20-%20All-new%20Suzuki%20Dzire%20Hybrid%2002.jpg'),rateMin:15,rateMax:25,enabled:true},
+ {name:'Maruti Ertiga',seats:'6+1',capacity:6,tag:'Family Favourite',category:'MPV',image:commons('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Front%20view%20-%20April%2026%202018.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Toyota Innova',seats:'6+1',capacity:6,tag:'Premium Comfort',category:'Premium MPV',image:commons('Toyota%20Innova%20Crysta%202.4%20Z%20side.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Mahindra TUV',seats:'6+1',capacity:6,tag:'Strong & Spacious',category:'SUV',image:commons('Mahindra%20TUV%20300%20%282016%29%20%2852715226367%29.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Mahindra Bolero',seats:'6+1',capacity:6,tag:'Reliable Traveller',category:'SUV',image:commons('Mahindra%20Bolero%20ZLX.jpg'),rateMin:15,rateMax:25,enabled:true},
