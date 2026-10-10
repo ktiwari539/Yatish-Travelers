@@ -94,7 +94,7 @@ export function AdminDashboard() {
           <p className="crm-footnote">These are local interaction counts, not individually identified visitors or accurate production analytics. Counts can include repeated clicks and testing.</p>
         </div>
       ) : (
-
+      <div className="crm-booking-panel">
       <div className="crm-heading"><div><span className="crm-eyebrow">Enquiry management</span><h1>Every journey starts here.</h1><p>Local bookings dashboard — update follow-ups without losing the original enquiry.</p></div><button className="crm-refresh" type="button" onClick={()=>void load()} disabled={loading}><RefreshCw size={16}/> Refresh</button></div>
       {error&&<div className="crm-error" role="alert">{error}</div>}
       <div className="crm-metrics">{[['Total enquiries',items.length],...statuses.map(s=>[s,items.filter(i=>i.status===s).length])].map(([label,value])=><article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div>
