@@ -82,15 +82,21 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
 
   const second=await fetch(root+'/api/enquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       name:'Second Guest',phone:'9340098177',mode:'quote',pickup:'Jaipur',destination:'Ajmer',tripDate:'2026-12-05',
-      vehicle:'Toyota Innova',passengers:3,days:1,distanceKm:250,estimatedMin:1,estimatedMax:2
+      vehicle:'Toyota Innova',passengers:3,days:1,nightStay:true,distanceKm:250,estimatedMin:1,estimatedMax:2
     })});
   assert.equal(second.status,201);
   const newList=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
   const entry=newList.items.find(x=>x.name==='Second Guest');
-  assert.equal(entry.estimatedMin,250*21);
-  assert.equal(entry.estimatedMax,250*34);
+  assert.equal(entry.estimatedMin,250*21+500);
+  assert.equal(entry.estimatedMax,250*34+500);
 
-  const image=Buffer.concat([Buffer.from([255,216,255,224]),Buffer.alloc(300,7)]);
+  const manualDenied=await fetch(root+'/api/admin/enquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Walk-in Guest',phone:'9340098177'})});
+  assert.equal(manualDenied.status,401);
+  const manuallyAdded=await fetch(root+'/api/admin/enquiries',{method:'POST',headers,body:JSON.stringify({name:'Manual WhatsApp Guest',phone:'9340098177',source:'staff-whatsapp',notes:'Enquired via WhatsApp'})});
+  assert.equal(manuallyAdded.status,201);
+  const afterManual=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
+  assert.equal(afterManual.items.find(i=>i.name==='Manual WhatsApp Guest').source,'staff-whatsapp');
+    const image=Buffer.concat([Buffer.from([255,216,255,224]),Buffer.alloc(300,7)]);
   const upload=await fetch(root+'/api/admin/images',{method:'POST',headers,body:JSON.stringify({mime:'image/jpeg',data:image.toString('base64')})});
   assert.equal(upload.status,201);
   const uploadBody=await upload.json();
