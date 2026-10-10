@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CinematicShowroom } from './CinematicShowroom';
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
-import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
   name: string;
@@ -230,6 +230,7 @@ export function App() {
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [quoteError, setQuoteError] = useState('');
   const [quoteId, setQuoteId] = useState('');
+  const [quoteDelivery,setQuoteDelivery]=useState<Array<{channel:string;purpose:string;status:string}>>([]);
   const [copied, setCopied] = useState(false);
   const [heroIndex, setHeroIndex] = useState(2);
   const [liveFleet,setLiveFleet]=useState<FleetVehicle[]>(fleet);
@@ -316,6 +317,7 @@ export function App() {
     setQuoteSubmitted(false);
     setQuoteError('');
     setQuoteId('');
+    setQuoteDelivery([]);
     setCopied(false);
     setQuoteOpen(true);
   };
@@ -376,6 +378,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <div className="hero-actions">
             <a className="primary" href="#fare"><Calculator size={18} /> Calculate Fare</a>
             <WhatsappLink source="hero" label="Chat on WhatsApp" className="secondary hero-whatsapp"/>
+            <a className="hero-email-link" href={contactEmail+'?subject='+encodeURIComponent('Travel quotation enquiry — Mateshwari Travellers')} onClick={()=>logInteraction('email_click','hero')}><Mail size={17}/> Email Us</a>
             <a className="hero-fleet-link" href="#showroom">Explore Fleet <ArrowRight size={15}/></a>
           </div>
           <div className="trust-row">
@@ -692,7 +695,10 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </footer>
 
-      <div className="floating-contact"><WhatsappLink source="floating" label="WhatsApp us"/></div>
+      <div className="floating-contact">
+        <a className="floating-email" href={contactEmail+'?subject='+encodeURIComponent('Travel enquiry — Mateshwari Travellers')} onClick={()=>logInteraction('email_click','floating')} aria-label="Email Mateshwari Travellers"><Mail size={18}/><span>Email</span></a>
+        <WhatsappLink source="floating" label="WhatsApp us"/>
+      </div>
       {quoteOpen && (
         <div className="quote-modal" role="dialog" aria-modal="true" aria-labelledby="quote-title" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setQuoteOpen(false);
@@ -749,6 +755,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Unable to save your request.');
                     setQuoteId(result.id);
+                    setQuoteDelivery(result.delivery||[]);
                     setQuoteSubmitted(true);
                   } catch (error) {
                     setQuoteError(error instanceof Error ? error.message : 'Unable to save your request. Check that the local CRM API is running.');
