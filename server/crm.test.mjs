@@ -18,7 +18,7 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   const directory=mkdtempSync(join(tmpdir(),'mt-crm-test-'));
   const secret='local-admin-test-token';
   const child=spawn(process.execPath,[resolve('server/crm.mjs')],{
-    env:{...process.env,CRM_PORT:String(port),CRM_DATA_FILE:join(directory,'records.jsonl'),CRM_EVENTS_FILE:join(directory,'events.jsonl'),CRM_CATALOG_FILE:join(directory,'catalog.json'),CRM_UPLOADS_DIR:join(directory,'uploads'),CRM_ADMIN_TOKEN:secret},
+    env:{...process.env,CRM_PORT:String(port),CRM_DATA_FILE:join(directory,'records.jsonl'),CRM_EVENTS_FILE:join(directory,'events.jsonl'),CRM_NOTIFICATIONS_FILE:join(directory,'notifications.jsonl'),CRM_NOTIFICATIONS_MODE:'preview',CRM_CATALOG_FILE:join(directory,'catalog.json'),CRM_UPLOADS_DIR:join(directory,'uploads'),CRM_ADMIN_TOKEN:secret},
     stdio:'ignore'
   });
   t.after(()=>{child.kill('SIGTERM');rmSync(directory,{recursive:true,force:true});});
@@ -50,6 +50,25 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   assert.equal(before.items.length,1);
   assert.equal(before.items[0].status,'new');
   assert.equal(before.items[0].pickup,'Jaipur');
+  const initialOutboxResponse=await fetch(root+'/api/admin/notifications',{headers});
+  assert.equal(initialOutboxResponse.status,200);
+  const initialOutbox=await initialOutboxResponse.json();
+  assert.equal(initialOutbox.config.mode,'preview');
+  assert.equal(initialOutbox.items.length,2,'Business email and WhatsApp are prepared even without provider credentials');
+  assert.ok(initialOutbox.items.every(m=>m.status==='preview'));
+  assert.ok(initialOutbox.items.some(m=>m.channel==='email'&&m.recipient==='ktiwari539@gmail.com'));
+  assert.ok(initialOutbox.items.some(m=>m.channel==='whatsapp'&&m.recipient==='919340098177'));
+  assert.equal((await fetch(root+'/api/admin/notifications')).status,401);
+  const quoteDraft=await fetch(root+'/api/admin/enquiries/'+id+'/quotation',{method:'POST',headers,body:JSON.stringify({amount:12900,notes:'Includes 1 driver night stay. GST extra.'})});
+  assert.equal(quoteDraft.status,201);
+  const prepared=await quoteDraft.json();
+  assert.equal(prepared.quote.amount,12900);
+  assert.ok(prepared.delivery.every(m=>m.status==='preview'));
+  const savedQuote=(await (await fetch(root+'/api/admin/enquiries',{headers})).json()).items[0];
+  assert.equal(savedQuote.quote.amount,12900);
+  assert.equal(savedQuote.status,'quoted');
+  assert.equal((await fetch(root+'/api/admin/enquiries/'+id+'/quotation',{method:'POST',headers,body:JSON.stringify({amount:-5})})).status,400);
+  assert.equal((await fetch(root+'/api/admin/enquiries/'+id+'/quotation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:13000})})).status,401);
   const patch=await fetch(root+'/api/admin/enquiries/'+id,{method:'PATCH',headers,body:JSON.stringify({status:'quoted'})});
   assert.equal(patch.status,200);
   const refreshed=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
