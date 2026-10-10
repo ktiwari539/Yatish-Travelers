@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { CinematicShowroom } from './CinematicShowroom';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
@@ -107,7 +108,7 @@ function StoriesPage() {
   return (
     <main className="stories-page">
       <header className="stories-nav">
-        <a className="brand" href="/">YATISH <span>TRAVELERS</span></a>
+        <a className="brand" href="/">MATESHWARI <span>TRAVELLERS</span></a>
         <a className="secondary" href="/">Back to Home <ArrowRight size={16} /></a>
       </header>
 
@@ -148,7 +149,7 @@ function StoriesPage() {
           <span className="kicker">Share Your Journey</span>
           <h2>Share the moments that made your journey memorable.</h2>
           <p>
-            Add your trip details, a short story and photos. Your submission stays private until it has been reviewed by Yatish Travelers.
+            Add your trip details, a short story and photos. Your submission stays private until it has been reviewed by Mateshwari Travellers.
           </p>
         </div>
         <form onSubmit={(event) => event.preventDefault()} className="story-submit-form">
@@ -173,7 +174,7 @@ function StoriesPage() {
       </section>
 
       <footer className="stories-footer">
-        <div><strong>Yatish Travelers</strong><p>Real journeys. Verified stories. Premium travel.</p></div>
+        <div><strong>Mateshwari Travellers</strong><p>Real journeys. Verified stories. Premium travel.</p></div>
         <div><a href="/">Home</a><a href="/#fleet">Fleet</a><a href="/#contact">Contact</a></div>
       </footer>
 
@@ -193,10 +194,10 @@ export function App() {
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
-  const journeyRef = useRef<HTMLElement | null>(null);
+  const [heroIndex, setHeroIndex] = useState(2);
 
   const selected = fleet.find((item) => item.name === vehicle) ?? fleet[1];
-  const heroVehicle = fleet[2];
+  const heroVehicle = fleet[heroIndex];
 
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>('.reveal-3d'));
@@ -212,33 +213,7 @@ export function App() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const section = journeyRef.current;
-    if (!section) return;
 
-    let frame = 0;
-    const update = () => {
-      const rect = section.getBoundingClientRect();
-      const range = Math.max(1, rect.height - window.innerHeight);
-      const progress = Math.max(0, Math.min(1, -rect.top / range));
-      section.style.setProperty('--journey-progress', progress.toFixed(3));
-      section.dataset.step = progress < 0.34 ? '1' : progress < 0.68 ? '2' : '3';
-      frame = 0;
-    };
-
-    const onScroll = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, []);
 
   const estimate = useMemo(() => {
     const chargeableKm = Math.max(km, days * 250);
@@ -287,7 +262,7 @@ export function App() {
     setQuoteOpen(true);
   };
 
-  const quoteSummary = `Yatish Travelers enquiry
+  const quoteSummary = `Mateshwari Travellers enquiry
 Vehicle: ${selected.name}
 Passengers: ${passengers}
 Distance: ${estimate.chargeableKm.toLocaleString('en-IN')} km
@@ -320,7 +295,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   return (
     <main>
       <header className="nav">
-        <a className="brand" href="#top">YATISH <span>TRAVELERS</span></a>
+        <a className="brand" href="#top">MATESHWARI <span>TRAVELLERS</span></a>
         <nav>
           <a href="#fleet">Fleet</a>
           <a href="#services">Services</a>
@@ -355,7 +330,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             <img
               className="hero-car-image"
               src={heroVehicle.image}
-              alt="Toyota Innova Crysta"
+              alt={heroVehicle.name}
               fetchPriority="high"
             />
             <div className="hero-car-shade" />
@@ -371,12 +346,21 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             <strong>₹15–₹25/km</strong>
             <small>Final fare confirmed before booking</small>
           </div>
-          <div className="motion-pill"><span/> Designed around the journey.</div>
+          <div className="motion-pill"><span/> Every journey, beautifully considered.</div>
+          <div className="hero-vehicle-picker" role="group" aria-label="Featured vehicle">
+            {fleet.slice(0, 4).map((car, index) => (
+              <button type="button" key={car.name} aria-pressed={heroIndex === index}
+                className={heroIndex === index ? 'hero-vehicle-option is-selected' : 'hero-vehicle-option'}
+                onClick={() => setHeroIndex(index)}>
+                <span>0{index + 1}</span>{car.name}
+              </button>
+            ))}
+          </div>
           <div className="hero-scroll-cue" aria-hidden="true"><span>Scroll to explore</span><i /></div>
         </div>
       </section>
 
-      <section className="signature-strip reveal-3d" aria-label="Yatish Travelers service highlights">
+      <section className="signature-strip reveal-3d" aria-label="Mateshwari Travellers service highlights">
         <div><small>01</small><strong>Chauffeur Included</strong><span>Professional driver-led travel</span></div>
         <div><small>02</small><strong>Flexible Journeys</strong><span>Local, airport and outstation</span></div>
         <div><small>03</small><strong>Right-Sized Fleet</strong><span>From sedans to group travelers</span></div>
@@ -515,39 +499,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </section>
 
-      <section ref={journeyRef} className="journey-motion" aria-label="Interactive journey animation">
-        <div className="journey-sticky">
-          <div className="journey-copy">
-            <span className="kicker">A Journey in Motion</span>
-            <h2>Scroll the road. Feel the depth.</h2>
-            <p>This section reacts directly to your scroll — the vehicle moves from the horizon into the foreground while the route progresses with it.</p>
+      <CinematicShowroom vehicles={fleet} onExplore={(name) => { setVehicle(name); openQuote('quote'); }} />
 
-            <div className="journey-steps">
-              <div className="journey-step step-one"><small>01</small><strong>Choose</strong><span>Match the right vehicle to your trip.</span></div>
-              <div className="journey-step step-two"><small>02</small><strong>Confirm</strong><span>Review route, timing and major charges.</span></div>
-              <div className="journey-step step-three"><small>03</small><strong>Travel</strong><span>Your chauffeur-led journey begins.</span></div>
-            </div>
-          </div>
-
-          <div className="journey-world" aria-hidden="true">
-            <div className="journey-sun" />
-            <div className="journey-mountain mountain-a" />
-            <div className="journey-mountain mountain-b" />
-            <div className="journey-road">
-              <i/><i/><i/><i/><i/>
-            </div>
-            <div className="journey-route route-a"><MapPin size={15}/><span>Pickup</span></div>
-            <div className="journey-route route-b"><Route size={15}/><span>On the road</span></div>
-            <div className="journey-route route-c"><CheckCircle2 size={15}/><span>Arrive</span></div>
-            <div className="journey-vehicle">
-              <img src={fleet[2].image} alt="" />
-            </div>
-            <div className="journey-shadow" />
-          </div>
-
-          <div className="journey-progress"><span/></div>
-        </div>
-      </section>
 
       <section className="corporate-section reveal-3d" id="corporate">
         <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
@@ -557,7 +510,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <h2>One travel partner for your teams, guests and business journeys.</h2>
           <p>
             From daily business movement to airport pickups, executive travel, events and multi-city requirements,
-            Yatish Travelers can coordinate corporate transport based on fleet and city availability.
+            Mateshwari Travellers can coordinate corporate transport based on fleet and city availability.
           </p>
           <div className="corporate-actions">
             <button className="primary" type="button" onClick={() => openQuote('corporate')}>Discuss Corporate Requirement <ArrowRight size={17}/></button>
@@ -661,7 +614,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
       <footer id="contact">
-        <div><strong>Yatish Travelers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
+        <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
         <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><button className="footer-action" type="button" onClick={() => openQuote('callback')}>Request a callback</button></div>
         <div><span>Travel</span><p>Local city rides · Outstation trips · Airport transfers · Family journeys · Corporate mobility</p></div>
         <div className="image-credits">
