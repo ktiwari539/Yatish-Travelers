@@ -25,6 +25,14 @@ Keep the terminal open and enter your **private** token at http://localhost:5173
 | http://localhost:5173/stories | Story submission placeholder and scenic inspiration (not fake testimonials) |
 | http://localhost:5173/admin | CRM: enquiries, activity tracking, vehicle configuration |
 
+### Email and WhatsApp quotation previews
+
+The website has direct **Email Us**, **Call** and **WhatsApp** contact buttons. Form submissions are saved in the local CRM. In the CRM, open **Enquiries & follow-ups** and click **Prepare & send quotation**, enter the final quoted amount and notes, and submit. Review **Email & WhatsApp outbox** for business and customer email copies and business WhatsApp preview records.
+
+The default notification mode is **preview**, so **nothing is sent externally**. The integration adapters for Resend email and Meta WhatsApp Cloud API are implemented; sender domain, API credentials, approved WhatsApp template and explicit `CRM_NOTIFICATIONS_MODE=live` are required later.
+
+Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
+
 ### Test the booking funnel
 
 1. Visit the homepage and click **Request Final Quote**, **Request Callback**, or **Plan this trip**.
@@ -38,8 +46,8 @@ Keep the terminal open and enter your **private** token at http://localhost:5173
 
 1. In `/admin`, choose **Cars & pricing**.
 2. Edit vehicle name, category, seating capacity, tag, minimum and maximum indicative rate, or visibility.
-3. Upload an authorized JPG, PNG or WebP photo (max **3 MB**) from your Mac or paste an **HTTPS** image URL.
-4. Add another vehicle, remove a vehicle, or toggle whether it is displayed.
+3. Upload an authorized JPG, PNG or WebP photo (max **3 MB**) from your Mac. Before uploading, the photo privacy studio lets you drag-select real number plates and pixelate the actual image pixels. Or provide an authorized **HTTPS** image URL.
+4. Add up to five alternate-angle photo URLs per car for the rotating showroom. Add another vehicle, remove a vehicle, or toggle whether it is displayed.
 5. Click **Save changes**, then refresh the public website. The public fleet and selected vehicle's indicative estimate read the new configuration.
 
 **Images, catalog and enquiries are stored on your Mac** under `.data/`, which is gitignored. Uploaded photo URLs such as `/api/uploads/...` only work while the local CRM server is running.
