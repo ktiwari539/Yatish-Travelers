@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Compass, MoveUpRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Compass, MoveUpRight, RotateCw } from 'lucide-react';
 
 export type ShowroomVehicle = {
   name: string;
@@ -7,6 +7,7 @@ export type ShowroomVehicle = {
   seats: string;
   tag: string;
   category: string;
+  gallery?:string[];
 };
 
 type Props = {
@@ -20,7 +21,9 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
   const [activeIndex, setActiveIndex] = useState(1);
   const [progress, setProgress] = useState(0);
   const [soundless, setSoundless] = useState(true);
+  const [angle,setAngle]=useState(0);
   const active = vehicles[activeIndex] ?? vehicles[0];
+  const photographs = active ? [active.image,...(active.gallery||[])] : [];
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -58,6 +61,7 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
     setSoundless(false);
     priorScrollProgress.current = progress;
   };
+  useEffect(()=>{setAngle(0);},[active?.name]);
   const next = () => choose(activeIndex + 1);
   const previous = () => choose(activeIndex - 1);
 
@@ -93,7 +97,19 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
             </div>
           </div>
 
-          <div className="cinema-stage" aria-label={'Featured vehicle: ' + active.name}>
+          <div className="cinema-stage" aria-label={'Featured vehicle: ' + active.name}
+            onPointerMove={(event)=>{
+              if(event.pointerType==='touch')return;
+              const bounds=event.currentTarget.getBoundingClientRect();
+              const x=(event.clientX-bounds.left)/bounds.width-.5;
+              const y=(event.clientY-bounds.top)/bounds.height-.5;
+              event.currentTarget.style.setProperty('--pointer-x',String(x.toFixed(3)));
+              event.currentTarget.style.setProperty('--pointer-y',String(y.toFixed(3)));
+            }}
+            onPointerLeave={(event)=>{
+              event.currentTarget.style.setProperty('--pointer-x','0');
+              event.currentTarget.style.setProperty('--pointer-y','0');
+            }}>
             <div className="cinema-stage-halo" />
             <span className="cinema-stage-stamp">ENGINEERED FOR THE OPEN ROAD</span>
             <div className="cinema-ghost cinema-ghost-back" aria-hidden="true">
@@ -102,11 +118,12 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
             <div className="cinema-ghost cinema-ghost-front" aria-hidden="true">
               <img src={vehicles[(activeIndex + 1) % vehicles.length].image} alt="" />
             </div>
-            <div className="cinema-vehicle" key={active.name}>
-              <img src={active.image} alt={active.name + ' vehicle photography'} loading="lazy"/>
+            <div className="cinema-vehicle" key={active.name+'-'+angle}>
+              <img src={photographs[angle%photographs.length]||active.image} alt={active.name + ' / angle '+(angle+1)} loading="lazy"/>
               <div className="cinema-vehicle-sheen" />
               <span>YOUR NEXT JOURNEY <ArrowRight size={15}/></span>
             </div>
+            {photographs.length>1&&<button className="cinema-angle" type="button" onClick={()=>setAngle(n=>(n+1)%photographs.length)} aria-label="View another angle of this vehicle"><RotateCw size={15}/> View angle {angle+1}/{photographs.length}</button>}
             <div className="cinema-stage-track"><span /></div>
             <span className="cinema-stage-counter">0{activeIndex + 1} <i /> {vehicles.length.toString().padStart(2, '0')}</span>
           </div>
