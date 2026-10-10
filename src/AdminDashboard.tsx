@@ -1,6 +1,6 @@
 import { FleetManager } from './FleetManager';
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, LogIn, LogOut, RefreshCw, Search, Users } from 'lucide-react';
+import { ArrowLeft, LogIn, LogOut, RefreshCw, Search, Users, Plus } from 'lucide-react';
 
 type Enquiry={
   id:string;createdAt:string;updatedAt:string;status:string;mode:string;
@@ -18,6 +18,8 @@ export function AdminDashboard() {
   const [filter,setFilter]=useState('all');
   const [search,setSearch]=useState('');
   const [saving,setSaving]=useState<string|null>(null);
+  const [manualOpen,setManualOpen]=useState(false);
+  const [manualSaving,setManualSaving]=useState(false);
   const [tab,setTab]=useState<'bookings'|'fleet'|'engagement'>('bookings');
   const [engagement,setEngagement]=useState<{total:number;counts:Record<string,number>;sessions:number;recent:Array<{event:string;vehicle:string;source:string;createdAt:string}>}>({total:0,counts:{},sessions:0,recent:[]});
   const load=useCallback(async()=>{
@@ -50,6 +52,18 @@ export function AdminDashboard() {
       setItems(existing=>existing.map(item=>item.id===id?{...item,status}:item));
     }catch(e){setError(e instanceof Error?e.message:'Update failed');}
     finally{setSaving(null);}
+  };
+  const createManual=async(event:React.FormEvent<HTMLFormElement>)=>{
+    event.preventDefault();
+    const data=new FormData(event.currentTarget);
+    setManualSaving(true);setError('');
+    try{
+      const response=await fetch('/api/admin/enquiries',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(data.entries()))});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error||'Unable to save manual lead.');
+      setManualOpen(false);void load();
+    }catch(e){setError(e instanceof Error?e.message:'Save failed');}
+    finally{setManualSaving(false);}
   };
   const visible=items.filter(item=>(filter==='all'||item.status===filter)&&(
     [item.name,item.phone,item.pickup,item.destination,item.vehicle,item.tripType,item.id].some(text=>
@@ -95,7 +109,23 @@ export function AdminDashboard() {
         </div>
       ) : (
       <div className="crm-booking-panel">
-      <div className="crm-heading"><div><span className="crm-eyebrow">Enquiry management</span><h1>Every journey starts here.</h1><p>Local bookings dashboard — update follow-ups without losing the original enquiry.</p></div><button className="crm-refresh" type="button" onClick={()=>void load()} disabled={loading}><RefreshCw size={16}/> Refresh</button></div>
+      <div className="crm-heading"><div><span className="crm-eyebrow">Enquiry management</span><h1>Every journey starts here.</h1><p>Follow-ups from the website and manually logged inbound WhatsApp or calls.</p></div><div className="crm-heading-actions"><button className="fleet-add" type="button" onClick={()=>setManualOpen(x=>!x)}><Plus size={16}/> {manualOpen?'Close form':'Log incoming lead'}</button><button className="crm-refresh" type="button" onClick={()=>void load()} disabled={loading}><RefreshCw size={16}/> Refresh</button></div></div>
+       {manualOpen&&<form className="crm-manual-form" onSubmit={e=>void createManual(e)}>
+         <h2>Log an enquiry received outside the website</h2>
+         <p>Use this when a customer contacts you directly through WhatsApp, phone or email, so the conversation can be followed up in the CRM.</p>
+         <div className="crm-manual-grid">
+           <label>Customer name<input name="name" required minLength={2} placeholder="Name"/></label>
+           <label>Phone number<input name="phone" required inputMode="tel" placeholder="+91..."/></label>
+           <label>Lead source<select name="source"><option value="staff-whatsapp">WhatsApp conversation</option><option value="staff-call">Phone call</option><option value="staff-email">Email</option><option value="staff-other">Other</option></select></label>
+           <label>Email (optional)<input name="email" type="email" placeholder="customer@example.com"/></label>
+           <label>Pickup<input name="pickup" placeholder="Pickup area"/></label>
+           <label>Destination<input name="destination" placeholder="Destination"/></label>
+           <label>Travel date<input name="tripDate" type="date"/></label>
+           <label>Vehicle requested<input name="vehicle" placeholder="Vehicle or class"/></label>
+         </div>
+         <label>Notes<textarea name="notes" rows={3} placeholder="Quoted price, time to call back, special instructions..."/></label>
+         <button className="fleet-save" type="submit" disabled={manualSaving}>{manualSaving?'Saving...':'Save incoming lead'}</button>
+       </form>}
       {error&&<div className="crm-error" role="alert">{error}</div>}
       <div className="crm-metrics">{[['Total enquiries',items.length],...statuses.map(s=>[s,items.filter(i=>i.status===s).length])].map(([label,value])=><article key={label}><span>{label}</span><strong>{value}</strong></article>)}</div>
       <div className="crm-toolbar"><label><Search size={16}/><input aria-label="Search enquiries" placeholder="Search customer, phone, route or vehicle..." value={search} onChange={e=>setSearch(e.target.value)} /></label><select aria-label="Filter by status" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">All statuses</option>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
