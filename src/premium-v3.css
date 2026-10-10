@@ -590,3 +590,70 @@ footer>div>span{color:var(--yt-bronze)}
   .reveal-3d,.reveal-3d *{opacity:1!important;transform:none!important;transition:none!important}
   .hero-poster{animation:none}
 }
+
+
+/* v3.1 vehicle photography cleanup — no grey plate bars */
+.plate-veil{display:none!important}
+.story-stack-card:before,.story-feature-image:before,.driveby-car:before{content:none!important}
+
+.hero-car-frame:after,
+.fleet-visual:after,
+.reel-card:after,
+.selected-vehicle-image:after{
+  content:'';
+  position:absolute;
+  z-index:2;
+  left:0;
+  right:0;
+  bottom:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(15,35,29,0),rgba(15,35,29,.12) 28%,rgba(15,35,29,.72) 100%);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 42%);
+  mask-image:linear-gradient(to bottom,transparent 0%,black 42%);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+.hero-car-frame:after{height:34%;inset:auto 12px 12px 12px;border-radius:0 0 22px 22px}
+.fleet-visual:after{height:34%}
+.reel-card:after{height:33%}
+.selected-vehicle-image:after{height:42%}
+
+.hero-car-label,.poster-corner,.fleet-number,.fleet-type,.reel-card-copy{z-index:4}
+
+.hero-car-image{
+  transform:scale(1.12) translateY(-2%);
+  object-position:center 43%;
+}
+.fleet-visual img{
+  transform:scale(1.10) translateY(-2%);
+  object-position:center 45%;
+}
+.fleet-card:hover .fleet-visual img{
+  transform:scale(1.15) translateY(-2%);
+}
+.fleet-card:nth-child(2) .fleet-visual img{
+  transform:scale(1.34) translateY(1%);
+  object-position:center 54%;
+}
+.fleet-card:nth-child(2):hover .fleet-visual img{
+  transform:scale(1.40) translateY(1%);
+}
+.fleet-card:nth-child(3) .fleet-visual img{
+  transform:scale(1.08) translateY(-1%);
+  object-position:center 49%;
+}
+.fleet-card:nth-child(3):hover .fleet-visual img{
+  transform:scale(1.13) translateY(-1%);
+}
+.reel-card img{transform:scale(1.08)}
+.reel-card:nth-child(6n+2) img{transform:scale(1.24)}
+.reel-card:hover img{transform:scale(1.13)}
+.reel-card:nth-child(6n+2):hover img{transform:scale(1.29)}
+
+.photo-credit{display:none!important}
+
+@media(max-width:760px){
+  .hero-car-image{transform:scale(1.09) translateY(-1%)}
+  .fleet-visual:after{height:38%}
+  .fleet-card:nth-child(2) .fleet-visual img{transform:scale(1.28) translateY(1%)}
+}
