@@ -159,6 +159,20 @@ const server = http.createServer(async (req,res)=>{
           return reply(res,200,writeCatalog(next));
         } catch(e) {return reply(res,400,{error:e.message});}
       }
+      if(url.pathname==='/api/admin/enquiries' && req.method==='POST') {
+        const input=await readBody(req),name=trim(input.name,100),phone=trim(input.phone,24);
+        if(name.length<2||!/^\\+?[0-9 ()-]{8,24}$/.test(phone))return reply(res,400,{error:'Enter valid name and phone number.'});
+        const now=new Date().toISOString();
+        const record={
+          id:randomUUID(),createdAt:now,updatedAt:now,status:'new',mode:'callback',name,phone,
+          email:trim(input.email,180),source:trim(input.source,80)||'staff-manual',
+          pickup:trim(input.pickup,200),destination:trim(input.destination,200),
+          tripDate:trim(input.tripDate,10),tripType:trim(input.tripType,70),notes:trim(input.notes,1000),
+          vehicle:trim(input.vehicle,100),passengers:1,days:1,distanceKm:0,estimatedMin:0,estimatedMax:0
+        };
+        writeEvent({type:'created',value:record});
+        return reply(res,201,{id:record.id,status:'new'});
+      }
       if(url.pathname==='/api/admin/enquiries' && req.method==='GET') return reply(res,200,{items:records()});
       if(url.pathname==='/api/admin/summary' && req.method==='GET') {
         const items=records();
