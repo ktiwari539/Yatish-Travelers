@@ -16,6 +16,7 @@ type FleetVehicle = {
   capacity?:number;
   rateMin?:number;
   rateMax?:number;
+  gallery?:string[];
 };
 
 const commonsImage = (fileName: string) =>
@@ -31,6 +32,7 @@ const fleet: FleetVehicle[] = [
     imageSource: 'https://commons.wikimedia.org/wiki/File:MIAS_2025_-_All-new_Suzuki_Dzire_Hybrid_02.jpg',
     imageCredit: 'Ethan Llamas',
     license: 'CC BY-SA 4.0',
+    gallery:[commonsImage('MIAS%202025%20-%20All-new%20Suzuki%20Dzire%20Hybrid%2004.jpg')],
   },
   {
     name: 'Maruti Ertiga',
@@ -41,6 +43,7 @@ const fleet: FleetVehicle[] = [
     imageSource: 'https://commons.wikimedia.org/wiki/File:Suzuki_Ertiga_GX_1.5_-_Indonesia_International_Motor_Show_2018_-_Front_view_-_April_26_2018.jpg',
     imageCredit: 'Wilzz99',
     license: 'CC BY-SA 4.0',
+    gallery:[commonsImage('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Rear%20view%20-%20April%2026%202018.jpg')],
   },
   {
     name: 'Toyota Innova',
@@ -51,6 +54,7 @@ const fleet: FleetVehicle[] = [
     imageSource: 'https://commons.wikimedia.org/wiki/File:Toyota_Innova_Crysta_2.4_Z_side.jpg',
     imageCredit: 'Premnath Kudva',
     license: 'CC BY-SA 4.0',
+    gallery:[commonsImage('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg')],
   },
   {
     name: 'Mahindra TUV',
