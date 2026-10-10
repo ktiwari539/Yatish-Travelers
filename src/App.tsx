@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CinematicShowroom } from './CinematicShowroom';
 import { AdminDashboard } from './AdminDashboard';
+import { TravelEditorial } from './TravelEditorial';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
@@ -12,6 +13,9 @@ type FleetVehicle = {
   imageSource: string;
   imageCredit: string;
   license: string;
+  capacity?:number;
+  rateMin?:number;
+  rateMax?:number;
 };
 
 const commonsImage = (fileName: string) =>
@@ -80,6 +84,34 @@ const fleet: FleetVehicle[] = [
   },
 ];
 
+
+const contactWhatsapp='https://wa.me/919340098177';
+const contactEmail='mailto:ktiwari539@gmail.com';
+const getVisitorSession=()=>{
+  try {
+    let value=sessionStorage.getItem('mt-visitor-session');
+    if (!value) {
+      value=crypto.randomUUID();
+      sessionStorage.setItem('mt-visitor-session',value);
+    }
+    return value;
+  } catch { return ''; }
+};
+const logInteraction=(event:string,source:string,vehicle='')=>{
+  if (typeof window==='undefined')return;
+  const body=JSON.stringify({event,source,vehicle,sessionId:getVisitorSession()});
+  try {
+    void fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});
+  }catch{/* analytics must never block booking */}
+};
+const WhatsappLink=({label='WhatsApp',source,className='whatsapp-link'}:{label?:string;source:string;className?:string})=>(
+  <a href={contactWhatsapp+'?text='+encodeURIComponent('Hello Mateshwari Travellers, I would like to enquire about a trip.')}
+     target="_blank" rel="noopener noreferrer" className={className}
+     onClick={()=>logInteraction('whatsapp_click',source)} aria-label="Chat with Mateshwari Travellers on WhatsApp">
+    <MessageCircle size={18}/>{label}
+  </a>
+);
+
 const indicativePricing = {
   minRate: 15,
   maxRate: 25,
@@ -145,6 +177,7 @@ function StoriesPage() {
         ))}
       </section>
 
+      <TravelEditorial stories />
       <section className="story-submit" id="share-story">
         <div>
           <span className="kicker">Share Your Journey</span>
@@ -176,7 +209,7 @@ function StoriesPage() {
 
       <footer className="stories-footer">
         <div><strong>Mateshwari Travellers</strong><p>Real journeys. Verified stories. Premium travel.</p></div>
-        <div><a href="/">Home</a><a href="/#fleet">Fleet</a><a href="/#contact">Contact</a></div>
+        <div><a href="/">Home</a><a href="/#fleet">Fleet</a><WhatsappLink label="WhatsApp" source="stories-footer"/><a href={contactEmail}>Email</a></div>
       </footer>
 
     </main>
@@ -199,9 +232,23 @@ export function App() {
   const [quoteId, setQuoteId] = useState('');
   const [copied, setCopied] = useState(false);
   const [heroIndex, setHeroIndex] = useState(2);
+  const [liveFleet,setLiveFleet]=useState<FleetVehicle[]>(fleet);
+  const [quoteSource,setQuoteSource]=useState('website');
+  useEffect(()=>{
+    let active=true;
+    fetch('/api/catalog').then(res=>res.ok?res.json():Promise.reject()).then(data=>{
+      if(!active || !Array.isArray(data.vehicles))return;
+      const next=data.vehicles.map((car:FleetVehicle)=>{
+        const initial=fleet.find(v=>v.name===car.name && v.image===car.image);
+        return {...car,imageSource:initial?.imageSource||car.image,imageCredit:initial?.imageCredit||'Fleet administration',license:initial?.license||'Check image rights'};
+      });
+      setLiveFleet(next);
+    }).catch(()=>{/* offline frontend keeps preview vehicles */});
+    return ()=>{active=false;};
+  },[]);
 
-  const selected = fleet.find((item) => item.name === vehicle) ?? fleet[1];
-  const heroVehicle = fleet[heroIndex];
+  const selected = liveFleet.find(item=>item.name===vehicle) ?? liveFleet[0] ?? fleet[1];
+  const heroVehicle = liveFleet[heroIndex] ?? liveFleet[0] ?? fleet[2];
 
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>('.reveal-3d'));
@@ -221,8 +268,8 @@ export function App() {
 
   const estimate = useMemo(() => {
     const chargeableKm = Math.max(km, days * 250);
-    const minBase = chargeableKm * indicativePricing.minRate;
-    const maxBase = chargeableKm * indicativePricing.maxRate;
+    const minBase = chargeableKm * (selected.rateMin ?? indicativePricing.minRate);
+    const maxBase = chargeableKm * (selected.rateMax ?? indicativePricing.maxRate);
     const driver = nightStay ? 500 : 0;
     return {
       chargeableKm,
@@ -232,16 +279,19 @@ export function App() {
       minTotal: minBase + driver,
       maxTotal: maxBase + driver,
     };
-  }, [days, km, nightStay]);
+  }, [days, km, nightStay, selected.name, selected.rateMin, selected.rateMax]);
 
   const filteredFleet = useMemo(() => {
-    const filtered = fleet.filter((car) => (
-      fleetFilter === 'All' || vehicleProfiles[car.name].useCases.includes(fleetFilter)
+    const filtered = liveFleet.filter((car)=>(
+      fleetFilter === 'All' || (vehicleProfiles[car.name]?.useCases||[
+        car.category.toLowerCase().includes('premium')?'Premium':'Family',
+        car.capacity && car.capacity>=7?'Group':'Business'
+      ]).includes(fleetFilter)
     ));
 
     return [...filtered].sort((a, b) => {
-      const aProfile = vehicleProfiles[a.name];
-      const bProfile = vehicleProfiles[b.name];
+      const aProfile=vehicleProfiles[a.name]??{capacity:a.capacity||4,useCases:['Family'],priority:50};
+      const bProfile=vehicleProfiles[b.name]??{capacity:b.capacity||4,useCases:['Family'],priority:50};
 
       if (fleetSort === 'seats-desc') return bProfile.capacity - aProfile.capacity;
       if (fleetSort === 'compact') return aProfile.capacity - bProfile.capacity;
@@ -257,10 +307,12 @@ export function App() {
       const bGap = bFits === 0 ? bProfile.capacity - passengers : 99;
       return aFits - bFits || aGap - bGap || aProfile.priority - bProfile.priority;
     });
-  }, [fleetFilter, fleetSort, passengers]);
+  }, [fleetFilter, fleetSort, passengers, liveFleet]);
 
-  const openQuote = (mode: QuoteMode = 'quote') => {
+  const openQuote = (mode: QuoteMode = 'quote',source='website') => {
     setQuoteMode(mode);
+    setQuoteSource(source);
+    logInteraction(mode+'_open',source,selected.name);
     setQuoteSubmitted(false);
     setQuoteError('');
     setQuoteId('');
@@ -323,12 +375,13 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <p>Local rides, outstation trips, airport transfers and multi-day travel with transparent pricing and trusted drivers.</p>
           <div className="hero-actions">
             <a className="primary" href="#fare"><Calculator size={18} /> Calculate Fare</a>
-            <a className="secondary" href="#fleet">Explore Fleet</a>
+            <WhatsappLink source="hero" label="Chat on WhatsApp" className="secondary hero-whatsapp"/>
+            <a className="hero-fleet-link" href="#showroom">Explore Fleet <ArrowRight size={15}/></a>
           </div>
           <div className="trust-row">
             <span><Check size={16}/> Transparent per-km pricing</span>
             <span><ShieldCheck size={16}/> Verified drivers</span>
-            <span><MessageCircle size={16}/> Quick WhatsApp booking</span>
+            <span><MessageCircle size={16}/> Direct WhatsApp enquiries</span>
           </div>
         </div>
 
@@ -356,7 +409,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           </div>
           <div className="motion-pill"><span/> Every journey, beautifully considered.</div>
           <div className="hero-vehicle-picker" role="group" aria-label="Featured vehicle">
-            {fleet.slice(0, 4).map((car, index) => (
+            {liveFleet.slice(0, 4).map((car, index) => (
               <button type="button" key={car.name} aria-pressed={heroIndex === index}
                 className={heroIndex === index ? 'hero-vehicle-option is-selected' : 'hero-vehicle-option'}
                 onClick={() => setHeroIndex(index)}>
@@ -437,10 +490,10 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
               <div className="fleet-meta">
                 <span>{car.tag}</span>
                 <h3>{car.name}</h3>
-                <div className="rate"><strong>₹15–₹25</strong><small>/ km indicative range</small></div>
+                <div className="rate"><strong>₹{car.rateMin??15}–₹{car.rateMax??25}</strong><small>/ km indicative range</small></div>
                 <div className="fleet-bottom">
                   <span>{car.seats} seats · {car.category}</span>
-                  <button onClick={() => { setVehicle(car.name); document.getElementById('fare')?.scrollIntoView({behavior:'smooth'}); }}>
+                  <button onClick={() => { setVehicle(car.name);logInteraction('vehicle_explore','fleet',car.name);document.getElementById('fare')?.scrollIntoView({behavior:'smooth'}); }}>
                     Estimate <ArrowRight size={15}/>
                   </button>
                 </div>
@@ -487,9 +540,9 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
         <div className="fleet-reel-mask">
           <div className="fleet-reel-track">
-            {[...fleet, ...fleet].map((car, index) => (
-              <article className="reel-card" key={`${car.name}-${index}`} aria-hidden={index >= fleet.length}>
-                <img src={car.image} alt={index < fleet.length ? car.name : ''} loading="lazy" />
+            {[...liveFleet,...liveFleet].map((car, index) => (
+              <article className="reel-card" key={`${car.name}-${index}`} aria-hidden={index >= liveFleet.length}>
+                <img src={car.image} alt={index < liveFleet.length ? car.name : ''} loading="lazy" />
                 <div className="reel-card-shade" />
                 <div className="reel-card-copy">
                   <small>{car.category}</small>
@@ -507,7 +560,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </section>
 
-      <CinematicShowroom vehicles={fleet} onExplore={(name) => { setVehicle(name); openQuote('quote'); }} />
+      <CinematicShowroom vehicles={liveFleet.length?liveFleet:fleet} onExplore={(name) => { setVehicle(name); openQuote('quote','showroom'); }} />
 
 
       <section className="corporate-section reveal-3d" id="corporate">
@@ -562,7 +615,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="fare-copy">
           <span className="kicker">Trip Estimator</span>
           <h2>Know the approximate cost before you call.</h2>
-          <p>Use the estimator for an indicative ₹15–₹25/km range. Final pricing can vary by vehicle, route, trip duration and travel requirements. Driver allowance is added only when a night stay is required. Toll/FASTag, parking, state permit and applicable GST are charged separately as applicable.</p>
+          <p>Indicative pricing follows the selected vehicle. Final pricing can vary by route, trip duration and travel requirements. Driver allowance is added only when a night stay is required. Toll/FASTag, parking, state permit and applicable GST are charged separately as applicable.</p>
           <div className="selected-vehicle">
             <div className="selected-vehicle-image"><img src={selected.image} alt="" /></div>
             <div><span>Selected vehicle</span><strong>{selected.name}</strong><small>{selected.seats} · {selected.category}</small></div>
@@ -572,7 +625,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="calculator">
           <label>Vehicle
             <select value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
-              {fleet.map((car) => <option key={car.name}>{car.name}</option>)}
+              {liveFleet.map((car) => <option key={car.name}>{car.name}</option>)}
             </select>
           </label>
           <div className="field-row">
@@ -588,15 +641,16 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             <div><span>Parking / state permit</span><strong>Actuals extra</strong></div>
             <div className="total"><span>Indicative trip range</span><strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong></div>
           </div>
-          <p className="note">This estimate currently uses a 250 km/day minimum. The ₹15–₹25/km band is indicative only; your final quote is confirmed before booking. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals.</p>
+          <p className="note">This estimate currently uses a 250 km/day minimum. The selected vehicle rate is indicative only; your final quote is confirmed before booking. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals.</p>
           <div className="calc-actions">
-            <button className="primary" type="button" onClick={() => openQuote('quote')}><MessageCircle size={18}/> Request Final Quote</button>
-            <button className="secondary" type="button" onClick={() => openQuote('callback')}><Phone size={17}/> Request Callback</button>
+            <button className="primary" type="button" onClick={() => openQuote('quote','calculator')}><MessageCircle size={18}/> Request Final Quote</button>
+            <button className="secondary" type="button" onClick={() => openQuote('callback','calculator')}><Phone size={17}/> Request Callback</button>
           </div>
         </div>
       </section>
 
 
+      <TravelEditorial />
       <section className="stories-teaser reveal-3d" id="stories">
         <div className="stories-teaser-copy">
           <span className="kicker">Stories from the Road</span>
@@ -608,7 +662,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
 
         <div className="stories-teaser-stack" aria-hidden="true">
-          {fleet.slice(1, 4).map((car, index) => (
+          {liveFleet.slice(1, 4).map((car, index) => (
             <article className={`story-stack-card story-stack-${index + 1}`} key={car.name}>
               <img src={car.image} alt="" />
               <div>
@@ -623,21 +677,22 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
       <footer id="contact">
         <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
-        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><button className="footer-action" type="button" onClick={() => openQuote('callback')}>Request a callback</button></div>
+        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
         <div><span>Travel</span><p>Local city rides · Outstation trips · Airport transfers · Family journeys · Corporate mobility</p></div>
         <div className="image-credits">
           <span>Image credits</span>
           <p>
-            {fleet.map((car, index) => (
+            {liveFleet.map((car, index) => (
               <span key={car.name}>
                 <a href={car.imageSource} target="_blank" rel="noreferrer">{car.name}: {car.imageCredit} ({car.license})</a>
-                {index < fleet.length - 1 ? ' · ' : ''}
+                {index < liveFleet.length - 1 ? ' · ' : ''}
               </span>
             ))}
           </p>
         </div>
       </footer>
 
+      <div className="floating-contact"><WhatsappLink source="floating" label="WhatsApp us"/></div>
       {quoteOpen && (
         <div className="quote-modal" role="dialog" aria-modal="true" aria-labelledby="quote-title" onMouseDown={(event) => {
           if (event.target === event.currentTarget) setQuoteOpen(false);
@@ -672,6 +727,9 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         mode: quoteMode,
+                        sessionId: getVisitorSession(),
+                        source:quoteSource,
+                        email:data.get('email'),
                         name: data.get('name'),
                         phone: data.get('phone'),
                         pickup: data.get('pickup') || '',
@@ -701,6 +759,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                     <label>Name<input name="name" required placeholder="Your name" /></label>
                     <label>Phone<input name="phone" required inputMode="tel" placeholder="+91..." /></label>
                   </div>
+                  <label>Email (optional)<input name="email" type="email" placeholder="you@example.com"/></label>
 
                   {quoteMode !== 'callback' && (
                     <>
@@ -730,7 +789,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                     <button className="primary" type="submit" disabled={quoteSubmitting}>{quoteSubmitting ? 'Saving request...' : quoteMode === 'callback' ? 'Request a Callback' : 'Send Trip Enquiry'} <ArrowRight size={16}/></button>
                     <button className="secondary" type="button" onClick={copyQuoteSummary}>{copied ? <CheckCircle2 size={16}/> : <Copy size={16}/>} {copied ? 'Copied' : 'Copy Trip Summary'}</button>
                   </div>
-                  <small className="quote-disclaimer">Requests are saved to your local CRM during testing. No external notifications are sent.</small>
+                  <div className="quote-contact-options"><WhatsappLink source="quote-dialog" label="Or message us on WhatsApp"/><a href={contactEmail}>Email us directly</a></div>
+                  <small className="quote-disclaimer">Requests are saved to your local CRM during testing. No external notifications are sent. WhatsApp opens your messaging app separately.</small>
                 </form>
               </>
             ) : (
