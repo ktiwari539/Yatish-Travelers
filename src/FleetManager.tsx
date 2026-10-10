@@ -14,6 +14,7 @@ export function FleetManager({token}:Props) {
  const [error,setError]=useState('');
  const [success,setSuccess]=useState('');
  const [loaded,setLoaded]=useState(false);
+ const [uploading,setUploading]=useState<number|null>(null);
  const load=useCallback(async()=>{
    setError('');
    try {
@@ -27,6 +28,27 @@ export function FleetManager({token}:Props) {
  const change=(index:number,patch:Partial<CatalogVehicle>)=>{
   setVehicles(current=>current.map((v,i)=>i===index?{...v,...patch}:v));
   setSuccess('');
+ };
+ const uploadPhoto=async(index:number,file:File|undefined)=>{
+   if(!file)return;
+   setError('');setSuccess('');
+   if(file.size>3_000_000||!['image/jpeg','image/png','image/webp'].includes(file.type)){
+     setError('Choose a JPG, PNG or WebP photo smaller than 3 MB.');return;
+   }
+   setUploading(index);
+   try{
+     const encoded=await new Promise<string>((resolve,reject)=>{
+       const reader=new FileReader();
+       reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+       reader.onerror=()=>reject(new Error('Could not read image file'));
+       reader.readAsDataURL(file);
+     });
+     const response=await fetch('/api/admin/images',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({mime:file.type,data:encoded})});
+     const body=await response.json();
+     if(!response.ok)throw new Error(body.error||'Image upload failed');
+     change(index,{image:body.url});setSuccess('Image uploaded locally. Press Save Changes to publish the new vehicle photo in the local preview.');
+   }catch(e){setError(e instanceof Error?e.message:'Upload failed');}
+   finally{setUploading(null);}
  };
  const save=async()=>{
    setError('');setSuccess('');setSaving(true);
@@ -60,7 +82,11 @@ export function FleetManager({token}:Props) {
           <label>Category<input value={v.category} onChange={e=>change(index,{category:e.target.value})}/></label>
           <label>Short description<input value={v.tag} onChange={e=>change(index,{tag:e.target.value})}/></label>
         </div>
-        <label>Photo (HTTPS URL)<input type="url" value={v.image} onChange={e=>change(index,{image:e.target.value})} placeholder="https://.../vehicle.jpg"/></label>
+        <label>Photo URL or uploaded local path<input type="text" value={v.image} onChange={e=>change(index,{image:e.target.value})} placeholder="https://.../vehicle.jpg"/></label>
+        <label className="fleet-photo-upload">Upload vehicle photo (JPG/PNG/WebP up to 3 MB)
+          <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{void uploadPhoto(index,e.target.files?.[0]);e.target.value='';}}/>
+          {uploading===index&&<span>Uploading image locally...</span>}
+        </label>
         <div className="fleet-editor-row">
           <label>Minimum ₹ / km<input type="number" min={1} step=".5" value={v.rateMin} onChange={e=>change(index,{rateMin:Number(e.target.value)})}/></label>
           <label>Maximum ₹ / km<input type="number" min={1} step=".5" value={v.rateMax} onChange={e=>change(index,{rateMax:Number(e.target.value)})}/></label>
@@ -75,6 +101,6 @@ export function FleetManager({token}:Props) {
      <button type="button" className="fleet-add" onClick={()=>setVehicles(current=>[...current,blank()])}><Plus size={16}/> Add another vehicle</button>
      <button type="button" className="fleet-save" disabled={saving} onClick={()=>void save()}><Save size={16}/> {saving?'Saving...':'Save fleet & pricing'}</button>
    </div>
-   <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Image URLs should be HTTPS and authorized for commercial reuse; external images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
+   <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored only on your Mac) or linked using HTTPS URLs. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
  </section>;
 }
