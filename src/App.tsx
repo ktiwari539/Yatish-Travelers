@@ -435,6 +435,11 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div><small>04</small><strong>Clear Quotations</strong><span>Know the major charges before travel</span></div>
       </section>
 
+      <div className="atelier-intro" aria-hidden="true">
+        <span>THE FLEET EXPERIENCE</span>
+        <span>SCROLL DOWN / STEP INTO THE STUDIO</span>
+      </div>
+      <CinematicShowroom vehicles={liveFleet.length?liveFleet:fleet} onExplore={(name) => { setVehicle(name); openQuote('quote','showroom'); }} />
       <section className="section reveal-3d" id="fleet">
         <div className="section-heading">
           <div><span className="kicker">Our Fleet</span><h2>Choose your ride.</h2></div>
@@ -567,7 +572,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </section>
 
-      <CinematicShowroom vehicles={liveFleet.length?liveFleet:fleet} onExplore={(name) => { setVehicle(name); openQuote('quote','showroom'); }} />
+
 
 
       <section className="corporate-section reveal-3d" id="corporate">
