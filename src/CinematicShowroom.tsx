@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Compass, MoveUpRight, RotateCw } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import type { PaintTone, StudioMood } from './Real3DVehicle';
+import { ArrowRight, ChevronLeft, ChevronRight, Compass, MoveUpRight, RotateCw, Sun, Moon, MousePointer2 } from 'lucide-react';
+
+const Real3DVehicle=lazy(()=>import('./Real3DVehicle').then(m=>({default:m.Real3DVehicle})));
+const tones: {id:PaintTone;name:string;color:string}[]=[{id:'champagne',name:'Champagne',color:'#b69b74'},{id:'pearl',name:'Pearl',color:'#e6e3db'},{id:'obsidian',name:'Obsidian',color:'#1a2726'},{id:'forest',name:'Forest',color:'#294e3f'}];
 
 export type ShowroomVehicle = {
   name: string;
@@ -22,8 +26,13 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
   const [progress, setProgress] = useState(0);
   const [soundless, setSoundless] = useState(true);
   const [angle,setAngle]=useState(0);
+  const [paint,setPaint]=useState<PaintTone>('champagne');
+  const [mood,setMood]=useState<StudioMood>('daylight');
+  const [webglUnavailable,setWebglUnavailable]=useState(false);
+  const [reducedMotion,setReducedMotion]=useState(false);
   const active = vehicles[activeIndex] ?? vehicles[0];
   const photographs = active ? [active.image,...(active.gallery||[])] : [];
+  useEffect(()=>{setReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);},[]);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -79,12 +88,26 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
         <div className="cinema-grid">
           <div className="cinema-copy">
             <div className="cinema-kicker"><span>0{activeIndex + 1} / 0{vehicles.length}</span><span>THE ART OF ARRIVING</span></div>
-            <h2 key={active.name}>The journey looks <em>better from here.</em></h2>
-            <p>Family escapes. Executive arrivals. Group adventures. Explore the vehicle that fits your journey, without losing the feeling of the road.</p>
+            <h2>Choose the journey. <em>Feel the difference.</em></h2>
+            <p>Enter our interactive design studio: rotate a real 3D vehicle concept, change its finish, switch the lighting and explore different body styles. Then pick the actual vehicle for your journey.</p>
             <div className="cinema-selected-details" key={active.name + '-details'}>
               <span>NOW SHOWING</span>
               <h3>{active.name}</h3>
               <p>{active.tag} <b>·</b> {active.seats} seats <b>·</b> {active.category}</p>
+              <small className="cinema-disclaimer">3D model is an illustrative body style, not an exact render of this vehicle.</small>
+            </div>
+            <div className="studio-controls" aria-label="3D studio controls">
+              <div className="studio-paints" role="group" aria-label="Change model color">
+                <span>01 / PAINT FINISH</span>
+                <div>{tones.map(t=><button key={t.id} type="button" onClick={()=>setPaint(t.id)}
+                  className={paint===t.id?'selected':''} aria-pressed={paint===t.id}
+                  aria-label={t.name+' paint'} title={t.name} style={{'--paint':t.color} as React.CSSProperties}/>)}</div>
+              </div>
+              <div className="studio-moods" role="group" aria-label="Change studio lighting">
+                <span>02 / LIGHTING</span>
+                <button type="button" className={mood==='daylight'?'active':''} aria-pressed={mood==='daylight'} onClick={()=>setMood('daylight')}><Sun size={16}/> Daylight</button>
+                <button type="button" className={mood==='golden-hour'?'active':''} aria-pressed={mood==='golden-hour'} onClick={()=>setMood('golden-hour')}><Moon size={16}/> Sunset</button>
+              </div>
             </div>
             <div className="cinema-cta-row">
               <button type="button" className="cinema-explore" onClick={() => onExplore(active.name)}>
@@ -118,12 +141,23 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
             <div className="cinema-ghost cinema-ghost-front" aria-hidden="true">
               <img src={vehicles[(activeIndex + 1) % vehicles.length].image} alt="" />
             </div>
-            <div className="cinema-vehicle" key={active.name+'-'+angle}>
-              <img src={photographs[angle%photographs.length]||active.image} alt={active.name + ' / angle '+(angle+1)} loading="lazy"/>
-              <div className="cinema-vehicle-sheen" />
-              <span>YOUR NEXT JOURNEY <ArrowRight size={15}/></span>
+            <div className="cinema-webgl-stage">
+              {!reducedMotion && !webglUnavailable ? (
+                <Suspense fallback={<div className="studio-loading">LOADING LIVE 3D EXPERIENCE</div>}>
+                  <Real3DVehicle category={active.category} paint={paint} mood={mood} progress={progress}
+                    onUnavailable={()=>setWebglUnavailable(true)}/>
+                </Suspense>
+              ) : <img className="studio-static-fallback" src={active.image} alt={active.name} loading="lazy"/>}
+              <div className="studio-drag-hint"><MousePointer2 size={14}/>{webglUnavailable?'PHOTO PREVIEW':reducedMotion?'REDUCED MOTION MODE':'DRAG THE VEHICLE TO ROTATE'}</div>
             </div>
-            {photographs.length>1&&<button className="cinema-angle" type="button" onClick={()=>setAngle(n=>(n+1)%photographs.length)} aria-label="View another angle of this vehicle"><RotateCw size={15}/> View angle {angle+1}/{photographs.length}</button>}
+            <div className="cinema-photo-angles">
+              <span>REAL VEHICLE REFERENCE</span>
+              <button type="button" className="cinema-angle-photo"
+                onClick={()=>setAngle(n=>(n+1)%photographs.length)}
+                aria-label="Change reference vehicle photo"><img src={photographs[angle%photographs.length]||active.image} alt={active.name+' / reference angle '+(angle+1)} loading="lazy"/>
+                <span><RotateCw size={13}/> Reference {angle+1}/{photographs.length}</span>
+              </button>
+            </div>
             <div className="cinema-stage-track"><span /></div>
             <span className="cinema-stage-counter">0{activeIndex + 1} <i /> {vehicles.length.toString().padStart(2, '0')}</span>
           </div>
