@@ -63,7 +63,7 @@ const fleet: FleetVehicle[] = [
     imageSource: 'https://commons.wikimedia.org/wiki/File:Toyota_Innova_Crysta_2.4_Z_side.jpg',
     imageCredit: 'Premnath Kudva',
     license: 'CC BY-SA 4.0',
-    gallery:[commonsImage('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg')],
+    gallery:[commonsImage('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg'),commonsImage('Toyota%20Innova%20Crysta%202.4%20Z%20front%20right.jpg')],
   },
   {
     name: 'Mahindra TUV',
