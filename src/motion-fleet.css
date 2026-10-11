@@ -344,3 +344,32 @@ footer a:hover{color:#e7c58e}
  .motion-fleet-feature{transform:none!important}
  .motion-fleet-image>img{transition:none!important}
 }
+
+/* Responsive navigation works independently from the fixed contact bar. */
+.nav-menu-toggle{display:none;border:1px solid #d1d9cb;background:#f6f2e8;color:#1a4934;border-radius:12px;padding:9px;width:43px;height:43px;align-items:center;justify-content:center}
+.nav .mobile-nav-panel{display:none}
+.premium-catalog-card .premium-catalog-visual{isolation:isolate;background:linear-gradient(135deg,#d6dccd,#b8c7b9)}
+.premium-catalog-card .premium-catalog-visual img{object-fit:cover;object-position:center;filter:saturate(.94) contrast(1.04);width:100%;height:100%}
+.premium-catalog-card:hover .premium-catalog-visual img{transform:scale(1.05)}
+.catalog-angle-button{position:absolute;z-index:7;right:16px;bottom:16px;display:flex;gap:6px;align-items:center;padding:9px 12px;border-radius:99px;border:1px solid rgba(255,255,255,.65);background:rgba(250,247,236,.93);color:#204c35;box-shadow:0 9px 25px rgba(21,46,31,.15);font-size:11px;font-weight:850}
+.catalog-angle-button:hover{background:#fff}
+.premium-catalog-fallback{height:100%;display:grid;place-content:center;justify-items:center;gap:7px;color:#335544;font-size:22px;letter-spacing:-.05em}
+.premium-catalog-fallback small{font-size:10px;letter-spacing:.02em}
+.premium-catalog-card .fleet-bottom button{display:flex;align-items:center;gap:5px;border:0;background:none;color:#1c5138;font-weight:900;font-size:11px;white-space:nowrap}
+@media(max-width:1100px){
+ .nav nav{display:none}
+ .nav .nav-cta{display:inline-flex}
+ .nav-menu-toggle{display:flex;margin-left:auto}
+ .nav .mobile-nav-panel{display:grid;position:absolute;z-index:40;right:4vw;top:calc(100% + 8px);width:min(365px,92vw);padding:12px;background:#fffdf8;border:1px solid #e1dfd5;box-shadow:0 24px 70px rgba(11,44,25,.24);border-radius:19px;gap:2px;max-height:78svh;overflow-y:auto}
+ .nav .mobile-nav-panel>a{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;color:#234b36;font-size:12px;border-bottom:1px solid #eeece4;font-weight:760}
+ .nav .mobile-nav-panel>a:hover{background:#f4f3e9;border-radius:9px}
+ .nav .mobile-nav-panel>.mobile-nav-quote{background:#1b5138;color:white;border-radius:11px;margin-top:8px;border:0}
+}
+@media(max-width:760px){
+ .nav-menu-toggle{width:40px;height:40px;padding:7px}
+ .nav .nav-cta{display:none}
+ .nav .mobile-nav-panel{left:4vw;right:4vw;width:auto;top:calc(100% + 6px)}
+ .premium-catalog-card .premium-catalog-visual{height:255px}
+ .catalog-angle-button{bottom:13px;right:12px}
+}
+@media(prefers-reduced-motion:reduce){.premium-catalog-card:hover .premium-catalog-visual img{transform:none!important}}
