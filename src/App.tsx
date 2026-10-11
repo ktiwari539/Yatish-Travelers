@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CinematicShowroom } from './CinematicShowroom';
+import { FleetHeroVisual } from './FleetHeroVisual';
+import { PremiumFleetExperience } from './PremiumFleetExperience';
+import { WhyMateshwari } from './WhyMateshwari';
 
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
@@ -259,7 +261,11 @@ export function App() {
   },[]);
 
   const selected = liveFleet.find(item=>item.name===vehicle) ?? liveFleet[0] ?? fleet[1];
-  const heroVehicle = liveFleet[heroIndex] ?? liveFleet[0] ?? fleet[2];
+  const heroVehicle = liveFleet[Math.min(heroIndex,liveFleet.length-1)] ?? liveFleet[0] ?? fleet[2];
+  const selectFeatured = (name:string)=>{
+    const next=liveFleet.findIndex(item=>item.name===name);
+    if(next>=0){setHeroIndex(next);setVehicle(name);}
+  };
 
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>('.reveal-3d'));
@@ -398,51 +404,11 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           </div>
         </div>
 
-        <div className="car-stage">
-          <div className="road-lines" aria-hidden="true"><span/><span/><span/></div>
-          <div className="hero-car-frame hero-poster luxury-hero-photo"
-            onPointerMove={(event)=>{
-              if(event.pointerType==='touch')return;
-              const rect=event.currentTarget.getBoundingClientRect();
-              event.currentTarget.style.setProperty('--photo-x',String(((event.clientX-rect.left)/rect.width-.5).toFixed(3)));
-              event.currentTarget.style.setProperty('--photo-y',String(((event.clientY-rect.top)/rect.height-.5).toFixed(3)));
-            }}
-            onPointerLeave={(event)=>{event.currentTarget.style.setProperty('--photo-x','0');event.currentTarget.style.setProperty('--photo-y','0');}}>
-            <div className="luxury-hero-photo-layer cinematic-photo-layer">
-              <ScenicImage className="hero-car-image" src={luxuryMedia.hero.src}
-                fallback={luxuryMedia.hero.fallback}
-                alt={luxuryMedia.hero.alt} fetchPriority="high"/>
-            </div>
-            <div className="luxury-hero-photo-wash" aria-hidden="true"/>
-            <div className="luxury-hero-corner"><span className="luxury-light-dot"/> MATESHWARI / SIGNATURE FLEET</div>
-            <div className="luxury-hero-photo-caption cinematic-hero-caption">
-              <div><span>THE BEAUTY OF GOING FURTHER</span><h2>The road is yours.</h2>
-                <p>Considered travel. Memorable places. A calmer way to arrive.</p></div>
-              <span className="luxury-gallery-indicator">TRAVEL / REIMAGINED</span>
-            </div>
-            <div className="hero-selected-vehicle">
-              <span>YOUR SELECTED VEHICLE</span>
-              <strong>{heroVehicle.name}</strong>
-              <small>{heroVehicle.seats} · {heroVehicle.category}</small>
-            </div>
-            <span className="luxury-hero-edition">ILLUSTRATIVE TRAVEL PHOTOGRAPHY</span>
-          </div>
-          <div className="floating-card">
-            <span>Indicative fares</span>
-            <strong>₹{heroVehicle.rateMin ?? 15}–₹{heroVehicle.rateMax ?? 25}/km</strong>
-            <small>Final fare confirmed before booking</small>
-          </div>
-          <div className="motion-pill"><span/> Every journey, beautifully considered.</div>
-          <div className="hero-vehicle-picker" role="group" aria-label="Featured vehicle">
-            {liveFleet.slice(0, 4).map((car, index) => (
-              <button type="button" key={car.name} aria-pressed={heroIndex === index}
-                className={heroIndex === index ? 'hero-vehicle-option is-selected' : 'hero-vehicle-option'}
-                onClick={() => setHeroIndex(index)}>
-                <span>0{index + 1}</span>{car.name}
-              </button>
-            ))}
-          </div>
-          <div className="hero-scroll-cue" aria-hidden="true"><span>Scroll to explore</span><i /></div>
+        <div className="car-stage fleet-hero-slot">
+          <FleetHeroVisual vehicles={liveFleet}
+            activeIndex={Math.min(heroIndex,Math.max(0,liveFleet.length-1))}
+            onChange={index=>{const car=liveFleet[index];if(car)selectFeatured(car.name);}}
+            onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured');}}/>
         </div>
       </section>
 
@@ -453,12 +419,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div><small>04</small><strong>Clear Quotations</strong><span>Know the major charges before travel</span></div>
       </section>
 
-      <LuxuryInterlude compact />
-      <div className="atelier-intro" aria-hidden="true">
-        <span>THE FLEET EXPERIENCE</span>
-        <span>SCROLL DOWN / STEP INTO THE STUDIO</span>
-      </div>
-      <CinematicShowroom vehicles={liveFleet.length?liveFleet:fleet} onExplore={(name) => { setVehicle(name); openQuote('quote','showroom'); }} />
+      <PremiumFleetExperience vehicles={liveFleet} activeName={heroVehicle.name}
+        onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet');}}/>
       <section className="section reveal-3d" id="fleet">
         <div className="section-heading">
           <div><span className="kicker">Our Fleet</span><h2>Choose your ride.</h2></div>
@@ -534,6 +496,45 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </section>
 
+      <WhyMateshwari onQuote={()=>openQuote('quote','why-mateshwari')}/>
+      <section className="fare-section reveal-3d" id="fare">
+        <div className="fare-copy">
+          <span className="kicker">Trip Estimator</span>
+          <h2>Know the approximate cost before you call.</h2>
+          <p>Indicative pricing follows the selected vehicle. Final pricing can vary by route, trip duration and travel requirements. Driver allowance is added only when a night stay is required. Toll/FASTag, parking, state permit and applicable GST are charged separately as applicable.</p>
+          <div className="selected-vehicle">
+            <div className="selected-vehicle-image"><img src={selected.image} alt="" /></div>
+            <div><span>Selected vehicle</span><strong>{selected.name}</strong><small>{selected.seats} · {selected.category}</small></div>
+          </div>
+        </div>
+
+        <div className="calculator">
+          <label>Vehicle
+            <select value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
+              {liveFleet.map((car) => <option key={car.name}>{car.name}</option>)}
+            </select>
+          </label>
+          <div className="field-row">
+            <label>Approx. kilometres<input type="number" min="1" value={km} onChange={(e) => setKm(Number(e.target.value))}/></label>
+            <label>Trip days<input type="number" min="1" value={days} onChange={(e) => setDays(Number(e.target.value))}/></label>
+          </div>
+          <label className="checkline"><input type="checkbox" checked={nightStay} onChange={(e) => setNightStay(e.target.checked)}/> Driver night stay required</label>
+          <div className="breakdown">
+            <div><span>Chargeable distance</span><strong>{estimate.chargeableKm.toLocaleString('en-IN')} km</strong></div>
+            <div><span>Indicative vehicle range</span><strong>₹{estimate.minBase.toLocaleString('en-IN')}–₹{estimate.maxBase.toLocaleString('en-IN')}</strong></div>
+            {nightStay && <div><span>Driver night-stay allowance</span><strong>₹{estimate.driver.toLocaleString('en-IN')}</strong></div>}
+            <div><span>Toll / FASTag</span><strong>Actuals extra</strong></div>
+            <div><span>Parking / state permit</span><strong>Actuals extra</strong></div>
+            <div className="total"><span>Indicative trip range</span><strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong></div>
+          </div>
+          <p className="note">This estimate currently uses a 250 km/day minimum. The selected vehicle rate is indicative only; your final quote is confirmed before booking. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals.</p>
+          <div className="calc-actions">
+            <button className="primary" type="button" onClick={() => openQuote('quote','calculator')}><MessageCircle size={18}/> Request Final Quote</button>
+            <button className="secondary" type="button" onClick={() => openQuote('callback','calculator')}><Phone size={17}/> Request Callback</button>
+          </div>
+        </div>
+      </section>
+
       <section className="section services reveal-3d" id="services">
         <div className="section-heading">
           <div><span className="kicker">Travel Your Way</span><h2>One fleet. Multiple journeys.</h2></div>
@@ -558,6 +559,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
 
+      <LuxuryInterlude compact/>
       <RouteExperience onPlan={(kind)=>{
         const suggestions:Record<string,string[]>={
           mountains:['Mahindra TUV','Mahindra Bolero','Toyota Innova'],
@@ -570,43 +572,6 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         openQuote('quote','journey-studio');
       }}/>
       
-      <section className="fleet-reel-section reveal-3d" id="reels">
-        <div className="fleet-reel-heading">
-          <div>
-            <span className="kicker">Car Reels</span>
-            <h2>Our fleet, always in motion.</h2>
-          </div>
-          <p>
-            A continuous cinematic reel of the vehicles available across our travel categories.
-            A curated moving showcase of sedans, MPVs, SUVs and group-travel vehicles.
-          </p>
-        </div>
-
-        <div className="fleet-reel-mask">
-          <div className="fleet-reel-track">
-            {[...liveFleet,...liveFleet].map((car, index) => (
-              <article className="reel-card" key={`${car.name}-${index}`} aria-hidden={index >= liveFleet.length}>
-                <img src={car.image} alt={index < liveFleet.length ? car.name : ''} loading="lazy" />
-                <div className="reel-card-shade" />
-                <div className="reel-card-copy">
-                  <small>{car.category}</small>
-                  <strong>{car.name}</strong>
-                  <span>{car.seats} seats</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="fleet-reel-footer">
-          <span>Dzire · Ertiga · Innova · TUV · Bolero · Tempo Traveller</span>
-          <a href="#fleet">Explore fleet details <ArrowRight size={15}/></a>
-        </div>
-      </section>
-
-
-
-
       <section className="corporate-section reveal-3d" id="corporate">
         <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
         <div className="corporate-orbit corporate-orbit-two" aria-hidden="true" />
@@ -663,43 +628,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </section>
 
-      <section className="fare-section reveal-3d" id="fare">
-        <div className="fare-copy">
-          <span className="kicker">Trip Estimator</span>
-          <h2>Know the approximate cost before you call.</h2>
-          <p>Indicative pricing follows the selected vehicle. Final pricing can vary by route, trip duration and travel requirements. Driver allowance is added only when a night stay is required. Toll/FASTag, parking, state permit and applicable GST are charged separately as applicable.</p>
-          <div className="selected-vehicle">
-            <div className="selected-vehicle-image"><img src={selected.image} alt="" /></div>
-            <div><span>Selected vehicle</span><strong>{selected.name}</strong><small>{selected.seats} · {selected.category}</small></div>
-          </div>
-        </div>
 
-        <div className="calculator">
-          <label>Vehicle
-            <select value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
-              {liveFleet.map((car) => <option key={car.name}>{car.name}</option>)}
-            </select>
-          </label>
-          <div className="field-row">
-            <label>Approx. kilometres<input type="number" min="1" value={km} onChange={(e) => setKm(Number(e.target.value))}/></label>
-            <label>Trip days<input type="number" min="1" value={days} onChange={(e) => setDays(Number(e.target.value))}/></label>
-          </div>
-          <label className="checkline"><input type="checkbox" checked={nightStay} onChange={(e) => setNightStay(e.target.checked)}/> Driver night stay required</label>
-          <div className="breakdown">
-            <div><span>Chargeable distance</span><strong>{estimate.chargeableKm.toLocaleString('en-IN')} km</strong></div>
-            <div><span>Indicative vehicle range</span><strong>₹{estimate.minBase.toLocaleString('en-IN')}–₹{estimate.maxBase.toLocaleString('en-IN')}</strong></div>
-            {nightStay && <div><span>Driver night-stay allowance</span><strong>₹{estimate.driver.toLocaleString('en-IN')}</strong></div>}
-            <div><span>Toll / FASTag</span><strong>Actuals extra</strong></div>
-            <div><span>Parking / state permit</span><strong>Actuals extra</strong></div>
-            <div className="total"><span>Indicative trip range</span><strong>₹{estimate.minTotal.toLocaleString('en-IN')}–₹{estimate.maxTotal.toLocaleString('en-IN')}</strong></div>
-          </div>
-          <p className="note">This estimate currently uses a 250 km/day minimum. The selected vehicle rate is indicative only; your final quote is confirmed before booking. Driver allowance is added only for night stay. Toll/FASTag, parking and state permit charges are extra at actuals.</p>
-          <div className="calc-actions">
-            <button className="primary" type="button" onClick={() => openQuote('quote','calculator')}><MessageCircle size={18}/> Request Final Quote</button>
-            <button className="secondary" type="button" onClick={() => openQuote('callback','calculator')}><Phone size={17}/> Request Callback</button>
-          </div>
-        </div>
-      </section>
 
 
       <TravelEditorial />
@@ -723,6 +652,16 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </section>
 
+      <section className="conversion-finale" aria-label="Start a journey">
+        <div><span className="kicker">LET THE JOURNEY BEGIN</span>
+          <h2>Where would you like <em>to go?</em></h2>
+          <p>Tell us the route, date and who is travelling. We'll help work out a suitable vehicle and final quotation.</p></div>
+        <div className="conversion-finale-actions">
+          <button className="primary" type="button" onClick={()=>openQuote('quote','final-cta')}>Request a quotation <ArrowRight size={18}/></button>
+          <WhatsappLink source="final-cta" label="Chat on WhatsApp" className="secondary"/>
+          <a href="tel:+919340098177"><Phone size={17}/> Call us</a>
+        </div>
+      </section>
       <footer id="contact">
         <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
         <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
@@ -746,6 +685,11 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
       </footer>
 
+      <div className="mobile-booking-bar" role="navigation" aria-label="Quick contact">
+        <a href="https://wa.me/919340098177" target="_blank" rel="noopener noreferrer" onClick={()=>logInteraction('whatsapp_click','mobile-sticky')}><MessageCircle size={17}/> WhatsApp</a>
+        <a href="tel:+919340098177"><Phone size={17}/> Call</a>
+        <button type="button" onClick={()=>openQuote('quote','mobile-sticky')}>Get Quote <ArrowRight size={17}/></button>
+      </div>
       <div className="floating-contact">
         <a className="floating-email" href={contactEmail+'?subject='+encodeURIComponent('Travel enquiry — Mateshwari Travellers')} onClick={()=>logInteraction('email_click','floating')} aria-label="Email Mateshwari Travellers"><Mail size={18}/><span>Email</span></a>
         <WhatsappLink source="floating" label="WhatsApp us"/>
