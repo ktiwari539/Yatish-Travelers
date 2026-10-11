@@ -7,6 +7,7 @@ import './premium-v3.css';
 import './cinematic.css';
 import './crm.css';
 import './revision.css';
+import './webgl-premium.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
