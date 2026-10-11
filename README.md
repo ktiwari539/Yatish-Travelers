@@ -33,8 +33,24 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Phase 1 + 2: the premium moving fleet homepage (current build)
+
+The hero now features **a real fleet-model photo carousel** with an emphasized central vehicle and smaller adjacent previews. Change vehicles using the arrow controls or model dots. Desktop rotation is automatic until someone interacts; on mobile, manual selection avoids distracting motion.
+
+Directly below the hero, **Fleet in Motion** contains:
+- a large focal gallery synced with the hero's vehicle, current model label, seats and **per-car prices from CRM**;
+- previous/next cards, clickable model selector and available alternate-angle buttons;
+- **two continuous, seamless rows** of actual model-reference photos that pause on mouse hover, keyboard focus or the Pause button. On phones they become swipeable, snap-aligned photo rows rather than moving marquees. Reduced-motion settings are respected;
+- a clear **Request this vehicle** button that opens the saved local enquiry workflow.
+
+The normal fleet catalog has an explicit **next angle** button wherever licensed alternate views exist. Only real supplied color variants will be shown as such; the application does **not** recolor a vehicle photo and misrepresent it as an actual available fleet color. Admin can add more images (up to five additional URLs per vehicle) under **Cars & pricing**.
+
+Other changes: a new **Why Mateshwari** planning section, fare estimator moved earlier, a final full-width booking invitation, direct email/phone/WhatsApp contact, accessible mobile navigation, and a **fixed mobile WhatsApp / Call / Get Quote** bar. Corporate, road stories, trip selector, quotes and CRM remain.
+
+Manual responsive review sizes: **360, 390, 768, 1024, 1440 px**. Test vehicle selection → fare estimator → enquiry saving → /admin status tracking, and check carousel touch behavior, load failures, sticky links and keyboard focus. CI cannot assess visual quality. Do not merge or deploy until manually reviewed.
+
 ### Scenic luxury visual refresh — current review
-The homepage now uses **golden-hour travel imagery** (explicitly labeled *illustrative travel photography*), with an accurate selectable vehicle name and indicative rate displayed separately. The fleet cards continue to identify actual car models, instead of relabeling an unrelated scenic SUV as an Innova.
+The homepage hero now foregrounds a **moving fleet of actual vehicle-model reference photos** with model names and indicative rates. The golden-hour travel concepts remain in the scenic journey sections (not misrepresented as fleet cars). The fleet cards continue to identify actual car models, instead of relabeling an unrelated scenic SUV as an Innova.
 
 **Approved cinematic image pack (optional for local preview):** Download `mateshwari_visual_pack.zip` from the project conversation, then extract it into your local repository root:
 
@@ -43,7 +59,7 @@ cd ~/Projects/Yatish-Travelers
 unzip -o ~/Downloads/mateshwari_visual_pack.zip
 ```
 
-This installs `public/media/mt-hero-sunset.webp` and `public/media/mt-mountain-sunset.webp`, optimized from the two approved scenic concept visuals. They are **generated marketing concepts**, not photos of actual customer trips or the business's assigned vehicles. They are intentionally not included as binary assets in the draft PR. If the files are absent, the website falls back to the separately credited Unsplash photos.
+This installs `public/media/mt-hero-sunset.webp` and `public/media/mt-mountain-sunset.webp`, optimized from the two approved scenic concept visuals for the **journey editorial sections** (the front-screen hero now uses the vehicle reel). They are **generated marketing concepts**, not photos of actual customer trips or the business's assigned vehicles. They are intentionally not included as binary assets in the draft PR. If the files are absent, the website falls back to the separately credited Unsplash photos.
 
 The site also includes:
 - panoramic Himalayan-road image interlude with working **Explore journeys** and **Plan a trip** CTAs;
