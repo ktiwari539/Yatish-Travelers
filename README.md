@@ -33,16 +33,15 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
-### New interactive 3D and route experience
+### Visual direction: photographic luxury rather than toy-like concepts
 
-This build uses **real WebGL via Three.js**, instead of only photos with CSS transforms.
+The current local review intentionally **does not show the low-poly 3D car by default**. It had an incorrect visual relationship to vehicle names such as Toyota Innova. The hero now uses model-reference photography, a lighter editorial palette and pointer-responsive depth. A separate immersive fleet gallery has animated multi-angle photography, prior/next vehicle previews, manual model selection and quotation actions. The gallery remains interactive without misrepresenting generated concept geometry as an OEM vehicle.
 
-- **Interactive homepage hero:** drag to rotate a real-time 3D car silhouette; switch vehicle choices on the first screen.
-- **Mateshwari Atelier** directly below the introduction: scroll changes the 3D camera and highlighted fleet model; drag to rotate, select paint finishes, toggle daylight/sunset, and use the car-selection arrows.
-- **Journey Studio** after Services: animated route for four journey choices (Hill Escapes, Heritage, Airport, Events), reverse-route control and appropriate vehicle suggestions for quotations.
-- The built-in 3D bodies are unbranded **category concepts** (sedan, MPV, SUV, Traveller), not exact OEM vehicle models. They deliberately have no number plates. The public car photos remain reference images and still need visual plate checks.
-- To show an accurate model, upload an approved, self-contained **GLB 2.0** file (maximum 8 MB) in `/admin` → **Cars & pricing** → **3D model**. Uploaded models are stored locally under `.data/models/`, which is excluded from Git. Color swatches are disabled when an uploaded model is displayed, since its original materials are retained.
-- WebGL can fall back to regular photography if the browser or device does not support 3D. Respect reduced-motion preferences and check both desktop and mobile manually.
+The actual Three.js WebGL implementation remains available **only when you upload a licensed, model-accurate GLB** using CRM → Cars & pricing → 3D model. Without this asset, accurate photos are shown. A studio-quality photorealistic 3D representation cannot be reliably constructed procedurally. Travel editorial and Journey Studio still supply interactive route changes and parallax.
+
+**Photo privacy:** Side-view images reduce the exposure of registration plates, but the full existing reference photo catalog has **not** been independently guaranteed plate-free. Before public launch, use the admin photo privacy editor to pixelate visible registration details or replace photos with licensed images. No conspicuous grey overlays are used.
+
+**Review criteria:** desktop and mobile photo framing; legible controls and CTAs; loading/fallback for remote Wikimedia image URLs; no misleading model representation; check each photo for any visible plate; functioning quote/CRM and WhatsApp paths.
 
 ### Test the booking funnel
 
