@@ -219,3 +219,40 @@
  .scenic-image{opacity:1}
  .luxury-interlude{scroll-behavior:auto}
 }
+
+/* Story page: scenery-led opening, not invented customer testimonials */
+.stories-hero.cinematic-stories-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:linear-gradient(135deg,#1d4736,#102b21);
+  min-height:75svh;color:#fffbf1
+}
+.cinematic-stories-hero .stories-hero-background{
+  position:absolute;z-index:-2;inset:0;height:100%;width:100%;
+  object-fit:cover;object-position:center 50%;filter:saturate(.9) contrast(1.08)
+}
+.cinematic-stories-hero:before{
+  content:'';position:absolute;z-index:-1;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(10,37,26,.91) 0%,rgba(15,40,29,.78) 42%,rgba(16,39,28,.16) 100%),
+  linear-gradient(0deg,rgba(7,26,18,.4),transparent 55%)
+}
+.cinematic-stories-hero .stories-hero-glow{opacity:.1;pointer-events:none}
+.cinematic-stories-hero h1{color:#fff9ed;max-width:920px;font-size:clamp(50px,7vw,108px);letter-spacing:-.07em}
+.cinematic-stories-hero .kicker{color:#eac392}
+.cinematic-stories-hero>p{color:#e1e8da;max-width:650px}
+.cinematic-stories-hero .secondary{color:#fffaf0;border-color:rgba(255,255,255,.55);background:rgba(19,55,34,.4)}
+.cinematic-stories-hero .secondary:hover{background:rgba(240,214,176,.25)}
+.stories-gallery .story-feature-image{background:#c7d6c2}
+.stories-gallery .story-feature-image img{object-fit:cover;width:100%;height:100%;filter:saturate(.93) contrast(1.04)}
+.stories-gallery .story-feature-copy small{font-size:10px;letter-spacing:.12em;color:#a47b48;font-weight:850}
+.stories-gallery .story-feature-copy strong{font-size:11px;color:#647f69}
+.stories-gallery .story-feature:hover .story-feature-image img{transform:scale(1.04)}
+@media(max-width:760px){
+ .stories-hero.cinematic-stories-hero{min-height:75svh;padding:125px 6vw 90px}
+ .cinematic-stories-hero h1{font-size:clamp(50px,11vw,70px);line-height:1}
+ .cinematic-stories-hero:before{background:linear-gradient(90deg,rgba(11,36,25,.90),rgba(12,36,25,.60)),linear-gradient(0deg,rgba(6,21,16,.54),transparent)}
+ .cinematic-stories-hero .stories-hero-background{object-position:57% center}
+ .stories-gallery .story-feature-image{min-height:260px}
+}
+@media(prefers-reduced-motion:reduce){
+ .stories-gallery .story-feature-image img{transition:none!important;transform:none!important}
+}
