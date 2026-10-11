@@ -354,3 +354,53 @@
 @media(max-width:920px){.route-playground-content{grid-template-columns:1fr;padding:16px}.route-playground-story{padding:30px 20px 28px}.route-illustration{min-height:410px}.route-playground-tabs{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.atelier-intro span:last-child{font-size:8px;text-align:right}.route-playground{padding:80px 5vw}.route-playground-head h2{font-size:49px}.route-playground-head>p{font-size:12px}.route-playground-tabs{gap:4px}.route-playground-tabs button{font-size:10px;min-height:45px}.route-playground-tabs button span{font-size:8px}.route-playground-content{padding:9px}.route-playground-story{padding:23px 16px}.route-playground-story h3{font-size:39px}.route-playground-story>p{font-size:12px}.route-illustration{min-height:340px}.route-illustration-feature{width:64px;height:64px}.route-svg{top:-6%}.route-endpoint{left:4%;bottom:12%;padding:9px}.route-endpoint.destination{right:3%;top:16%}.route-navigation-hint{display:none}}
 @media(prefers-reduced-motion:reduce){.route-svg-path{stroke-dashoffset:0;animation:none}.route-playground-story{animation:none}.route-illustration-feature,.route-orbit{transform:none}}
+
+/* The first screen itself is now interactive WebGL, not a photo pretending to be 3D */
+.hero-3d-poster{
+ position:relative;
+ isolation:isolate;
+ background:
+  radial-gradient(ellipse at 52% 30%,rgba(244,224,185,.45),transparent 48%),
+  linear-gradient(150deg,#e5dfd0 0%,#b9c5b5 56%,#8fa79a 100%);
+ border:1px solid rgba(135,105,71,.20);
+ box-shadow:0 44px 110px rgba(28,58,39,.22),0 7px 28px rgba(26,45,30,.1);
+ overflow:hidden;
+}
+.hero-3d-poster:before{
+ content:'';
+ position:absolute;
+ inset:6%;
+ border-radius:50%;
+ border:1px solid rgba(248,248,228,.27);
+ pointer-events:none;
+ z-index:1
+}
+.hero-3d-poster .vehicle-webgl{
+ position:absolute;
+ inset:0;
+ z-index:2;
+ width:100%;
+ height:100%
+}
+.hero-3d-poster .vehicle-webgl canvas{cursor:grab}
+.hero-3d-poster .vehicle-webgl canvas:active{cursor:grabbing}
+.hero-3d-poster .hero-car-shade{
+ position:absolute;
+ z-index:3;
+ inset:0;
+ pointer-events:none;
+ background:linear-gradient(180deg,rgba(12,44,28,.18) 0%,transparent 33%,transparent 64%,rgba(9,36,25,.69) 100%)
+}
+.hero-3d-poster .poster-corner,.hero-3d-poster .hero-car-label{z-index:6;pointer-events:none}
+.hero-3d-poster .poster-corner{color:#f8f1dd}
+.hero-3d-poster .hero-car-label span{font-size:10px;letter-spacing:.14em;color:#ede8d4}
+.hero-3d-poster .hero-car-label strong{color:#fffdf2}
+.hero-3d-poster .hero-car-label small{color:#e7e9dc}
+.hero-3d-poster .hero-car-image{position:absolute;inset:0;height:100%;width:100%;object-fit:cover}
+.hero-3d-poster:hover{transform:perspective(1200px) translateY(-2px)}
+@media(max-width:760px){
+ .hero-3d-poster{min-height:320px}
+ .hero-3d-poster .hero-car-label strong{font-size:22px}
+ .hero-3d-poster .poster-corner{top:14px;left:14px}
+ .hero-3d-poster .hero-car-label span{font-size:8px}
+}
