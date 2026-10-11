@@ -25,7 +25,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
  const previous=vehicles.length?vehicles[(activeIndex-1+vehicles.length)%vehicles.length]:null;
  const photos=current?[current.image,...(current.gallery||[])].filter(Boolean):[];
  useEffect(()=>{
-   const q=window.matchMedia('(prefers-reduced-motion: reduce)');
+   const q=window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)');
    const sync=()=>setMotionAllowed(!q.matches);
    sync();q.addEventListener('change',sync);return()=>q.removeEventListener('change',sync);
  },[]);
