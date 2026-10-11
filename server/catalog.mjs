@@ -35,7 +35,14 @@ export function readCatalog(){
   if(!existsSync(catalogPath)) return {vehicles:defaultCatalog.map(x=>({...x})),updatedAt:null};
   const value=JSON.parse(readFileSync(catalogPath,'utf8'));
   if(!Array.isArray(value.vehicles)) throw new Error('Invalid stored catalog.');
-  return value;
+  // Only migrate the exact previous bundled reference asset, never user-provided photos.
+  const previousErtiga=commons('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Front%20view%20-%20April%2026%202018.jpg');
+  const currentErtiga=defaultCatalog.find(v=>v.name==='Maruti Ertiga')?.image;
+  return {...value,vehicles:value.vehicles.map(v=>(
+    v.name==='Maruti Ertiga'&&v.image===previousErtiga&&currentErtiga
+      ?{...v,image:currentErtiga}
+      :v
+  ))};
 }
 export function writeCatalog(vehicles){
   if(!Array.isArray(vehicles)||vehicles.length>80) throw new Error('Catalog limit exceeded.');
