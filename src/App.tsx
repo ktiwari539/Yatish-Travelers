@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CinematicShowroom } from './CinematicShowroom';
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
+import { RouteExperience } from './RouteExperience';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
@@ -538,6 +539,18 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
 
+      <RouteExperience onPlan={(kind)=>{
+        const suggestions:Record<string,string[]>={
+          mountains:['Mahindra TUV','Mahindra Bolero','Toyota Innova'],
+          heritage:['Toyota Innova','Maruti Ertiga','Maruti Dzire'],
+          airport:['Maruti Dzire','Toyota Innova','Maruti Ertiga'],
+          events:['Tempo Traveller','Maruti Ertiga','Toyota Innova']
+        };
+        const match=(suggestions[kind]||[]).find(name=>liveFleet.some(car=>car.name===name));
+        if(match)setVehicle(match);
+        openQuote('quote','journey-studio');
+      }}/>
+      
       <section className="fleet-reel-section reveal-3d" id="reels">
         <div className="fleet-reel-heading">
           <div>
