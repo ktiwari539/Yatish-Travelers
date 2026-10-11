@@ -296,3 +296,61 @@
  .cinema-sticky{position:relative;height:auto;min-height:760px}
  .hero:hover h1 em{transform:none}
 }
+
+/* Interaction chapter two — animated route storytelling */
+.atelier-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 6vw;background:#17372c;color:#cfdfce;font-size:10px;letter-spacing:.16em;font-weight:800}
+.atelier-intro span:first-child{color:#e4c18f}
+.route-playground{overflow:hidden;padding:115px 6vw 84px;background:#f7f3eb;color:#203c30;isolation:isolate;position:relative}
+.route-playground:before{content:'WANDER';position:absolute;pointer-events:none;right:-6%;top:-25px;font-size:clamp(150px,24vw,480px);font-weight:900;letter-spacing:-.07em;opacity:.025}
+.route-playground-head{position:relative;max-width:850px;margin:0 auto 42px;text-align:center}
+.route-playground-head>span{display:inline-flex;gap:9px;align-items:center;font-size:11px;font-weight:800;letter-spacing:.18em;color:#986d43}
+.route-playground-head h2{font-size:clamp(48px,6vw,90px);line-height:1.02;letter-spacing:-.055em;margin:13px 0}
+.route-playground-head h2 em{font-family:Georgia,serif;font-weight:500;color:#9e7245}
+.route-playground-head>p{max-width:585px;margin:14px auto 0;font-size:14px;line-height:1.75;color:#667a6a}
+.route-playground-shell{--route-x:0;--route-y:0;position:relative;width:min(1350px,100%);margin:auto;border:1px solid #ccd3c8;border-radius:28px;background:#fffdf7;box-shadow:0 40px 110px rgba(35,57,41,.095);transition:box-shadow .5s}
+.route-playground-shell:hover{box-shadow:0 50px 130px rgba(35,57,41,.14)}
+.route-playground-tabs{display:grid;grid-template-columns:repeat(4,1fr);padding:8px;gap:7px;border-bottom:1px solid #e1dfd5}
+.route-playground-tabs button{display:flex;justify-content:center;align-items:center;gap:11px;min-height:50px;border:0;background:transparent;color:#6d8072;border-radius:16px;font-size:12px;font-weight:800;transition:background .3s,color .3s,transform .3s}
+.route-playground-tabs button span{color:#a5794a;font-size:10px}
+.route-playground-tabs button:hover{background:#f1f3ec;transform:translateY(-1px)}
+.route-playground-tabs button.chosen{background:#204b38;color:#fff;box-shadow:0 8px 20px rgba(27,61,41,.14)}
+.route-playground-tabs button.chosen span{color:#d5bd92}
+.route-playground-content{--route-glow:#eac79d;display:grid;grid-template-columns:44% 56%;min-height:530px;padding:32px}
+.route-playground-story{display:flex;align-items:flex-start;flex-direction:column;justify-content:center;position:relative;z-index:2;padding:35px 5vw 35px 18px;animation:routeStoryIn .6s cubic-bezier(.2,.77,.2,1) both}
+.route-playground-kicker{font-size:10px;font-weight:900;letter-spacing:.17em;color:#a47947}
+.route-playground-story h3{font-size:clamp(39px,4.1vw,63px);line-height:1.05;letter-spacing:-.055em;margin:17px 0}
+.route-playground-story>p{max-width:380px;font-size:14px;line-height:1.8;color:#69776a}
+.route-experience-info{display:grid;gap:8px;margin:25px 0;font-size:11px;font-weight:750;color:#5e725e}
+.route-experience-info span:first-child{display:flex;align-items:center;gap:7px}
+.route-experience-info span:last-child{font-size:10px;color:#a07443}
+.route-book-button{display:flex;align-items:center;gap:10px;padding:16px 21px;background:#214938;border:1px solid #214938;color:#fff;border-radius:99px;font-size:12px;font-weight:850;transition:transform .25s,box-shadow .25s}
+.route-book-button:hover{transform:translateY(-4px);box-shadow:0 15px 35px rgba(20,57,36,.25)}
+.route-illustration{position:relative;min-height:465px;overflow:hidden;border-radius:22px;background:
+ radial-gradient(circle at 65% 30%,rgba(255,255,255,.14),transparent 36%),
+ radial-gradient(circle at 28% 79%,rgba(222,189,140,.14),transparent 35%),
+ linear-gradient(140deg,#204a38,#162e28 70%);color:#f4ead8;perspective:1100px;transform-style:preserve-3d;transition:background .6s}
+.route-illustration.route-heritage{background:radial-gradient(circle at 67% 26%,rgba(250,202,147,.17),transparent 40%),linear-gradient(135deg,#55422e,#263e32)}
+.route-illustration.route-airport{background:radial-gradient(circle at 67% 28%,rgba(176,224,221,.14),transparent 40%),linear-gradient(137deg,#244551,#172e32)}
+.route-illustration.route-events{background:radial-gradient(circle at 67% 28%,rgba(194,175,217,.2),transparent 40%),linear-gradient(137deg,#443a4e,#1b3134)}
+.route-orbit{position:absolute;border:1px solid rgba(255,255,255,.1);border-radius:50%;width:460px;height:460px;left:29%;top:-35%;transform:translate3d(calc(var(--route-x)*-32px),calc(var(--route-y)*-28px),-90px) rotate(-15deg);pointer-events:none;transition:transform .2s}
+.orb-two{width:320px;height:320px;top:32%;left:-23%;opacity:.6}
+.route-mesh{position:absolute;inset:0;background-image:linear-gradient(rgba(237,224,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(237,224,184,.06) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(ellipse,black 10%,transparent 80%);transform:translate(calc(var(--route-x)*-12px),calc(var(--route-y)*-12px));pointer-events:none}
+.route-illustration-title{position:absolute;top:23px;left:26px;color:#daba90;font-size:11px;font-weight:800;letter-spacing:.12em}
+.route-illustration-title span{color:#e5ebde;font-size:9px}
+.route-svg{position:absolute;inset:4% 0 5%;width:100%;height:90%;filter:drop-shadow(0 0 16px rgba(246,225,177,.25))}
+.route-svg-path-bg{fill:none;stroke:rgba(236,229,196,.2);stroke-width:3;stroke-dasharray:6 12}
+.route-svg-path{fill:none;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:950;stroke-dashoffset:950;animation:drawRoute 2.7s .25s cubic-bezier(.16,.66,.17,1) forwards}
+.route-endpoint{position:absolute;display:grid;gap:5px;z-index:5;left:11%;bottom:13%;padding:11px 14px;border:1px solid rgba(255,255,255,.24);background:rgba(10,35,25,.6);border-radius:14px;backdrop-filter:blur(8px);box-shadow:0 8px 15px rgba(0,0,0,.09)}
+.route-endpoint.destination{left:auto;bottom:auto;right:6%;top:17%}
+.route-endpoint small{font-size:8px;color:#d4b894;letter-spacing:.16em;font-weight:900}
+.route-endpoint strong{font-size:10px;letter-spacing:.03em;color:#f7f7ec}
+.route-illustration-feature{position:absolute;left:51%;top:51%;display:grid;place-items:center;width:91px;height:91px;border:1px solid rgba(236,216,185,.36);background:rgba(236,224,195,.12);border-radius:25px;color:var(--route-glow);box-shadow:0 14px 33px rgba(3,24,17,.3);backdrop-filter:blur(10px);transform:translate(-50%,-50%) translate3d(calc(var(--route-x)*22px),calc(var(--route-y)*25px),35px) rotate(-6deg);transition:transform .22s}
+.route-reverse{position:absolute;z-index:6;right:6%;bottom:6%;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22);border-radius:99px;color:#fff;padding:10px 14px;font-size:10px;font-weight:800;backdrop-filter:blur(8px)}
+.route-reverse:hover{background:rgba(255,255,255,.19)}
+.route-navigation-hint{position:absolute;left:25px;bottom:25px;font-size:9px;font-weight:800;color:#b5c9bb;letter-spacing:.13em}
+.route-playground-note{font-size:11px;line-height:1.55;color:#7d826e;text-align:center;margin:22px auto 0}
+@keyframes drawRoute{to{stroke-dashoffset:0}}
+@keyframes routeStoryIn{from{opacity:0;transform:translate3d(-27px,16px,0)}to{opacity:1;transform:none}}
+@media(max-width:920px){.route-playground-content{grid-template-columns:1fr;padding:16px}.route-playground-story{padding:30px 20px 28px}.route-illustration{min-height:410px}.route-playground-tabs{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.atelier-intro span:last-child{font-size:8px;text-align:right}.route-playground{padding:80px 5vw}.route-playground-head h2{font-size:49px}.route-playground-head>p{font-size:12px}.route-playground-tabs{gap:4px}.route-playground-tabs button{font-size:10px;min-height:45px}.route-playground-tabs button span{font-size:8px}.route-playground-content{padding:9px}.route-playground-story{padding:23px 16px}.route-playground-story h3{font-size:39px}.route-playground-story>p{font-size:12px}.route-illustration{min-height:340px}.route-illustration-feature{width:64px;height:64px}.route-svg{top:-6%}.route-endpoint{left:4%;bottom:12%;padding:9px}.route-endpoint.destination{right:3%;top:16%}.route-navigation-hint{display:none}}
+@media(prefers-reduced-motion:reduce){.route-svg-path{stroke-dashoffset:0;animation:none}.route-playground-story{animation:none}.route-illustration-feature,.route-orbit{transform:none}}
