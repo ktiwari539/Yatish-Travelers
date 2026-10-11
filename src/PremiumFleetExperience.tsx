@@ -88,7 +88,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
  };
  if(!active)return null;
  return <section className="motion-fleet-section" id="motion-fleet" ref={root}
-    aria-label="Interactive premium vehicle fleet collection" onMouseEnter={()=>setPaused(true)} onMouseLeave={()=>setPaused(false)}
+    aria-label="Interactive premium vehicle fleet collection"
     onFocusCapture={()=>setPaused(true)} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget))setPaused(false);}}>
    <div className="motion-fleet-grain" aria-hidden="true"/>
    <div className="motion-fleet-topline"><span><Sparkles size={15}/> MATESHWARI / THE COLLECTION</span><span>THE VEHICLE. THE JOURNEY. THE EXPERIENCE.</span></div>
@@ -96,7 +96,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     <div><span className="motion-eyebrow">01 / FLEET IN MOTION</span><h2>A better journey <em>begins here.</em></h2></div>
     <p>From a thoughtful city transfer to a long-awaited family escape. Find your kind of journey in a fleet made for different ways of travelling.</p>
    </div>
-   <div className="motion-fleet-stage">
+   <div className="motion-fleet-stage" onMouseEnter={()=>setPaused(true)} onMouseLeave={()=>setPaused(false)}>
     <div className="motion-fleet-copy">
      <span className="motion-active-count">{String(index+1).padStart(2,'0')}<i/> {String(safe.length).padStart(2,'0')}</span>
      <div className="motion-fleet-copy-main" key={active.name}>
@@ -147,7 +147,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
    <div className="motion-reel-header">
     <div><span className="motion-eyebrow">DISCOVER THE ANGLES</span><h3>Every detail, in <em>motion.</em></h3></div>
     <button type="button" className="motion-reel-toggle" onClick={()=>{setPaused(v=>!v);setTouched(true);}}
-      aria-pressed={paused||reduced}>{paused||reduced?<CirclePlay size={18}/>:<CirclePause size={18}/>} {paused||reduced?'Play preview':'Pause motion'}</button>
+      aria-pressed={paused||reduced} disabled={reduced}>{paused||reduced?<CirclePlay size={18}/>:<CirclePause size={18}/>} {reduced?'Reduced motion':paused?'Play preview':'Pause motion'}</button>
    </div>
    <div className={'motion-reels '+(paused||reduced?'is-paused':'')}>
     <ReelLane vehicles={safe} offset={0} onSelect={name=>{setTouched(true);onSelect(name);}}/>
