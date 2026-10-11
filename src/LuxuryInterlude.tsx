@@ -11,7 +11,7 @@ export function LuxuryInterlude({compact=false}:{compact?:boolean}){
     event.currentTarget.style.setProperty('--landscape-y',String(((event.clientY-bounds.top)/bounds.height-.5).toFixed(3)));
   }}
   onPointerLeave={event=>{event.currentTarget.style.setProperty('--landscape-x','0');event.currentTarget.style.setProperty('--landscape-y','0');}}>
-  <div className="luxury-interlude-scene"><ScenicImage src={luxuryMedia.mountains.src} fallback={luxuryMedia.landscape.src} alt={luxuryMedia.mountains.alt} loading="lazy"/></div>
+  <div className="luxury-interlude-scene"><ScenicImage src={luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt={luxuryMedia.mountains.alt} loading="lazy"/></div>
   <div className="luxury-interlude-overlay"/>
   <div className="luxury-interlude-text">
     <span><Compass size={15}/> THE ART OF THE JOURNEY</span>
