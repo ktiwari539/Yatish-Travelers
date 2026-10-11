@@ -33,6 +33,17 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### New interactive 3D and route experience
+
+This build uses **real WebGL via Three.js**, instead of only photos with CSS transforms.
+
+- **Interactive homepage hero:** drag to rotate a real-time 3D car silhouette; switch vehicle choices on the first screen.
+- **Mateshwari Atelier** directly below the introduction: scroll changes the 3D camera and highlighted fleet model; drag to rotate, select paint finishes, toggle daylight/sunset, and use the car-selection arrows.
+- **Journey Studio** after Services: animated route for four journey choices (Hill Escapes, Heritage, Airport, Events), reverse-route control and appropriate vehicle suggestions for quotations.
+- The built-in 3D bodies are unbranded **category concepts** (sedan, MPV, SUV, Traveller), not exact OEM vehicle models. They deliberately have no number plates. The public car photos remain reference images and still need visual plate checks.
+- To show an accurate model, upload an approved, self-contained **GLB 2.0** file (maximum 8 MB) in `/admin` → **Cars & pricing** → **3D model**. Uploaded models are stored locally under `.data/models/`, which is excluded from Git. Color swatches are disabled when an uploaded model is displayed, since its original materials are retained.
+- WebGL can fall back to regular photography if the browser or device does not support 3D. Respect reduced-motion preferences and check both desktop and mobile manually.
+
 ### Test the booking funnel
 
 1. Visit the homepage and click **Request Final Quote**, **Request Callback**, or **Plan this trip**.
@@ -69,7 +80,7 @@ Road-trip and mountain-drive cards use attributed Wikimedia Commons scenery as *
 - The CRM uses a single admin token, JSONL event storage, local catalog JSON and image files; production requires real staff accounts and RBAC, a managed DB, protected uploads, audit logs, backups, abuse controls and privacy/retention policies.
 - Prices remain **indicative**, with a current 250 km/day minimum and optional driver night-stay allowance. Final pricing, GST and extras require approval. Price editing doesn't currently change the 250 km/day rule.
 - Requests do not send staff email notifications automatically. Direct WhatsApp and email links are available for customers.
-- The showroom uses layered CSS perspective and scroll-based transitions, **not actual 3D car models**.
+- The showroom now uses live WebGL rendering and authored procedural 3D vehicle shapes; **exact manufacturer models and photorealism still require licensed GLB assets**. GitHub CI validates code, not appearance or physical-device performance.
 
 ## Developer commands
 
