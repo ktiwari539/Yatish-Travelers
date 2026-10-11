@@ -152,7 +152,7 @@ html{scroll-padding-top:84px}
 .motion-reel-card-label span{color:#ead7af;font-size:8px;letter-spacing:.1em;text-transform:uppercase}
 .motion-reel-card-label strong{font-size:16px;line-height:1.05;letter-spacing:-.04em}
 .motion-reel-card-icon{position:absolute;right:11px;bottom:13px;color:#fff}
-.motion-fleet-section:hover .motion-reel-lane,.motion-fleet-section:focus-within .motion-reel-lane,.motion-reels.is-paused .motion-reel-lane{animation-play-state:paused}
+.motion-reels:hover .motion-reel-lane,.motion-reels:focus-within .motion-reel-lane,.motion-reels.is-paused .motion-reel-lane{animation-play-state:paused}
 .motion-fleet-bottom{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:23px 6vw 0;border-top:1px solid rgba(255,255,255,.15);padding-top:20px;color:#d0d9cf;font-size:11px}
 .motion-fleet-bottom a{display:flex;align-items:center;gap:8px;color:#edcd98;font-weight:800}
 @keyframes motionReelForward{to{transform:translateX(-50%)}}
@@ -373,3 +373,5 @@ footer a:hover{color:#e7c58e}
  .catalog-angle-button{bottom:13px;right:12px}
 }
 @media(prefers-reduced-motion:reduce){.premium-catalog-card:hover .premium-catalog-visual img{transform:none!important}}
+
+.motion-reel-toggle:disabled{opacity:.65;cursor:not-allowed}
