@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { CinematicShowroom } from './CinematicShowroom';
+
+const Hero3D=lazy(()=>import('./Real3DVehicle').then(mod=>({default:mod.Real3DVehicle})));
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
 import { RouteExperience } from './RouteExperience';
@@ -18,6 +20,7 @@ type FleetVehicle = {
   rateMin?:number;
   rateMax?:number;
   gallery?:string[];
+  modelUrl?:string;
 };
 
 const commonsImage = (fileName: string) =>
@@ -238,6 +241,7 @@ export function App() {
   const [quoteDelivery,setQuoteDelivery]=useState<Array<{channel:string;purpose:string;status:string}>>([]);
   const [copied, setCopied] = useState(false);
   const [heroIndex, setHeroIndex] = useState(2);
+  const [hero3dUnavailable,setHero3dUnavailable]=useState(false);
   const [liveFleet,setLiveFleet]=useState<FleetVehicle[]>(fleet);
   const [quoteSource,setQuoteSource]=useState('website');
   useEffect(()=>{
@@ -395,17 +399,17 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
         <div className="car-stage">
           <div className="road-lines" aria-hidden="true"><span/><span/><span/></div>
-          <div className="hero-car-frame hero-poster">
-            <img
-              className="hero-car-image"
-              src={heroVehicle.image}
-              alt={heroVehicle.name}
-              fetchPriority="high"
-            />
-            <div className="hero-car-shade" />
-            <div className="poster-corner" aria-hidden="true"><span>01</span><strong>Signature journeys</strong></div>
+          <div className="hero-car-frame hero-poster hero-3d-poster">
+            {!hero3dUnavailable ? (
+              <Suspense fallback={<img className="hero-car-image" src={heroVehicle.image} alt={heroVehicle.name} fetchPriority="high"/>}>
+                <Hero3D category={heroVehicle.category} paint="champagne" mood="daylight" progress={0}
+                  modelUrl={heroVehicle.modelUrl} onUnavailable={()=>setHero3dUnavailable(true)}/>
+              </Suspense>
+            ):<img className="hero-car-image" src={heroVehicle.image} alt={heroVehicle.name} fetchPriority="high"/>}
+            <div className="hero-car-shade"/>
+            <div className="poster-corner" aria-hidden="true"><span>LIVE / 3D</span><strong>Signature journeys</strong></div>
             <div className="hero-car-label">
-              <span>Premium Fleet</span>
+              <span>DRAG TO EXPLORE · CONCEPT VISUAL</span>
               <strong>{heroVehicle.name}</strong>
               <small>{heroVehicle.seats} seats · {heroVehicle.category}</small>
             </div>
