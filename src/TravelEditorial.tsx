@@ -16,7 +16,7 @@ export function TravelEditorial({stories=false}:{stories?:boolean}){
    <div className="route-editorial-grid">
      {trips.map((trip,index)=><article className={'route-tile route-tile-'+index} key={trip.title}>
        <div className="route-tile-visual">
-         <ScenicImage src={trip.visual.src} fallback={luxuryMedia.landscape.src} alt={trip.visual.alt} loading="lazy"/>
+         <ScenicImage src={trip.visual.src} fallback={trip.visual.fallback ?? luxuryMedia.landscape.src} alt={trip.visual.alt} loading="lazy"/>
          <div className="route-tile-scrim"/>
          <span className="route-tile-num">{trip.index} / 03</span>
          <span className="route-tile-icon">{index===0?<Mountain size={20}/>:index===1?<Route size={20}/>:<Trees size={20}/>}</span>
