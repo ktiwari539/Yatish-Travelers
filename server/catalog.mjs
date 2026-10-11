@@ -27,7 +27,9 @@ export function validateVehicle(input,previous={}) {
   if(!Number.isFinite(rateMin)||!Number.isFinite(rateMax)||rateMin<1||rateMax>10000||rateMin>rateMax) throw new Error('Invalid per-km pricing.');
   const gallery=Array.isArray(input.gallery)?input.gallery.filter(v=>typeof v==='string'&&v.length).slice(0,5):[];
   if(gallery.some(v=>!validImage(v)))throw new Error('All alternate images must be HTTPS or local uploads.');
-  return {id:previous.id||randomUUID(),name,seats,tag,category,image,capacity,rateMin,rateMax,enabled:input.enabled!==false,gallery};
+  const modelUrl=text(input.modelUrl,150);
+  if(modelUrl&&!/^\/api\/models\/[a-f0-9-]{36}\.glb$/.test(modelUrl))throw new Error('3D model must be a locally uploaded GLB.');
+  return {id:previous.id||randomUUID(),name,seats,tag,category,image,capacity,rateMin,rateMax,enabled:input.enabled!==false,gallery,modelUrl};
 }
 export function readCatalog(){
   if(!existsSync(catalogPath)) return {vehicles:defaultCatalog.map(x=>({...x})),updatedAt:null};
