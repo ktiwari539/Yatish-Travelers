@@ -150,7 +150,7 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
  return {vehicle,wheels,paint};
 }
 
-export function Real3DVehicle({category,paint,mood,progress,onUnavailable}:Props){
+export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailable}:Props){
  const host=useRef<HTMLDivElement|null>(null);
  const engine=useRef<{
   renderer:THREE.WebGLRenderer;scene:THREE.Scene;camera:THREE.PerspectiveCamera;
@@ -224,6 +224,36 @@ export function Real3DVehicle({category,paint,mood,progress,onUnavailable}:Props
       const root=new THREE.Group();scene.add(root);
       const built=createVehicle(classOf(category),paintValues[paint]);
       root.add(built.vehicle);
+      // Approved local GLB assets replace the conceptual 3D silhouette.
+      // Uploaded assets are self-contained and validated by the local CRM backend.
+      if(modelUrl && /^\/api\/models\/[0-9a-f-]{36}\.glb$/.test(modelUrl)){
+        import('three/examples/jsm/loaders/GLTFLoader.js').then(({GLTFLoader})=>{
+          if(cancelled)return;
+          new GLTFLoader().load(modelUrl,gltf=>{
+            if(cancelled)return;
+            const custom=gltf.scene;
+            const box=new THREE.Box3().setFromObject(custom);
+            if(box.isEmpty())return;
+            const size=box.getSize(new THREE.Vector3());
+            const max=Math.max(size.x,size.z);
+            if(max<.001)return;
+            const scale=4.65/max;
+            custom.scale.setScalar(scale);
+            const bounds=new THREE.Box3().setFromObject(custom);
+            const center=bounds.getCenter(new THREE.Vector3());
+            custom.position.set(-center.x,-bounds.min.y+.065,-center.z);
+            custom.traverse(obj=>{
+              if(obj instanceof THREE.Mesh){
+                obj.castShadow=true;obj.receiveShadow=true;
+              }
+            });
+            root.remove(built.vehicle);
+            root.add(custom);
+          },undefined,error=>{
+            console.warn('Could not load uploaded GLB, keeping 3D concept vehicle.',error);
+          });
+        }).catch(()=>{/* procedural model remains available */});
+      }
 
       const tick=()=>{
         if(cancelled||!visible)return;
@@ -298,7 +328,7 @@ export function Real3DVehicle({category,paint,mood,progress,onUnavailable}:Props
   };
  // Scene rebuilt only when silhouette category changes, not on every scroll frame.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[category]);
+ },[category,modelUrl]);
 
  useEffect(()=>{
    const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
