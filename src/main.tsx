@@ -8,6 +8,7 @@ import './cinematic.css';
 import './crm.css';
 import './revision.css';
 import './webgl-premium.css';
+import './photo-luxury.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
