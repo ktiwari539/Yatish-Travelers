@@ -143,9 +143,9 @@ type QuoteMode = 'quote' | 'callback' | 'corporate';
 
 function StoriesPage() {
   const storySlots = [
-    { title: 'Family Journeys', text: 'Road-trip photos and verified family travel experiences will live here.', car: fleet[1] },
-    { title: 'Airport & Business', text: 'Approved airport and corporate travel stories can be published here.', car: fleet[2] },
-    { title: 'Group Adventures', text: 'Tempo Traveller and group-tour memories can be shared after moderation.', car: fleet[5] },
+    { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:luxuryMedia.hero },
+    { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:luxuryMedia.mountains },
+    { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:luxuryMedia.airport }
   ];
 
   return (
@@ -155,13 +155,13 @@ function StoriesPage() {
         <a className="secondary" href="/">Back to Home <ArrowRight size={16} /></a>
       </header>
 
-      <section className="stories-hero">
+      <section className="stories-hero cinematic-stories-hero">
+        <ScenicImage className="stories-hero-background" src={luxuryMedia.mountains.src} fallback={luxuryMedia.landscape.src} alt="" loading="eager"/>
         <div className="stories-hero-glow" />
         <span className="kicker">Stories from the Road</span>
         <h1>Every trip has a story worth keeping.</h1>
         <p>
-          A dedicated space for real customer journeys, travel photos and verified feedback.
-          Every story is reviewed before it appears publicly.
+          Discover scenic journeys and ideas for your next trip. This page will also feature real customer photos and verified travel stories once our submission and moderation process opens.
         </p>
         <div className="stories-hero-actions">
           <a className="primary" href="#share-story">Share your journey <ArrowRight size={16}/></a>
@@ -173,15 +173,15 @@ function StoriesPage() {
         {storySlots.map((story, index) => (
           <article className="story-feature" key={story.title}>
             <div className="story-feature-image">
-              <img src={story.car.image} alt={story.car.name} />
+              <ScenicImage src={story.visual.src} fallback={luxuryMedia.mountains.src} alt={story.visual.alt} loading="lazy" />
               <div className="story-feature-shade" />
               <span>0{index + 1}</span>
             </div>
             <div className="story-feature-copy">
-              <small>Customer journey</small>
+              <small>EDITORIAL JOURNEY INSPIRATION</small>
               <h2>{story.title}</h2>
               <p>{story.text}</p>
-              <strong>Verified stories will appear here</strong>
+              <strong>Real customer stories: awaiting approved submissions</strong>
             </div>
           </article>
         ))}
