@@ -4,10 +4,10 @@ import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
 
 export type CatalogVehicle = {
  id:string;name:string;seats:string;capacity:number;tag:string;category:string;image:string;
- rateMin:number;rateMax:number;enabled:boolean;gallery?:string[];
+ rateMin:number;rateMax:number;enabled:boolean;gallery?:string[];modelUrl?:string;
 };
 type Props={token:string};
-const blank=():CatalogVehicle=>({id:'',name:'',seats:'4+1',capacity:4,tag:'Comfortable travel',category:'Sedan',image:'',rateMin:15,rateMax:25,enabled:false,gallery:[]});
+const blank=():CatalogVehicle=>({id:'',name:'',seats:'4+1',capacity:4,tag:'Comfortable travel',category:'Sedan',image:'',rateMin:15,rateMax:25,enabled:false,gallery:[],modelUrl:''});
 
 export function FleetManager({token}:Props) {
  const [vehicles,setVehicles]=useState<CatalogVehicle[]>([]);
@@ -16,6 +16,7 @@ export function FleetManager({token}:Props) {
  const [success,setSuccess]=useState('');
  const [loaded,setLoaded]=useState(false);
  const [uploading,setUploading]=useState<number|null>(null);
+ const [uploadingModel,setUploadingModel]=useState<number|null>(null);
  const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File}|null>(null);
  const load=useCallback(async()=>{
    setError('');
@@ -51,6 +52,28 @@ export function FleetManager({token}:Props) {
      change(index,{image:body.url});setSuccess('Image uploaded locally. Press Save Changes to publish the new vehicle photo in the local preview.');
    }catch(e){setError(e instanceof Error?e.message:'Upload failed');throw e;}
    finally{setUploading(null);}
+ };
+ const uploadModel=async(index:number,file:File|undefined)=>{
+   if(!file)return;
+   setError('');setSuccess('');
+   if(file.size>8_000_000||!file.name.toLowerCase().endsWith('.glb')){
+     setError('Choose a self-contained .glb model smaller than 8 MB.');return;
+   }
+   setUploadingModel(index);
+   try{
+     const encoded=await new Promise<string>((resolve,reject)=>{
+       const reader=new FileReader();
+       reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+       reader.onerror=()=>reject(new Error('Unable to read GLB model.'));
+       reader.readAsDataURL(file);
+     });
+     const response=await fetch('/api/admin/models',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({data:encoded})});
+     const body=await response.json();
+     if(!response.ok)throw new Error(body.error||'GLB model upload failed.');
+     change(index,{modelUrl:body.url});
+     setSuccess('3D model uploaded to this computer. Save fleet settings, then reload the public showroom.');
+   }catch(e){setError(e instanceof Error?e.message:'Upload failed.');}
+   finally{setUploadingModel(null);}
  };
  const save=async()=>{
    setError('');setSuccess('');setSaving(true);
@@ -92,7 +115,16 @@ export function FleetManager({token}:Props) {
           <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{const selected=e.target.files?.[0];if(selected)setEditingPhoto({index,file:selected});e.target.value='';}}/>
           {uploading===index&&<span>Uploading image locally...</span>}
         </label>
-        <div className="fleet-editor-row">
+        <div className="fleet-model-upload">
+          <span>True 3D model (optional / licensed GLB)</span>
+          <small>Show a detailed branded vehicle model in the interactive showroom. Without one, the site renders an unbranded 3D concept silhouette.</small>
+          <label>Choose self-contained GLB (up to 8 MB)
+            <input type="file" accept=".glb,model/gltf-binary" disabled={uploadingModel===index} onChange={e=>{void uploadModel(index,e.target.files?.[0]);e.target.value='';}}/>
+          </label>
+          {v.modelUrl&&<div className="fleet-model-present"><span>Local model configured: {v.modelUrl}</span><button type="button" onClick={()=>change(index,{modelUrl:''})}>Remove 3D model</button></div>}
+          {uploadingModel===index&&<span>Uploading 3D model...</span>}
+        </div>
+                <div className="fleet-editor-row">
           <label>Minimum ₹ / km<input type="number" min={1} step=".5" value={v.rateMin} onChange={e=>change(index,{rateMin:Number(e.target.value)})}/></label>
           <label>Maximum ₹ / km<input type="number" min={1} step=".5" value={v.rateMax} onChange={e=>change(index,{rateMax:Number(e.target.value)})}/></label>
         </div>
