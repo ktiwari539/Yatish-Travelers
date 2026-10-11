@@ -36,6 +36,15 @@ Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-an
 ### Scenic luxury visual refresh — current review
 The homepage now uses **golden-hour travel imagery** (explicitly labeled *illustrative travel photography*), with an accurate selectable vehicle name and indicative rate displayed separately. The fleet cards continue to identify actual car models, instead of relabeling an unrelated scenic SUV as an Innova.
 
+**Approved cinematic image pack (optional for local preview):** Download `mateshwari_visual_pack.zip` from the project conversation, then extract it into your local repository root:
+
+```bash
+cd ~/Projects/Yatish-Travelers
+unzip -o ~/Downloads/mateshwari_visual_pack.zip
+```
+
+This installs `public/media/mt-hero-sunset.webp` and `public/media/mt-mountain-sunset.webp`, optimized from the two approved scenic concept visuals. They are **generated marketing concepts**, not photos of actual customer trips or the business's assigned vehicles. They are intentionally not included as binary assets in the draft PR. If the files are absent, the website falls back to the separately credited Unsplash photos.
+
 The site also includes:
 - panoramic Himalayan-road image interlude with working **Explore journeys** and **Plan a trip** CTAs;
 - image-led Local, Outstation, Airport and Events service tiles;
