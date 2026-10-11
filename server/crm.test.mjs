@@ -18,7 +18,7 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   const directory=mkdtempSync(join(tmpdir(),'mt-crm-test-'));
   const secret='local-admin-test-token';
   const child=spawn(process.execPath,[resolve('server/crm.mjs')],{
-    env:{...process.env,CRM_PORT:String(port),CRM_DATA_FILE:join(directory,'records.jsonl'),CRM_EVENTS_FILE:join(directory,'events.jsonl'),CRM_NOTIFICATIONS_FILE:join(directory,'notifications.jsonl'),CRM_NOTIFICATIONS_MODE:'preview',CRM_CATALOG_FILE:join(directory,'catalog.json'),CRM_UPLOADS_DIR:join(directory,'uploads'),CRM_ADMIN_TOKEN:secret},
+    env:{...process.env,CRM_PORT:String(port),CRM_DATA_FILE:join(directory,'records.jsonl'),CRM_EVENTS_FILE:join(directory,'events.jsonl'),CRM_NOTIFICATIONS_FILE:join(directory,'notifications.jsonl'),CRM_NOTIFICATIONS_MODE:'preview',CRM_CATALOG_FILE:join(directory,'catalog.json'),CRM_UPLOADS_DIR:join(directory,'uploads'),CRM_MODELS_DIR:join(directory,'models'),CRM_ADMIN_TOKEN:secret},
     stdio:'ignore'
   });
   t.after(()=>{child.kill('SIGTERM');rmSync(directory,{recursive:true,force:true});});
@@ -115,6 +115,33 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   assert.equal(manuallyAdded.status,201);
   const afterManual=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
   assert.equal(afterManual.items.find(i=>i.name==='Manual WhatsApp Guest').source,'staff-whatsapp');
+  
+  const makeGlb=(meta)=>{
+    const json=Buffer.from(JSON.stringify(meta),'utf8');
+    const padding=(4-json.length%4)%4;
+    const contents=Buffer.concat([json,Buffer.alloc(padding,0x20)]);
+    const buf=Buffer.alloc(20+contents.length);
+    buf.write('glTF',0);buf.writeUInt32LE(2,4);buf.writeUInt32LE(buf.length,8);
+    buf.writeUInt32LE(contents.length,12);buf.write('JSON',16);
+    contents.copy(buf,20);return buf;
+  };
+  const model=makeGlb({asset:{version:'2.0'},meshes:[{primitives:[{attributes:{POSITION:0}}]}]});
+  assert.equal((await fetch(root+'/api/admin/models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:model.toString('base64')})})).status,401);
+  const modelUpload=await fetch(root+'/api/admin/models',{method:'POST',headers,body:JSON.stringify({data:model.toString('base64')})});
+  assert.equal(modelUpload.status,201);
+  const uploadedModel=await modelUpload.json();
+  assert.match(uploadedModel.url,/^\/api\/models\/[0-9a-f-]{36}\.glb$/);
+  const modelResponse=await fetch(root+uploadedModel.url);
+  assert.equal(modelResponse.status,200);
+  assert.equal(modelResponse.headers.get('content-type'),'model/gltf-binary');
+  const invalidRemote=makeGlb({asset:{version:'2.0'},meshes:[{}],buffers:[{uri:'https://example.org/remote.bin',byteLength:0}]});
+  const remoteResp=await fetch(root+'/api/admin/models',{method:'POST',headers,body:JSON.stringify({data:invalidRemote.toString('base64')})});
+  assert.equal(remoteResp.status,400);
+  const catalogWithModel=reloaded.vehicles.map((v,i)=>i===0?{...v,modelUrl:uploadedModel.url}:v);
+  const saveModel=await fetch(root+'/api/admin/catalog',{method:'PUT',headers,body:JSON.stringify({vehicles:catalogWithModel})});
+  assert.equal(saveModel.status,200);
+  const reloadModel=(await (await fetch(root+'/api/catalog')).json()).vehicles;
+  assert.equal(reloadModel[0].modelUrl,uploadedModel.url);
     const image=Buffer.concat([Buffer.from([255,216,255,224]),Buffer.alloc(300,7)]);
   const upload=await fetch(root+'/api/admin/images',{method:'POST',headers,body:JSON.stringify({mime:'image/jpeg',data:image.toString('base64')})});
   assert.equal(upload.status,201);
