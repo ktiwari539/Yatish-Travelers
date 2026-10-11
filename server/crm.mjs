@@ -10,6 +10,7 @@ const dataPath = resolve(process.env.CRM_DATA_FILE || '.data/enquiries.jsonl');
 const secret = process.env.CRM_ADMIN_TOKEN || '';
 const eventsPath=resolve(process.env.CRM_EVENTS_FILE || '.data/events.jsonl');
 const uploadsPath=resolve(process.env.CRM_UPLOADS_DIR || '.data/uploads');
+const modelsPath=resolve(process.env.CRM_MODELS_DIR || '.data/models');
 const ALLOWED_EVENTS=new Set(['quote_open','callback_open','corporate_open','whatsapp_click','email_click','vehicle_explore','quote_submit']);
 const VALID_STATUS = new Set(['new','contacted','quoted','confirmed','closed']);
 const rate = new Map();
@@ -78,7 +79,15 @@ const server = http.createServer(async (req,res)=>{
       res.writeHead(200,{'Content-Type':uploadMatch[2]==='jpg'?'image/jpeg':uploadMatch[2]==='png'?'image/png':'image/webp','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
       return res.end(readFileSync(file));
     }
-    if (url.pathname === '/api/catalog' && req.method === 'GET') {
+    const modelMatch=url.pathname.match(/^\/api\/models\/([0-9a-f-]{36})\.glb$/);
+    if(modelMatch&&req.method==='GET'){
+      const file=resolve(modelsPath,modelMatch[1]+'.glb');
+      if(!existsSync(file))return reply(res,404,{error:'Model not found.'});
+      const content=readFileSync(file);
+      res.writeHead(200,{'Content-Type':'model/gltf-binary','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+      return res.end(content);
+    }
+        if (url.pathname === '/api/catalog' && req.method === 'GET') {
       const config=readCatalog();
       return reply(res,200,{vehicles:config.vehicles.filter(v=>v.enabled),updatedAt:config.updatedAt});
     }
@@ -138,7 +147,30 @@ const server = http.createServer(async (req,res)=>{
       if(!secret) return reply(res,503,{error:'Admin access not configured. Set CRM_ADMIN_TOKEN.'});
       const provided=req.headers.authorization?.replace(/^Bearer /,'')||'';
       if (!compareToken(provided)) return reply(res,401,{error:'Invalid admin token.'});
-      if(url.pathname==='/api/admin/images' && req.method==='POST') {
+      if(url.pathname==='/api/admin/models'&&req.method==='POST'){
+        const incoming=await readBody(req,11_400_000);
+        const encoded=incoming.data;
+        if(typeof encoded!=='string'||encoded.length>11_250_000||!/^[a-zA-Z0-9+/]+={0,2}$/.test(encoded))return reply(res,400,{error:'Invalid GLB upload.'});
+        const file=Buffer.from(encoded,'base64');
+        if(file.length<28||file.length>8_000_000||file.toString('ascii',0,4)!=='glTF'||file.readUInt32LE(4)!==2||file.readUInt32LE(8)!==file.length){
+          return reply(res,400,{error:'Upload a valid glTF 2.0 GLB under 8 MB.'});
+        }
+        const chunkLength=file.readUInt32LE(12),chunkType=file.readUInt32LE(16);
+        if(chunkType!==0x4e4f534a||chunkLength>1_000_000||20+chunkLength>file.length)return reply(res,400,{error:'Invalid GLB JSON chunk.'});
+        let meta;
+        try{meta=JSON.parse(file.subarray(20,20+chunkLength).toString('utf8'));}catch{return reply(res,400,{error:'Invalid GLB metadata.'});}
+        if(meta.asset?.version!=='2.0'||!Array.isArray(meta.meshes)||meta.meshes.length===0){
+          return reply(res,400,{error:'GLB must contain a glTF 2.0 vehicle mesh.'});
+        }
+        if([...(meta.buffers||[]),...(meta.images||[])].some(resource=>typeof resource.uri==='string'&&!resource.uri.startsWith('data:'))){
+          return reply(res,400,{error:'Bundle all images and buffers inside the GLB. External resources are not supported.'});
+        }
+        mkdirSync(modelsPath,{recursive:true,mode:0o700});
+        const name=randomUUID()+'.glb';
+        writeFileSync(resolve(modelsPath,name),file,{mode:0o600,flag:'wx'});
+        return reply(res,201,{url:'/api/models/'+name});
+      }
+            if(url.pathname==='/api/admin/images' && req.method==='POST') {
         const incoming=await readBody(req,4_300_000);
         const mime=trim(incoming.mime,40),payload=incoming.data;
         if(typeof payload!=='string'||payload.length>4_200_000||!/^[a-zA-Z0-9+/]+={0,2}$/.test(payload))return reply(res,400,{error:'Invalid image data.'});
