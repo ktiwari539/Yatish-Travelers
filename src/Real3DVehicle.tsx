@@ -10,6 +10,7 @@ type Props={
  paint:PaintTone;
  mood:StudioMood;
  progress:number;
+ modelUrl?:string;
  onUnavailable?:()=>void;
 };
 
