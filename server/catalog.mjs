@@ -14,7 +14,7 @@ export const defaultCatalog=[
 ].map((v)=>({...v,id:v.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
  gallery:v.name==='Maruti Dzire' ? [commons('MIAS%202025%20-%20All-new%20Suzuki%20Dzire%20Hybrid%2004.jpg')]
  :v.name==='Maruti Ertiga' ? [commons('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Rear%20view%20-%20April%2026%202018.jpg')]
- :v.name==='Toyota Innova' ? [commons('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg')]
+ :v.name==='Toyota Innova' ? [commons('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg'),commons('Toyota%20Innova%20Crysta%202.4%20Z%20front%20right.jpg')]
  :[]
 }));
 const text=(value,max=120)=>typeof value==='string'?value.trim().slice(0,max):'';
