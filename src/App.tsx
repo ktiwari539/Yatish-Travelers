@@ -156,7 +156,7 @@ function StoriesPage() {
       </header>
 
       <section className="stories-hero cinematic-stories-hero">
-        <ScenicImage className="stories-hero-background" src={luxuryMedia.mountains.src} fallback={luxuryMedia.landscape.src} alt="" loading="eager"/>
+        <ScenicImage className="stories-hero-background" src={luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
         <div className="stories-hero-glow" />
         <span className="kicker">Stories from the Road</span>
         <h1>Every trip has a story worth keeping.</h1>
@@ -173,7 +173,7 @@ function StoriesPage() {
         {storySlots.map((story, index) => (
           <article className="story-feature" key={story.title}>
             <div className="story-feature-image">
-              <ScenicImage src={story.visual.src} fallback={luxuryMedia.mountains.src} alt={story.visual.alt} loading="lazy" />
+              <ScenicImage src={story.visual.src} fallback={story.visual.fallback ?? luxuryMedia.landscape.src} alt={story.visual.alt} loading="lazy" />
               <div className="story-feature-shade" />
               <span>0{index + 1}</span>
             </div>
@@ -410,7 +410,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             onPointerLeave={(event)=>{event.currentTarget.style.setProperty('--photo-x','0');event.currentTarget.style.setProperty('--photo-y','0');}}>
             <div className="luxury-hero-photo-layer cinematic-photo-layer">
               <ScenicImage className="hero-car-image" src={luxuryMedia.hero.src}
-                fallback={luxuryMedia.mountains.src}
+                fallback={luxuryMedia.hero.fallback}
                 alt={luxuryMedia.hero.alt} fetchPriority="high"/>
             </div>
             <div className="luxury-hero-photo-wash" aria-hidden="true"/>
@@ -546,7 +546,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events', visual: luxuryMedia.hero },
           ].map((item) => (
             <article key={item.title} className="cinematic-service-card">
-              <div className="cinematic-service-media"><ScenicImage src={item.visual.src} fallback={luxuryMedia.mountains.src} alt={item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
+              <div className="cinematic-service-media"><ScenicImage src={item.visual.src} fallback={item.visual.fallback ?? luxuryMedia.landscape.src} alt={item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
               <div className="service-icon">{item.icon}</div>
               <small>{item.meta}</small>
               <h3>{item.title}</h3>
@@ -716,7 +716,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="stories-teaser-stack cinematic-stories-stack" aria-label="Illustrative journeys">
           {[{visual:luxuryMedia.mountains,title:'Mountain escapes'}, {visual:luxuryMedia.hero,title:'The golden-hour drive'}, {visual:luxuryMedia.landscape,title:'Places worth discovering'}].map(({visual,title},index)=>(
             <article className={`story-stack-card story-stack-${index + 1}`} key={title}>
-              <ScenicImage src={visual.src} fallback={luxuryMedia.mountains.src} alt={visual.alt} loading="lazy" />
+              <ScenicImage src={visual.src} fallback={visual.fallback ?? luxuryMedia.landscape.src} alt={visual.alt} loading="lazy" />
               <div><small>TRAVEL INSPIRATION</small><strong>{title}</strong><span>Imagine your next journey</span></div>
             </article>
           ))}
