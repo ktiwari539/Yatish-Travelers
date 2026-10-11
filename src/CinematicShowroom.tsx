@@ -12,6 +12,7 @@ export type ShowroomVehicle = {
   tag: string;
   category: string;
   gallery?:string[];
+  modelUrl?:string;
 };
 
 type Props = {
@@ -94,12 +95,12 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
               <span>NOW SHOWING</span>
               <h3>{active.name}</h3>
               <p>{active.tag} <b>·</b> {active.seats} seats <b>·</b> {active.category}</p>
-              <small className="cinema-disclaimer">3D model is an illustrative body style, not an exact render of this vehicle.</small>
+              <small className="cinema-disclaimer">{active.modelUrl?'Licensed 3D model uploaded by fleet management.':'3D silhouette represents the vehicle category, not its exact manufacturer model.'}</small>
             </div>
             <div className="studio-controls" aria-label="3D studio controls">
-              <div className="studio-paints" role="group" aria-label="Change model color">
-                <span>01 / PAINT FINISH</span>
-                <div>{tones.map(t=><button key={t.id} type="button" onClick={()=>setPaint(t.id)}
+              <div className="studio-paints" role="group" aria-label="Change conceptual model color">
+                <span>01 / {active.modelUrl?'CUSTOM MODEL':'CONCEPT PAINT'}</span>
+                <div>{tones.map(t=><button key={t.id} type="button" onClick={()=>setPaint(t.id)} disabled={!!active.modelUrl}
                   className={paint===t.id?'selected':''} aria-pressed={paint===t.id}
                   aria-label={t.name+' paint'} title={t.name} style={{'--paint':t.color} as React.CSSProperties}/>)}</div>
               </div>
@@ -144,7 +145,7 @@ export function CinematicShowroom({ vehicles, onExplore }: Props) {
             <div className="cinema-webgl-stage">
               {!reducedMotion && !webglUnavailable ? (
                 <Suspense fallback={<div className="studio-loading">LOADING LIVE 3D EXPERIENCE</div>}>
-                  <Real3DVehicle category={active.category} paint={paint} mood={mood} progress={progress}
+                  <Real3DVehicle category={active.category} paint={paint} mood={mood} progress={progress} modelUrl={active.modelUrl}
                     onUnavailable={()=>setWebglUnavailable(true)}/>
                 </Suspense>
               ) : <img className="studio-static-fallback" src={active.image} alt={active.name} loading="lazy"/>}
