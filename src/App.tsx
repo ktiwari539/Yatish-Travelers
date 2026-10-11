@@ -738,6 +738,11 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             ))}
           </p>
           <p>Alternate angles: <a href="https://commons.wikimedia.org/wiki/File:MIAS_2025_-_All-new_Suzuki_Dzire_Hybrid_04.jpg" target="_blank" rel="noreferrer">Dzire — Ethan Llamas (CC BY-SA 4.0)</a> · <a href="https://commons.wikimedia.org/wiki/File:Suzuki_Ertiga_GX_1.5_-_Indonesia_International_Motor_Show_2018_-_Rear_view_-_April_26_2018.jpg" target="_blank" rel="noreferrer">Ertiga — Wilzz99 (CC BY-SA 4.0)</a> · <a href="https://commons.wikimedia.org/wiki/File:Toyota_Innova_Crysta_2.4_Z_rear_left.jpg" target="_blank" rel="noreferrer">Innova — Premnath Kudva (CC BY-SA)</a>.</p>
+          <p>Scenic editorial images (Unsplash License):
+            {[luxuryMedia.hero,luxuryMedia.mountains,luxuryMedia.airport,luxuryMedia.forest,luxuryMedia.landscape].map((visual,index)=>(
+              <span key={visual.src}> <a href={visual.source} target="_blank" rel="noreferrer">{visual.credit}</a>{index<4?' · ':''}</span>
+            ))}
+          </p>
         </div>
       </footer>
 
