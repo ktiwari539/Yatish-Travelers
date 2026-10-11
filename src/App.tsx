@@ -3,6 +3,9 @@ import { CinematicShowroom } from './CinematicShowroom';
 
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
+import { ScenicImage } from './ScenicImage';
+import { luxuryMedia } from './luxuryMedia';
+import { LuxuryInterlude } from './LuxuryInterlude';
 import { RouteExperience } from './RouteExperience';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
@@ -405,18 +408,24 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
               event.currentTarget.style.setProperty('--photo-y',String(((event.clientY-rect.top)/rect.height-.5).toFixed(3)));
             }}
             onPointerLeave={(event)=>{event.currentTarget.style.setProperty('--photo-x','0');event.currentTarget.style.setProperty('--photo-y','0');}}>
-            <div className="luxury-hero-photo-layer" key={heroVehicle.name}>
-              <img className="hero-car-image" src={heroVehicle.image}
-                alt={heroVehicle.name+' — actual model reference photography'} fetchPriority="high"/>
+            <div className="luxury-hero-photo-layer cinematic-photo-layer">
+              <ScenicImage className="hero-car-image" src={luxuryMedia.hero.src}
+                fallback={luxuryMedia.mountains.src}
+                alt={luxuryMedia.hero.alt} fetchPriority="high"/>
             </div>
             <div className="luxury-hero-photo-wash" aria-hidden="true"/>
             <div className="luxury-hero-corner"><span className="luxury-light-dot"/> MATESHWARI / SIGNATURE FLEET</div>
-            <div className="luxury-hero-photo-caption">
-              <div><span>YOUR JOURNEY · YOUR CHOICE</span><h2>{heroVehicle.name}</h2>
-                <p>{heroVehicle.tag} <i/> {heroVehicle.seats} seats <i/> {heroVehicle.category}</p></div>
-              <span className="luxury-gallery-indicator">01 / 0{liveFleet.slice(0,4).length}</span>
+            <div className="luxury-hero-photo-caption cinematic-hero-caption">
+              <div><span>THE BEAUTY OF GOING FURTHER</span><h2>The road is yours.</h2>
+                <p>Considered travel. Memorable places. A calmer way to arrive.</p></div>
+              <span className="luxury-gallery-indicator">TRAVEL / REIMAGINED</span>
             </div>
-            <span className="luxury-hero-edition">MODEL REFERENCE PHOTOGRAPHY</span>
+            <div className="hero-selected-vehicle">
+              <span>YOUR SELECTED VEHICLE</span>
+              <strong>{heroVehicle.name}</strong>
+              <small>{heroVehicle.seats} · {heroVehicle.category}</small>
+            </div>
+            <span className="luxury-hero-edition">ILLUSTRATIVE TRAVEL PHOTOGRAPHY</span>
           </div>
           <div className="floating-card">
             <span>Indicative fares</span>
@@ -444,6 +453,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div><small>04</small><strong>Clear Quotations</strong><span>Know the major charges before travel</span></div>
       </section>
 
+      <LuxuryInterlude compact />
       <div className="atelier-intro" aria-hidden="true">
         <span>THE FLEET EXPERIENCE</span>
         <span>SCROLL DOWN / STEP INTO THE STUDIO</span>
@@ -530,12 +540,13 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
         <div className="service-grid">
           {[
-            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides' },
-            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity' },
-            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport' },
-            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events' },
+            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides', visual: luxuryMedia.forest },
+            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity', visual: luxuryMedia.mountains },
+            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport', visual: luxuryMedia.airport },
+            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events', visual: luxuryMedia.hero },
           ].map((item) => (
-            <article key={item.title}>
+            <article key={item.title} className="cinematic-service-card">
+              <div className="cinematic-service-media"><ScenicImage src={item.visual.src} fallback={luxuryMedia.mountains.src} alt={item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
               <div className="service-icon">{item.icon}</div>
               <small>{item.meta}</small>
               <h3>{item.title}</h3>
@@ -599,6 +610,14 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       <section className="corporate-section reveal-3d" id="corporate">
         <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
         <div className="corporate-orbit corporate-orbit-two" aria-hidden="true" />
+        <div className="corporate-image-panel">
+          <ScenicImage src={luxuryMedia.airport.src} fallback={luxuryMedia.forest.src} alt={luxuryMedia.airport.alt} loading="lazy"/>
+          <div className="corporate-image-overlay">
+            <small>ARRIVE IN YOUR ELEMENT</small>
+            <strong>Business travel, thoughtfully coordinated.</strong>
+            <span>Airport · Executive · Teams · Events</span>
+          </div>
+        </div>
         <div className="corporate-copy">
           <span className="kicker">Corporate Mobility</span>
           <h2>One travel partner for your teams, guests and business journeys.</h2>
@@ -694,15 +713,11 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <a className="primary" href="/stories">Explore Stories <ArrowRight size={17}/></a>
         </div>
 
-        <div className="stories-teaser-stack" aria-hidden="true">
-          {liveFleet.slice(1, 4).map((car, index) => (
-            <article className={`story-stack-card story-stack-${index + 1}`} key={car.name}>
-              <img src={car.image} alt="" />
-              <div>
-                <small>On the road</small>
-                <strong>{car.name}</strong>
-                <span>Real customer journeys</span>
-              </div>
+        <div className="stories-teaser-stack cinematic-stories-stack" aria-label="Illustrative journeys">
+          {[{visual:luxuryMedia.mountains,title:'Mountain escapes'}, {visual:luxuryMedia.hero,title:'The golden-hour drive'}, {visual:luxuryMedia.landscape,title:'Places worth discovering'}].map(({visual,title},index)=>(
+            <article className={`story-stack-card story-stack-${index + 1}`} key={title}>
+              <ScenicImage src={visual.src} fallback={luxuryMedia.mountains.src} alt={visual.alt} loading="lazy" />
+              <div><small>TRAVEL INSPIRATION</small><strong>{title}</strong><span>Imagine your next journey</span></div>
             </article>
           ))}
         </div>
