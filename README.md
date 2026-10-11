@@ -33,6 +33,20 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Scenic luxury visual refresh — current review
+The homepage now uses **golden-hour travel imagery** (explicitly labeled *illustrative travel photography*), with an accurate selectable vehicle name and indicative rate displayed separately. The fleet cards continue to identify actual car models, instead of relabeling an unrelated scenic SUV as an Innova.
+
+The site also includes:
+- panoramic Himalayan-road image interlude with working **Explore journeys** and **Plan a trip** CTAs;
+- image-led Local, Outstation, Airport and Events service tiles;
+- a photographic airport/corporate travel panel;
+- three landscape-led Stories teaser cards and a credited Mountain / Golden Hour / Green Escapes travel editorial;
+- desktop/tablet/mobile layouts and reduced-motion support in `src/scenic-luxury.css`.
+
+Photo metadata and URLs live in `src/luxuryMedia.ts`. The current externally hosted scenic photographs are **development references**, licensed through Unsplash and accompanied by source/creator links; replace them with approved, locally hosted creative assets before launch. The design is influenced by the two previously generated sunset/SUV image references, but those generated files are **not currently bundled in Git**, so the website does not pretend they are.
+
+**Review these on your Mac:** first-screen hero crop, selected vehicle card, image-loaded states, mountain interlude, 4 service cards, Stories and corporate panorama. Test at 375px, 768px, 1024px and 1440px widths. Accessibility and real-device visual acceptance are separate from passing CI.
+
 ### Visual direction: photographic luxury rather than toy-like concepts
 
 The current local review intentionally **does not show the low-poly 3D car by default**. It had an incorrect visual relationship to vehicle names such as Toyota Innova. The hero now uses model-reference photography, a lighter editorial palette and pointer-responsive depth. A separate immersive fleet gallery has animated multi-angle photography, prior/next vehicle previews, manual model selection and quotation actions. The gallery remains interactive without misrepresenting generated concept geometry as an OEM vehicle.
