@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
+import { FleetCatalogCard } from './FleetCatalogCard';
 import { PremiumFleetExperience } from './PremiumFleetExperience';
 import { WhyMateshwari } from './WhyMateshwari';
 
@@ -483,28 +484,10 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
 
         <div className="fleet-grid">
-          {filteredFleet.map((car, index) => (
-            <article className="fleet-card" key={car.name} style={{ animationDelay: `${index * 90}ms` }}>
-              <div className="fleet-visual">
-                <img src={car.image} alt={car.name} loading="lazy" decoding="async" />
-                <div className="fleet-shade" />
-                <div className="fleet-number">0{index + 1}</div>
-                <span className="fleet-type">{car.category}</span>
-              </div>
-              <div className="fleet-meta">
-                <span>{car.tag}</span>
-                <h3>{car.name}</h3>
-                <div className="rate"><strong>₹{car.rateMin??15}–₹{car.rateMax??25}</strong><small>/ km indicative range</small></div>
-                <div className="fleet-bottom">
-                  <span>{car.seats} seats · {car.category}</span>
-                  <button onClick={() => { setVehicle(car.name);logInteraction('vehicle_explore','fleet',car.name);document.getElementById('fare')?.scrollIntoView({behavior:'smooth'}); }}>
-                    Estimate <ArrowRight size={15}/>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+          {filteredFleet.map((car,index)=>(
+            <FleetCatalogCard car={car} index={index} key={car.name}
+              onEstimate={()=>{selectFeatured(car.name);logInteraction('vehicle_explore','fleet',car.name);document.getElementById('fare')?.scrollIntoView({behavior:'smooth'});}}/>
+          ))}       </div>
       </section>
 
       <WhyMateshwari onQuote={()=>openQuote('quote','why-mateshwari')}/>
