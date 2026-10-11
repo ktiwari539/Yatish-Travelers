@@ -9,7 +9,7 @@ import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import { LuxuryInterlude } from './LuxuryInterlude';
 import { RouteExperience } from './RouteExperience';
-import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Menu, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
 type FleetVehicle = {
   name: string;
@@ -237,6 +237,7 @@ export function App() {
   const [fleetSort, setFleetSort] = useState('smart');
   const [passengers, setPassengers] = useState(4);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
@@ -326,10 +327,10 @@ export function App() {
     });
   }, [fleetFilter, fleetSort, passengers, liveFleet]);
 
-  const openQuote = (mode: QuoteMode = 'quote',source='website') => {
+  const openQuote = (mode: QuoteMode = 'quote',source='website',requestedVehicle?:string) => {
     setQuoteMode(mode);
     setQuoteSource(source);
-    logInteraction(mode+'_open',source,selected.name);
+    logInteraction(mode+'_open',source,requestedVehicle??selected.name);
     setQuoteSubmitted(false);
     setQuoteError('');
     setQuoteId('');
@@ -382,6 +383,16 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <a href="#contact">Contact</a>
         </nav>
         <a className="nav-cta" href="#fare">Plan a Trip <ArrowRight size={16} /></a>
+        <button className="nav-menu-toggle" type="button" onClick={()=>setMobileMenuOpen(v=>!v)}
+          aria-expanded={mobileMenuOpen} aria-controls="mobile-main-nav" aria-label={mobileMenuOpen?'Close navigation':'Open navigation'}>
+          {mobileMenuOpen?<X size={22}/>:<Menu size={22}/>}
+        </button>
+        {mobileMenuOpen&&<nav className="mobile-nav-panel" id="mobile-main-nav" aria-label="Mobile navigation">
+          {[['Fleet experience','#showroom'],['Vehicle options','#fleet'],['Fare estimator','#fare'],['Services','#services'],['Corporate','#corporate'],['Journeys','#journeys'],['Contact','#contact']].map(([label,href])=>(
+            <a key={href} href={href} onClick={()=>setMobileMenuOpen(false)}>{label}<ArrowRight size={15}/></a>
+          ))}
+          <a className="mobile-nav-quote" href="#fare" onClick={()=>setMobileMenuOpen(false)}>Get a quote <ArrowRight size={16}/></a>
+        </nav>}
       </header>
 
       <section className="hero" id="top">
@@ -408,7 +419,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <FleetHeroVisual vehicles={liveFleet}
             activeIndex={Math.min(heroIndex,Math.max(0,liveFleet.length-1))}
             onChange={index=>{const car=liveFleet[index];if(car)selectFeatured(car.name);}}
-            onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured');}}/>
+            onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
         </div>
       </section>
 
@@ -420,7 +431,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
       <PremiumFleetExperience vehicles={liveFleet} activeName={heroVehicle.name}
-        onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet');}}/>
+        onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet',name);}}/>
       <section className="section reveal-3d" id="fleet">
         <div className="section-heading">
           <div><span className="kicker">Our Fleet</span><h2>Choose your ride.</h2></div>
