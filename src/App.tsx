@@ -1,7 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CinematicShowroom } from './CinematicShowroom';
 
-const Hero3D=lazy(()=>import('./Real3DVehicle').then(mod=>({default:mod.Real3DVehicle})));
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
 import { RouteExperience } from './RouteExperience';
@@ -241,7 +240,6 @@ export function App() {
   const [quoteDelivery,setQuoteDelivery]=useState<Array<{channel:string;purpose:string;status:string}>>([]);
   const [copied, setCopied] = useState(false);
   const [heroIndex, setHeroIndex] = useState(2);
-  const [hero3dUnavailable,setHero3dUnavailable]=useState(false);
   const [liveFleet,setLiveFleet]=useState<FleetVehicle[]>(fleet);
   const [quoteSource,setQuoteSource]=useState('website');
   useEffect(()=>{
@@ -399,20 +397,26 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
         <div className="car-stage">
           <div className="road-lines" aria-hidden="true"><span/><span/><span/></div>
-          <div className="hero-car-frame hero-poster hero-3d-poster">
-            {!hero3dUnavailable ? (
-              <Suspense fallback={<img className="hero-car-image" src={heroVehicle.image} alt={heroVehicle.name} fetchPriority="high"/>}>
-                <Hero3D category={heroVehicle.category} paint="champagne" mood="daylight" progress={0}
-                  modelUrl={heroVehicle.modelUrl} onUnavailable={()=>setHero3dUnavailable(true)}/>
-              </Suspense>
-            ):<img className="hero-car-image" src={heroVehicle.image} alt={heroVehicle.name} fetchPriority="high"/>}
-            <div className="hero-car-shade"/>
-            <div className="poster-corner" aria-hidden="true"><span>LIVE / 3D</span><strong>Signature journeys</strong></div>
-            <div className="hero-car-label">
-              <span>DRAG TO EXPLORE · CONCEPT VISUAL</span>
-              <strong>{heroVehicle.name}</strong>
-              <small>{heroVehicle.seats} seats · {heroVehicle.category}</small>
+          <div className="hero-car-frame hero-poster luxury-hero-photo"
+            onPointerMove={(event)=>{
+              if(event.pointerType==='touch')return;
+              const rect=event.currentTarget.getBoundingClientRect();
+              event.currentTarget.style.setProperty('--photo-x',String(((event.clientX-rect.left)/rect.width-.5).toFixed(3)));
+              event.currentTarget.style.setProperty('--photo-y',String(((event.clientY-rect.top)/rect.height-.5).toFixed(3)));
+            }}
+            onPointerLeave={(event)=>{event.currentTarget.style.setProperty('--photo-x','0');event.currentTarget.style.setProperty('--photo-y','0');}}>
+            <div className="luxury-hero-photo-layer" key={heroVehicle.name}>
+              <img className="hero-car-image" src={heroVehicle.image}
+                alt={heroVehicle.name+' — actual model reference photography'} fetchPriority="high"/>
             </div>
+            <div className="luxury-hero-photo-wash" aria-hidden="true"/>
+            <div className="luxury-hero-corner"><span className="luxury-light-dot"/> MATESHWARI / SIGNATURE FLEET</div>
+            <div className="luxury-hero-photo-caption">
+              <div><span>YOUR JOURNEY · YOUR CHOICE</span><h2>{heroVehicle.name}</h2>
+                <p>{heroVehicle.tag} <i/> {heroVehicle.seats} seats <i/> {heroVehicle.category}</p></div>
+              <span className="luxury-gallery-indicator">01 / 0{liveFleet.slice(0,4).length}</span>
+            </div>
+            <span className="luxury-hero-edition">MODEL REFERENCE PHOTOGRAPHY</span>
           </div>
           <div className="floating-card">
             <span>Indicative fares</span>
