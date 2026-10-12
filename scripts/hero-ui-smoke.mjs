@@ -165,7 +165,6 @@ async function smoke(){
  ensure(narrowEmail&&narrowBooking&&narrowEmail.y+narrowEmail.height+4<narrowBooking.y,
    '375px hero must not overlap the booking panel');
  await page.screenshot({path:'artifacts/visual-evidence/mobile-375px.png'});
- await page.locator('.quote-close').click();
  // CRM photo-privacy regression: a current image cannot be published as
  // sanitized without pixelating a region or explicitly reviewing the whole photo.
  const tinyPng='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==';
