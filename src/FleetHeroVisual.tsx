@@ -31,6 +31,9 @@ const scenes=[
   },
 ] as const;
 
+// 4.8-second scene cadence: faster than the former 9.6s, without a frantic slider.
+const SCENE_INTERVAL_MS=4800;
+
 /**
  * This is a motion-led editorial backdrop, not a real-time video or OEM car model.
  * Scenic photographs are never described as photos of the selected fleet vehicle.
@@ -43,6 +46,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const [paused,setPaused]=useState(false);
   const [reduceMotion,setReduceMotion]=useState(false);
   const [visible,setVisible]=useState(true);
+  const [sceneReady,setSceneReady]=useState<boolean[]>(()=>scenes.map(()=>false));
   const active=vehicles[activeIndex]??vehicles[0];
 
   useEffect(()=>{
@@ -60,9 +64,14 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   },[]);
   useEffect(()=>{
     if(paused||reduceMotion||!visible)return;
-    const timer=window.setInterval(()=>setScene(index=>(index+1)%scenes.length),9600);
-    return()=>window.clearInterval(timer);
-  },[scene,paused,reduceMotion,visible]);
+    // Do not show a new slide until its large scenic photo (or fallback) has decoded.
+    // Hidden scenes are intentionally mounted and preloaded at low priority below.
+    const next=(scene+1)%scenes.length;
+    const timer=window.setTimeout(()=>{
+      if(sceneReady[next])setScene(next);
+    },SCENE_INTERVAL_MS);
+    return()=>window.clearTimeout(timer);
+  },[scene,paused,reduceMotion,visible,sceneReady]);
   useEffect(()=>{
     const element=host.current;
     if(!element||reduceMotion)return;
@@ -84,6 +93,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   },[reduceMotion]);
 
   const move=useCallback((delta:number)=>{
+    // Manual scene changes are immediate and intentionally pause autoplay.
     setScene(index=>(index+delta+scenes.length)%scenes.length);
     setPaused(true);
   },[]);
@@ -92,8 +102,9 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   };
   if(!active)return null;
 
-  return <div className={'cinema-director '+(paused?'is-paused':'')+(reduceMotion?' reduce-motion':'')}
+  return <div className={'cinema-director '+((paused||!visible||reduceMotion)?'is-paused':'')+(reduceMotion?' reduce-motion':'')}
     ref={host} aria-label="Cinematic journey scenes and selectable travel vehicles"
+    style={{'--cinema-duration':SCENE_INTERVAL_MS+'ms'} as React.CSSProperties}
     onPointerMove={event=>{
       if(reduceMotion||event.pointerType==='touch')return;
       const bounds=event.currentTarget.getBoundingClientRect();
@@ -110,7 +121,9 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
         className={'cinema-director-scene '+(i===scene?'is-active':'')}
         aria-hidden="true">
         <div className="cinema-director-backdrop">
-          <ScenicImage src={item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt="" loading={i===0?'eager':'lazy'} />
+          <ScenicImage src={item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt=""
+            loading="eager" decoding="async" fetchPriority={i===0?'high':'low'}
+            onLoad={()=>setSceneReady(previous=>previous[i]?previous:previous.map((ready,index)=>index===i?true:ready))}/>
         </div>
         <div className="cinema-director-foreground">
           <ScenicImage src={item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt="" loading="lazy"/>
@@ -162,6 +175,6 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
     <div className="cinema-director-playback" aria-hidden="true" key={scene}>
       <span className="cinema-director-progress"/>
     </div>
-    <p className="cinema-director-legal">ILLUSTRATIVE SCENERY · THE VEHICLE ABOVE IS YOUR SELECTED CATEGORY, NOT THE CAR IN THE PHOTO</p>
+    <p className="cinema-director-legal">ILLUSTRATIVE TRAVEL SCENERY · YOUR BOOKING VEHICLE IS SELECTED SEPARATELY</p>
   </div>;
 }
