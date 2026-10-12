@@ -246,7 +246,6 @@ export function App() {
   const [quoteId, setQuoteId] = useState('');
   const [quoteDelivery,setQuoteDelivery]=useState<Array<{channel:string;purpose:string;status:string}>>([]);
   const [copied, setCopied] = useState(false);
-  const [heroIndex, setHeroIndex] = useState(2);
   const [liveFleet,setLiveFleet]=useState<FleetVehicle[]>(fleet);
   const [quoteSource,setQuoteSource]=useState('website');
   useEffect(()=>{
@@ -263,10 +262,10 @@ export function App() {
   },[]);
 
   const selected = liveFleet.find(item=>item.name===vehicle) ?? liveFleet[0] ?? fleet[1];
-  const heroVehicle = liveFleet[Math.min(heroIndex,liveFleet.length-1)] ?? liveFleet[0] ?? fleet[2];
+  const heroVehicle = selected;
   const selectFeatured = (name:string)=>{
     const next=liveFleet.findIndex(item=>item.name===name);
-    if(next>=0){setHeroIndex(next);setVehicle(name);}
+    if(next>=0)setVehicle(name);
   };
 
   useEffect(() => {
@@ -399,7 +398,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       <section className="hero cinematic-landing" id="top" aria-label="Mateshwari Travellers signature journeys">
         <div className="car-stage fleet-hero-slot">
           <FleetHeroVisual vehicles={liveFleet}
-            activeIndex={Math.min(heroIndex,Math.max(0,liveFleet.length-1))}
+            activeIndex={Math.max(0,liveFleet.findIndex(item=>item.name===vehicle))}
             onChange={index=>{const car=liveFleet[index];if(car)selectFeatured(car.name);}}
             onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
         </div>
