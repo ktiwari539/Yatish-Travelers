@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, CarFront, ChevronLeft, ChevronRight, Compass, MoveUpRight } from 'lucide-react';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
@@ -29,6 +29,45 @@ function ModelImage({vehicle,src,alt,duplicate=false}:ModelImageProps){
 }
 export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Props){
   const [angle,setAngle]=useState(0);
+  const road=useRef<HTMLDivElement|null>(null);
+  const [driveStep,setDriveStep]=useState(0);
+  const [reducedMotion,setReducedMotion]=useState(false);
+  useEffect(()=>{
+    const query=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update=()=>setReducedMotion(query.matches);
+    update();
+    query.addEventListener('change',update);
+    return ()=>query.removeEventListener('change',update);
+  },[]);
+  useEffect(()=>{
+    const stage=road.current;
+    if(!stage)return;
+    let frame=0;
+    const update=()=>{
+      const rect=stage.getBoundingClientRect();
+      const distance=Math.max(1,rect.height-window.innerHeight);
+      const p=Math.min(1,Math.max(0,-rect.top/distance));
+      // Scroll controls photograph movement, not selected fleet model.
+      // Manual vehicle selection therefore remains stable and quote-safe.
+      const travel=reducedMotion?1:Math.min(1,p/.40);
+      stage.style.setProperty('--road-car-offset',(30*(1-travel)).toFixed(1)+'%');
+      stage.style.setProperty('--road-car-scale',(1.17-.14*travel).toFixed(3));
+      stage.style.setProperty('--road-marking-shift',(-p*480).toFixed(0)+'px');
+      stage.style.setProperty('--road-motion-progress',p.toFixed(3));
+      const step=reducedMotion?2:p<.34?0:p<.68?1:2;
+      setDriveStep(current=>current===step?current:step);
+      frame=0;
+    };
+    const watch=()=>{if(!frame)frame=window.requestAnimationFrame(update);};
+    update();
+    window.addEventListener('scroll',watch,{passive:true});
+    window.addEventListener('resize',watch);
+    return()=>{
+      window.removeEventListener('scroll',watch);
+      window.removeEventListener('resize',watch);
+      if(frame)cancelAnimationFrame(frame);
+    };
+  },[reducedMotion]);
   const activeIndex=Math.max(0,vehicles.findIndex(v=>v.name===activeName));
   const active=vehicles[activeIndex];
   // A reused photo URL is never allowed to stand for two different vehicle models.
@@ -54,19 +93,31 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   if(!active)return null;
   const showApprovedConcept=active.name==='Maruti Ertiga';
   const uniqueActive=hasUniquePhoto(active,chosenUrl);
+  const chapters=[
+    {number:'01',label:'THE ARRIVAL',heading:'See the real vehicle.',detail:'A distinct model-reference photograph comes into focus as you scroll.'},
+    {number:'02',label:'THE DETAILS',heading:'Discover the right fit.',detail:active.seats+' seating · '+active.category+' · '+active.tag+'.'},
+    {number:'03',label:'THE JOURNEY',heading:'Plan your next drive.',detail:'Request this model, then confirm the assigned vehicle, availability and final fare.'}
+  ];
+  const chapter=chapters[driveStep];
   return <section className="fleet-editorial" id="motion-fleet" aria-label="Our premium fleet collection">
     <div className="fleet-editorial-heading">
       <span className="fleet-editorial-kicker"><Compass size={15}/> THE MATESHWARI COLLECTION</span>
       <div><h2>One fleet. <em>{vehicles.length} distinct journeys.</em></h2>
-        <p>Explore ten distinct vehicle references. The assigned car, availability and final fare are confirmed on enquiry.</p></div>
+        <p>Explore {vehicles.length} individual vehicle references. Scroll through the scene, then request the model you prefer.</p></div>
     </div>
-    <div className="fleet-editorial-stage">
+    <div className="fleet-road-story" ref={road} aria-label="Scroll-driven photographic vehicle experience">
+      <div className="fleet-road-sticky">
+        <div className="fleet-road-story-top" aria-hidden="true">
+          <span>REAL VEHICLE PHOTOGRAPHY</span><span>SCROLL TO REVEAL <span className="fleet-road-story-line"/></span>
+        </div>
+    <div className="fleet-editorial-stage fleet-road-stage" data-drive-step={driveStep}>
       <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
         {showApprovedConcept
           ?<ScenicImage src={luxuryMedia.hero.src} fallback={uniqueActive?chosenUrl:undefined}
               alt="Ertiga-inspired AI-generated MPV travel concept, not an actual assigned vehicle photo" loading="lazy"/>
           :<ModelImage vehicle={active} src={chosenUrl}
               alt={active.name+' model-specific vehicle reference photo'} duplicate={!uniqueActive}/>}
+        <div className="fleet-drive-road-markings" aria-hidden="true"><span/><span/><span/></div>
         <div className="fleet-editorial-gradient"/>
         <div className="fleet-editorial-frame-tag"><span/> {showApprovedConcept?'ILLUSTRATIVE MPV CONCEPT':'MODEL-SPECIFIC REFERENCE'}</div>
         <span className="fleet-editorial-frame-count">{String(activeIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span>
@@ -81,6 +132,11 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
           </div>}
       </div>
       <div className="fleet-editorial-description">
+        <div className="fleet-drive-story-chapter" key={active.name+'-'+driveStep} aria-live="off">
+          <span>{chapter.number} / {chapter.label}</span>
+          <strong>{chapter.heading}</strong>
+          <p>{chapter.detail}</p>
+        </div>
         <span className="fleet-editorial-chapter">THE COLLECTION / {String(activeIndex+1).padStart(2,'0')}</span>
         <div className="fleet-editorial-model" key={active.name}>
           <span className="fleet-editorial-class">{active.category.toUpperCase()} <i/> {active.seats} SEATS</span>
@@ -97,6 +153,8 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
           <span>CHOOSE YOUR VEHICLE</span>
           <button type="button" onClick={()=>choose(activeIndex+1)} aria-label="Next model"><ChevronRight size={20}/></button>
         </div>
+      </div>
+      <div className="fleet-road-story-progress" aria-hidden="true"><i/></div>
       </div>
     </div>
     <div className="fleet-editorial-strip-title">
