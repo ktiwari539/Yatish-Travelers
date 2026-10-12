@@ -25,6 +25,27 @@ Keep the terminal open and enter your **private** token at http://localhost:5173
 | http://localhost:5173/stories | Story submission placeholder and scenic inspiration (not fake testimonials) |
 | http://localhost:5173/admin | CRM: enquiries, activity tracking, vehicle configuration |
 
+### User-provided premium fleet photos — Thar / XUV700 / Traveller
+
+The new **seven-photo local media pack** is supplied as a separate downloadable ZIP in our conversation: `mateshwari_fleet_photography_safe_pack.zip`. It includes a dynamic XUV700 driving image and studio front angle, red Thar front/rear renders, grey Thar driving and plate-sanitized front views, and the plate-sanitized Force Traveller photograph. The remaining seven model identities are unchanged.
+
+**Install once on your Mac, after pulling this branch:**
+
+```bash
+npm run fleet:install
+CRM_ADMIN_TOKEN="YOUR_PRIVATE_TOKEN" npm run dev:full
+```
+
+Save the ZIP in `~/Downloads/`, or run `npm run fleet:install -- /absolute/path/to/mateshwari_fleet_photography_safe_pack.zip`. The installer checks the exact permitted file names and SHA-256 hashes, and refuses to overwrite customized copies. It does not touch the earlier Ertiga concept or Scorpio video packs.
+
+**Important:** With the seven images physically present under `public/media/`, the local backend automatically replaces only the **unchanged default** Thar, XUV700 and Tempo Traveller reference URLs. Existing staff-uploaded images, prices, visibility and custom alternate galleries are preserved. A full CRM restart is required because the API reads the local filesystem. Without the pack, the website still uses its original fallback model references—there is no misleading substitution with other car models.
+
+**Number-plate review:** The user-supplied XUV700 driving photo already contains a blanked rear plate. The uploaded studio XUV700 and red Thar model renders show **model branding**, not readable registration numbers. The grey Thar front and the Traveller front/side registration markings were permanently pixelated in the exported WebP bytes. Check these at normal and zoomed display size. Other external model photos and any staff-added angles still require their own privacy review. No CSS cover-up is used to claim compliance.
+
+**Usage rights remain unverified:** These are user-provided preview/reference images, not evidence of a vehicle owned by Mateshwari Travellers, verified fleet availability or manufacturer endorsement. Seek appropriate permission or license clearance before public deployment. The website labels them as user-supplied reference media.
+
+**UX:** Ten fleet cards now form a horizontal, keyboard-accessible image rail with real browse-arrow buttons. The model-specific main preview and the lower vehicle cards use their own front/rear/road images, never a different model. Clicking a model still synchronizes the quote, fleet details and fare calculator.
+
 ### Email and WhatsApp quotation previews
 
 The website has direct **Email Us**, **Call** and **WhatsApp** contact buttons. Form submissions are saved in the local CRM. In the CRM, open **Enquiries & follow-ups** and click **Prepare & send quotation**, enter the final quoted amount and notes, and submit. Review **Email & WhatsApp outbox** for business and customer email copies and business WhatsApp preview records.
