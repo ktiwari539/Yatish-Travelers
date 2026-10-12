@@ -18,6 +18,7 @@ export function FleetManager({token}:Props) {
  const [uploading,setUploading]=useState<number|null>(null);
  const [uploadingModel,setUploadingModel]=useState<number|null>(null);
  const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File}|null>(null);
+ const [reviewingPhoto,setReviewingPhoto]=useState<number|null>(null);
  const load=useCallback(async()=>{
    setError('');
    try {
@@ -31,6 +32,23 @@ export function FleetManager({token}:Props) {
  const change=(index:number,patch:Partial<CatalogVehicle>)=>{
   setVehicles(current=>current.map((v,i)=>i===index?{...v,...patch}:v));
   setSuccess('');
+ };
+ const reviewCurrentPhoto=async(index:number,src:string)=>{
+   setError('');setSuccess('');setReviewingPhoto(index);
+   try{
+     // Browser CORS: no credentials or untrusted internal proxy. Wikimedia allows
+     // downloads where its response headers permit cross-origin image access.
+     const response=await fetch(src,{mode:'cors',credentials:'omit'});
+     if(!response.ok)throw new Error('Image host returned '+response.status);
+     const bytes=await response.blob();
+     if(!bytes.type.startsWith('image/')||bytes.size>15_000_000)
+       throw new Error('The image cannot be safely opened for review.');
+     const type=/^image\/(jpeg|png|webp)$/.test(bytes.type)?bytes.type:'image/jpeg';
+     setEditingPhoto({index,file:new File([bytes],
+       'review-'+vehicles[index].name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.jpg',{type})});
+   }catch(e){
+     setError('Cannot load this external image into the privacy editor. Download its licensed photo to your Mac and choose Upload / edit vehicle photo. This is a browser cross-origin restriction, not proof the image is plate-free.');
+   }finally{setReviewingPhoto(null);}
  };
  const uploadPhoto=async(index:number,file:File|undefined)=>{
    if(!file)return;
@@ -111,7 +129,14 @@ export function FleetManager({token}:Props) {
         <label>Additional vehicle angles (up to 5 URLs, one per line)
           <textarea rows={3} value={(v.gallery||[]).join('\n')} placeholder="https://.../side-view.jpg" onChange={e=>change(index,{gallery:e.target.value.split('\n').map(x=>x.trim()).filter(Boolean)})}/>
         </label>
-                <label className="fleet-photo-upload">Upload / edit vehicle photo · blur plates (JPG/PNG/WebP up to 3 MB)
+                <div className="fleet-photo-review-actions">
+          <button type="button" disabled={!v.image||reviewingPhoto===index}
+            onClick={()=>void reviewCurrentPhoto(index,v.image)}>
+            {reviewingPhoto===index?'Loading image for review…':'Review current photo / hide plates'}
+          </button>
+          <small>Inspect original registration details before allowing this photo into production. Edited copy replaces the linked photo after Save changes.</small>
+        </div>
+        <label className="fleet-photo-upload">Upload / edit vehicle photo · hide plates (JPG/PNG/WebP up to 3 MB)
           <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{const selected=e.target.files?.[0];if(selected)setEditingPhoto({index,file:selected});e.target.value='';}}/>
           {uploading===index&&<span>Uploading image locally...</span>}
         </label>
@@ -139,6 +164,6 @@ export function FleetManager({token}:Props) {
      <button type="button" className="fleet-save" disabled={saving} onClick={()=>void save()}><Save size={16}/> {saving?'Saving...':'Save fleet & pricing'}</button>
    </div>
    {editingPhoto&&<PhotoPrivacyEditor file={editingPhoto.file} onCancel={()=>setEditingPhoto(null)} onComplete={f=>uploadPhoto(editingPhoto.index,f)}/>}
-   <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored only on your Mac) or linked using HTTPS URLs. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
+   <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored only on your Mac) or linked using HTTPS URLs. Every existing external photo and every alternate angle must be reviewed separately before production. A link alone does not anonymize plate numbers. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
  </section>;
 }
