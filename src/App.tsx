@@ -82,8 +82,8 @@ const fleet: FleetVehicle[] = [
     category: 'SUV',
     image: commonsImage('Mahindra%20Bolero%20Gen%203.jpg'),
     imageSource: 'https://commons.wikimedia.org/wiki/File:Mahindra_Bolero_Gen_3.jpg',
-    imageCredit: 'Wikimedia Commons contributor',
-    license: 'See Commons source',
+    imageCredit: 'SnapMeUp',
+    license: 'CC BY-SA 4.0',
   },
   {
     name: 'Mahindra Scorpio-N',
