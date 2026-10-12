@@ -12,8 +12,8 @@ export const defaultCatalog=[
  {name:'Mahindra Bolero',seats:'6+1',capacity:6,tag:'Bold Black Edition · On request',category:'SUV',image:commons('Mahindra%20Bolero%20Gen%203.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Tempo Traveller',seats:'12+1 / 17+1',capacity:17,tag:'Group Travel',category:'Traveller',image:commons('Force%20Traveller%20Luxury.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Mahindra Scorpio-N',seats:'6+1',capacity:6,tag:'Statement SUV · On request',category:'Premium SUV',image:commons(encodeURIComponent('2024 Mahindra Scorpio Z8L front.jpg')),rateMin:15,rateMax:25,enabled:true},
- {name:'Mahindra Thar',seats:'3+1',capacity:3,tag:'Red Rage Adventure · On request',category:'Adventure SUV',image:commons(encodeURIComponent('Mahindra Thar SUV in "Red Rage" color at Ashiana Brahmanda, East Singbhum India (Ank Kumar, Infosys limited) 02 (cropped).jpg')),rateMin:15,rateMax:25,enabled:true},
- {name:'Mahindra XUV700',seats:'6+1',capacity:6,tag:'Black Executive · On request',category:'Premium SUV',image:commons(encodeURIComponent('A black Mahindra XUV700 SUV in Ashiana Brahmananda, Jamshedpur, India (Ank Kumar, Infosys Limited) 02.jpg')),rateMin:15,rateMax:25,enabled:true},
+ {name:'Mahindra Thar',seats:'3+1',capacity:3,tag:'Bold Adventure · On request',category:'Adventure SUV',image:commons(encodeURIComponent('Mahindra Thar SUV in "Red Rage" color at Ashiana Brahmanda, East Singbhum India (Ank Kumar, Infosys limited) 02 (cropped).jpg')),rateMin:15,rateMax:25,enabled:true},
+ {name:'Mahindra XUV700',seats:'6+1',capacity:6,tag:'Executive SUV · On request',category:'Premium SUV',image:commons(encodeURIComponent('A black Mahindra XUV700 SUV in Ashiana Brahmananda, Jamshedpur, India (Ank Kumar, Infosys Limited) 02.jpg')),rateMin:15,rateMax:25,enabled:true},
  {name:'Kia Carens',seats:'6+1',capacity:6,tag:'Contemporary Family · On request',category:'Premium MPV',image:commons(encodeURIComponent('Kia Carens 2024 Model 2.jpg')),rateMin:15,rateMax:25,enabled:true}
 ].map((v)=>({...v,id:v.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
  gallery:v.name==='Maruti Dzire' ? [commons('MIAS%202025%20-%20All-new%20Suzuki%20Dzire%20Hybrid%2004.jpg')]
@@ -52,8 +52,8 @@ const previewMedia={
    image:'/media/mt-traveller-safe.webp',gallery:[]
  }
 };
-const localFile=(path)=>resolve('public'+path);
-export function applyReviewedFleetMedia(records){
+export function applyReviewedFleetMedia(records,rootDir=resolve('public')){
+ const localFile=(path)=>resolve(rootDir,path.slice(1));
  return records.map(vehicle=>{
    const candidate=previewMedia[vehicle.name];
    if(!candidate)return vehicle;
