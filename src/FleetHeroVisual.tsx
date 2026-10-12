@@ -11,24 +11,15 @@ type Props={
   onQuote:(name:string)=>void;
 };
 const scenes=[
-  {
-    visual:luxuryMedia.mountains,
-    label:'BEYOND THE CITY',
-    index:'01',
-    subtitle:'A different perspective on the open road',
-  },
-  {
-    visual:luxuryMedia.hero,
-    label:'THE GOLDEN HOUR',
-    index:'02',
-    subtitle:'Even the journey deserves a moment',
-  },
-  {
-    visual:luxuryMedia.landscape,
-    label:'TAKE THE LONG WAY',
-    index:'03',
-    subtitle:'Every destination has a story',
-  },
+  {visual:luxuryMedia.hero, label:'THE SIGNATURE ARRIVAL', index:'01',
+   subtitle:'The journey starts before you leave.', foreground:'/media/mt-hero-car-cutout.webp',
+   tag:'GOLDEN-HOUR MPV CONCEPT'},
+  {visual:luxuryMedia.mountains, label:'THE OPEN ROAD', index:'02',
+   subtitle:'Every bend holds a new perspective.', foreground:'/media/mt-side-car-cutout.webp',
+   tag:'MOUNTAIN-ROAD MPV CONCEPT'},
+  {visual:luxuryMedia.landscape, label:'JOURNEYS THAT STAY', index:'03',
+   subtitle:'Take the long way to somewhere memorable.', foreground:'',
+   tag:'SCENIC TRAVEL INSPIRATION'},
 ] as const;
 
 // 4.8-second scene cadence: faster than the former 9.6s, without a frantic slider.
@@ -47,6 +38,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const [reduceMotion,setReduceMotion]=useState(false);
   const [visible,setVisible]=useState(true);
   const [sceneReady,setSceneReady]=useState<boolean[]>(()=>scenes.map(()=>false));
+  const [cinematic,setCinematic]=useState(true);
   const active=vehicles[activeIndex]??vehicles[0];
 
   useEffect(()=>{
@@ -103,7 +95,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const progressKey=[scene,paused?'paused':'playing',visible?'visible':'hidden',sceneReady.filter(Boolean).length].join('-');
   if(!active)return null;
 
-  return <div className={'cinema-director '+((paused||!visible||reduceMotion)?'is-paused':'')+(reduceMotion?' reduce-motion':'')}
+  return <div className={'cinema-director cinematic-v6 '+((paused||!visible||reduceMotion)?'is-paused':'')+(reduceMotion?' reduce-motion':'')+(cinematic?' cinematic-enabled':' cinematic-disabled')}
     ref={host} aria-label="Cinematic journey scenes and selectable travel vehicles"
     style={{'--cinema-duration':SCENE_INTERVAL_MS+'ms'} as React.CSSProperties}
     onPointerMove={event=>{
@@ -126,12 +118,14 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
             loading="eager" decoding="async" fetchPriority={i===0?'high':'low'}
             onLoad={()=>setSceneReady(previous=>previous[i]?previous:previous.map((ready,index)=>index===i?true:ready))}/>
         </div>
-        <div className="cinema-director-foreground">
-          <ScenicImage src={item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt="" loading="lazy"/>
-        </div>
+        {item.foreground&&<div className="cinema-director-foreground cinema-director-car-depth" aria-hidden="true">
+          <img src={item.foreground} alt="" loading="lazy" decoding="async"
+            onError={event=>{event.currentTarget.style.display='none';}}/>
+        </div>}
       </div>)}
     </div>
     <div className="cinema-director-atmosphere" aria-hidden="true"><span/><span/><span/></div>
+    <div className="cinema-director-kinetic" aria-hidden="true"><i/><i/><i/></div>
     <div className="cinema-director-haze" aria-hidden="true"/>
     <div className="cinema-director-scrim" aria-hidden="true"/>
 
@@ -140,8 +134,12 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
       <span className="cinema-director-chapter">{scenes[scene].label} <strong>{scenes[scene].index} / 0{scenes.length}</strong></span>
     </div>
 
+    <button type="button" className="cinema-director-cinematic-toggle" onClick={()=>setCinematic(value=>!value)}
+      aria-pressed={cinematic} title={cinematic?'Disable cinematic depth effect':'Enable cinematic depth effect'}>
+      {cinematic?'DEPTH ON':'DEPTH OFF'} <span aria-hidden="true"/>
+    </button>
     <div className="cinema-director-caption" aria-live="off">
-      <span className="cinema-director-vertical">THE OPEN ROAD IS CALLING</span>
+      <span className="cinema-director-vertical">{scenes[scene].tag}</span>
       <span className="cinema-director-subtitle" key={scenes[scene].index}>{scenes[scene].subtitle}</span>
     </div>
 
