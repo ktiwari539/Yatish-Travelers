@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, CarFront, ChevronLeft, ChevronRight, Compass, MoveUpRight } from 'lucide-react';
-import { ScenicImage } from './ScenicImage';
-import { luxuryMedia } from './luxuryMedia';
 
 export type FleetReelVehicle={
   name:string;seats:string;tag:string;category:string;image:string;
@@ -91,7 +89,6 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     onSelect(vehicles[(index+vehicles.length)%vehicles.length].name);
   };
   if(!active)return null;
-  const showApprovedConcept=active.name==='Maruti Ertiga';
   const uniqueActive=hasUniquePhoto(active,chosenUrl);
   const chapters=[
     {number:'01',label:'THE ARRIVAL',heading:'See the real vehicle.',detail:'A distinct model-reference photograph comes into focus as you scroll.'},
@@ -112,19 +109,16 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
         </div>
     <div className="fleet-editorial-stage fleet-road-stage" data-drive-step={driveStep}>
       <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
-        {showApprovedConcept
-          ?<ScenicImage src={luxuryMedia.hero.src} fallback={uniqueActive?chosenUrl:undefined}
-              alt="Ertiga-inspired AI-generated MPV travel concept, not an actual assigned vehicle photo" loading="lazy"/>
-          :<ModelImage vehicle={active} src={chosenUrl}
-              alt={active.name+' model-specific vehicle reference photo'} duplicate={!uniqueActive}/>}
+        <ModelImage vehicle={active} src={chosenUrl}
+          alt={active.name+' model-specific vehicle reference photograph'} duplicate={!uniqueActive}/>
         <div className="fleet-drive-road-markings" aria-hidden="true"><span/><span/><span/></div>
         <div className="fleet-editorial-gradient"/>
-        <div className="fleet-editorial-frame-tag"><span/> {showApprovedConcept?'ILLUSTRATIVE MPV CONCEPT':'MODEL-SPECIFIC REFERENCE'}</div>
+        <div className="fleet-editorial-frame-tag"><span/> MODEL-SPECIFIC REFERENCE</div>
         <span className="fleet-editorial-frame-count">{String(activeIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span>
         <div className="fleet-editorial-frame-caption">
-          {showApprovedConcept?'Golden-hour concept artwork. The actual Ertiga is confirmed before booking.':'Actual model and vehicle details are confirmed when we prepare your quote.'}
+          Original model photography, not a confirmed fleet vehicle. Vehicle and color are verified on enquiry.
         </div>
-        {modelPhotos.length>1&&uniqueActive&&!showApprovedConcept&&
+        {modelPhotos.length>1&&uniqueActive&&
           <div className="fleet-editorial-angles" role="group" aria-label="Choose model reference angle">
             {modelPhotos.map((url,index)=><button type="button" key={url} className={angle===index?'selected':''}
               aria-label={'View photo angle '+(index+1)} aria-pressed={angle===index}
@@ -156,6 +150,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
       </div>
       <div className="fleet-road-story-progress" aria-hidden="true"><i/></div>
       </div>
+    </div>
     </div>
     <div className="fleet-editorial-strip-title">
       <span>EXPLORE THE FLEET — INDIVIDUAL VEHICLE REFERENCES</span>
