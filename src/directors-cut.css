@@ -40,7 +40,7 @@
 .cinema-director-scene{
   position:absolute;inset:-2%;overflow:hidden;
   opacity:0;visibility:hidden;
-  transition:opacity 1.65s cubic-bezier(.22,.63,.2,1),visibility 1.65s;
+  transition:opacity 1.05s cubic-bezier(.22,.63,.2,1),visibility 1.05s;
   will-change:opacity;
   transform:translate3d(0,var(--cinema-scroll-y),0);
 }
@@ -188,7 +188,7 @@
 }
 .cinema-director-progress{
   display:block;height:100%;width:100%;background:linear-gradient(90deg,#e2b97f,#fff1cd);
-  transform-origin:left;animation:cinema-progress 9.6s linear both
+  transform-origin:left;animation:cinema-progress var(--cinema-duration,4800ms) linear both
 }
 .cinema-director.is-paused .cinema-director-progress,
 .cinema-director.is-paused .cinema-director-backdrop,
@@ -368,3 +368,7 @@
   .cinema-director-backdrop img{transform:none!important;transition:none!important}
   .cinema-director-progress{transform:scaleX(1)}
 }
+
+/* Quick transitions are controlled, not abrupt. Reduced contrast keeps labels readable. */
+.cinema-director-legal{font-size:9px;line-height:1.4;letter-spacing:.045em;opacity:.85;white-space:nowrap}
+@media(max-width:760px){.cinema-director-legal{font-size:8px;white-space:normal;max-width:87%}}
