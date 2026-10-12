@@ -50,6 +50,21 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'visible'});
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
+ // Gallery must use six distinct model photos or explicit model-specific placeholders.
+ const cards=await page.locator('.fleet-editorial-tile').evaluateAll(nodes=>nodes.map(node=>({
+  name:node.querySelector('.fleet-editorial-tile-foot strong')?.textContent?.trim(),
+  source:node.querySelector('img')?.getAttribute('src')||'',
+  placeholder:node.querySelector('.fleet-model-image-missing')?.textContent?.trim()||'',
+  category:node.querySelector('.fleet-editorial-tile-photo > span')?.textContent?.trim()
+ })));
+ ensure(cards.length===6,'Six distinct fleet cards are shown in local preview');
+ ensure(cards.every(card=>card.category!=='TRAVEL INSPIRATION'),'No fake scenic image is labeled as a vehicle');
+ ensure(cards.every(card=>Boolean(card.source)||card.placeholder.includes(card.name)),'Every card has its own model photo or named placeholder');
+ const sources=cards.map(card=>card.source).filter(Boolean);
+ ensure(new Set(sources).size===sources.length,'A photo URL is never recycled across different vehicle names');
+ ensure(cards.find(card=>card.name==='Tempo Traveller')?.source?.includes('Traveller')||
+  cards.find(card=>card.name==='Tempo Traveller')?.placeholder?.includes('Tempo Traveller'),
+  'Tempo Traveller shows its own reference or own placeholder, never a forest or a second MPV');
  // Selecting the actual Innova in the fleet must change the current fare/quote vehicle.
  await page.locator('.fleet-editorial-tile').filter({hasText:'Toyota Innova'}).click();
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Toyota Innova','Gallery model switched');
@@ -58,6 +73,17 @@ async function smoke(){
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Toyota Innova'),'Fleet quote uses selected Toyota Innova');
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
+ // Brand takes the visitor back to the actual homepage from a lower-page section.
+ await page.locator('#fleet').scrollIntoViewIfNeeded();
+ ensure(await page.evaluate(()=>window.scrollY)>150,'Scrolled down to check brand navigation');
+ ensure((await page.locator('header.nav a.brand').getAttribute('href'))==='/', 'Header brand links to homepage');
+ await page.locator('header.nav a.brand').click();
+ await page.waitForURL(url=>url.pathname==='/'&&!url.hash);
+ ensure(await page.evaluate(()=>window.scrollY)<100,'Clicking brand returns viewport to homepage top');
+ // Story-page brand also navigates home.
+ await page.goto('http://127.0.0.1:'+port+'/stories',{waitUntil:'domcontentloaded'});
+ await page.locator('.stories-nav a.brand').click();
+ await page.waitForURL(url=>url.pathname==='/'&&!url.hash);
  // Mobile: no forced animation, navigation and sticky request bar work.
  await page.setViewportSize({width:390,height:844});
  await page.reload({waitUntil:'domcontentloaded'});
@@ -72,7 +98,7 @@ async function smoke(){
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
  await page.locator('.quote-close').click();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
- console.log('PASS: car intro/skip, hero booking, scene control, fleet quote sync, WhatsApp/email links, mobile menu & sticky quote');
+ console.log('PASS: six distinct gallery vehicle images, brand navigation from home/stories, car intro, quote, scene controls, mobile links');
 }
 try{await smoke();}
 finally{
