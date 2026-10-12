@@ -29,3 +29,45 @@
  .fleet-photo-review-actions button{width:100%}
  .privacy-review-confirm{font-size:12px}
 }
+/* Innova executive chapter: a quieter arrival than the Scorpio, with
+   model-specific real photography; no invented door or car motion. */
+.fleet-road-stage[data-model="Toyota Innova"] .fleet-editorial-picture>img {
+  transform:translate3d(calc(var(--road-car-offset) * .42),0,0)
+    scale(calc(1.03 + (1 - var(--road-motion-progress)) * .09));
+  filter:saturate(.91) contrast(1.05);
+}
+.fleet-road-stage[data-model="Toyota Innova"] .fleet-editorial-picture:hover>img {
+  transform:translate3d(calc(var(--road-car-offset) * .42),0,0)
+    scale(calc(1.03 + (1 - var(--road-motion-progress)) * .09));
+}
+.fleet-innova-visual-note{
+  position:absolute;z-index:4;right:23px;bottom:100px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+  color:#fff7e9;text-align:right;
+  text-shadow:0 2px 18px rgba(5,30,21,.72);
+  pointer-events:none;
+}
+.fleet-innova-visual-note>span{
+  font-size:10px;letter-spacing:.2em;font-weight:900;
+}
+.fleet-innova-visual-note>strong{
+  font-size:clamp(25px,3.3vw,53px);letter-spacing:-.045em;
+  font-weight:900;line-height:1;
+}
+.fleet-innova-visual-note i{
+  width:68px;height:2px;background:#f6cb93;
+  box-shadow:0 1px 6px rgba(0,0,0,.25);
+}
+@media(max-width:760px){
+  .fleet-innova-visual-note{right:12px;bottom:61px}
+  .fleet-innova-visual-note>span{font-size:8px}
+  .fleet-innova-visual-note>strong{font-size:25px}
+  .fleet-road-stage[data-model="Toyota Innova"] .fleet-editorial-picture>img{
+    transform:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .fleet-road-stage[data-model="Toyota Innova"] .fleet-editorial-picture>img{
+    transform:none!important;
+  }
+}
