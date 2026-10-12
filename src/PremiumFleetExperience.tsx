@@ -27,6 +27,17 @@ function ModelImage({vehicle,src,alt,duplicate=false}:ModelImageProps){
 }
 export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Props){
   const [angle,setAngle]=useState(0);
+  const scorpioVideo=useRef<HTMLVideoElement|null>(null);
+  const [videoReady,setVideoReady]=useState(false);
+  const [videoFailed,setVideoFailed]=useState(false);
+  const [videoEnded,setVideoEnded]=useState(false);
+  // The locally installed video is a reviewed, edited AI-generated concept.
+  // Only this exact model receives it; all other cars retain their own photo.
+  useEffect(()=>{
+    setVideoReady(false);
+    setVideoFailed(false);
+    setVideoEnded(false);
+  },[activeName]);
   const road=useRef<HTMLDivElement|null>(null);
   const [driveStep,setDriveStep]=useState(0);
   const [reducedMotion,setReducedMotion]=useState(false);
@@ -68,6 +79,24 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   },[reducedMotion]);
   const activeIndex=Math.max(0,vehicles.findIndex(v=>v.name===activeName));
   const active=vehicles[activeIndex];
+  useEffect(()=>{
+    const video=scorpioVideo.current;
+    if(!video || activeName!=='Mahindra Scorpio-N'||reducedMotion||!videoReady)return;
+    let inView=false;
+    const watch=new IntersectionObserver(([entry])=>{
+      if(entry?.isIntersecting && !inView){
+        inView=true;
+        video.currentTime=0;
+        setVideoEnded(false);
+        void video.play().catch(()=>{});
+      }else if(!entry?.isIntersecting && inView){
+        inView=false;
+        video.pause();
+      }
+    },{threshold:.35});
+    watch.observe(video);
+    return()=>{watch.disconnect();video.pause();};
+  },[activeName,reducedMotion,videoReady]);
   // A reused photo URL is never allowed to stand for two different vehicle models.
   const photoOwner=useMemo(()=>{
     const owners=new Map<string,string>();
@@ -90,6 +119,14 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   };
   if(!active)return null;
   const uniqueActive=hasUniquePhoto(active,chosenUrl);
+  const showScorpioFilm=active.name==='Mahindra Scorpio-N'&&!reducedMotion&&!videoFailed;
+  const replayScorpioFilm=()=>{
+    const video=scorpioVideo.current;
+    if(!video)return;
+    video.currentTime=0;
+    setVideoEnded(false);
+    void video.play().catch(()=>{});
+  };
   const chapters=[
     {number:'01',label:'THE ARRIVAL',heading:'See the real vehicle.',detail:'A distinct model-reference photograph comes into focus as you scroll.'},
     {number:'02',label:'THE DETAILS',heading:'Discover the right fit.',detail:active.seats+' seating · '+active.category+' · '+active.tag+'.'},
@@ -111,12 +148,29 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
       <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
         <ModelImage vehicle={active} src={chosenUrl}
           alt={active.name+' model-specific vehicle reference photograph'} duplicate={!uniqueActive}/>
+        {showScorpioFilm&&<video key="scorpio-clean-v1" ref={scorpioVideo}
+          className={'fleet-scorpio-film'+(videoReady?' is-ready':'')}
+          src="/media/mt-scorpio-arrival.mp4"
+          poster="/media/mt-scorpio-poster.webp"
+          muted playsInline preload="metadata"
+          disablePictureInPicture
+          aria-label="Scorpio-N cinematic video concept: arrival followed by door opening"
+          onLoadedMetadata={()=>setVideoReady(true)}
+          onError={()=>{setVideoFailed(true);setVideoReady(false);}}
+          onEnded={()=>setVideoEnded(true)} />}
+        {showScorpioFilm&&videoReady&&<>
+          <span className="fleet-scorpio-film-credit">MATESHWARI TRAVELLERS <i/> SCORPIO-N FILM CONCEPT</span>
+          <button type="button" className="fleet-scorpio-replay"
+            onClick={replayScorpioFilm} aria-label="Replay Scorpio-N arrival film">
+            {videoEnded?'Replay arrival':'Replay film'} ↻
+          </button>
+        </>}
         <div className="fleet-drive-road-markings" aria-hidden="true"><span/><span/><span/></div>
         <div className="fleet-editorial-gradient"/>
-        <div className="fleet-editorial-frame-tag"><span/> MODEL-SPECIFIC REFERENCE</div>
+        <div className="fleet-editorial-frame-tag"><span/> {showScorpioFilm&&videoReady?'SCORPIO-N CINEMATIC CONCEPT':'MODEL-SPECIFIC REFERENCE'}</div>
         <span className="fleet-editorial-frame-count">{String(activeIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span>
         <div className="fleet-editorial-frame-caption">
-          Original model photography, not a confirmed fleet vehicle. Vehicle and color are verified on enquiry.
+          {showScorpioFilm&&videoReady?'Edited cinematic concept video; not genuine footage of a fleet vehicle.':'Model reference photography, not a confirmed fleet vehicle. Vehicle and color verified on enquiry.'}
         </div>
         {modelPhotos.length>1&&uniqueActive&&
           <div className="fleet-editorial-angles" role="group" aria-label="Choose model reference angle">
