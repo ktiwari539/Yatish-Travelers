@@ -58,7 +58,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     <div className="fleet-editorial-heading">
       <span className="fleet-editorial-kicker"><Compass size={15}/> THE MATESHWARI COLLECTION</span>
       <div><h2>One fleet. <em>{vehicles.length} distinct journeys.</em></h2>
-        <p>Explore the actual vehicle categories available for your trip. Each model has its own reference image and booking details.</p></div>
+        <p>Explore ten distinct vehicle references. The assigned car, availability and final fare are confirmed on enquiry.</p></div>
     </div>
     <div className="fleet-editorial-stage">
       <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
