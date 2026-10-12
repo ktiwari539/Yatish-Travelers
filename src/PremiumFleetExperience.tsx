@@ -57,7 +57,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   return <section className="fleet-editorial" id="motion-fleet" aria-label="Our premium fleet collection">
     <div className="fleet-editorial-heading">
       <span className="fleet-editorial-kicker"><Compass size={15}/> THE MATESHWARI COLLECTION</span>
-      <div><h2>One fleet. <em>Six distinct journeys.</em></h2>
+      <div><h2>One fleet. <em>{vehicles.length} distinct journeys.</em></h2>
         <p>Explore the actual vehicle categories available for your trip. Each model has its own reference image and booking details.</p></div>
     </div>
     <div className="fleet-editorial-stage">
