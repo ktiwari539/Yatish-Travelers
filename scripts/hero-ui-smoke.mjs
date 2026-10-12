@@ -50,6 +50,24 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'visible'});
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
+ // Scroll narrative uses actual model reference images, not generic 3D or concept art.
+ ensure(await page.locator('.fleet-road-story').count()===1,'Scroll storytelling stage is present');
+ ensure((await page.locator('.fleet-editorial-picture img').first().getAttribute('alt')||'').includes('Maruti Ertiga'),
+  'Ertiga scroll stage must show a model-specific photograph');
+ await page.evaluate(()=>{
+   const story=document.querySelector('.fleet-road-story');
+   if(!story)throw new Error('Scroll story missing');
+   window.scrollTo(0,window.scrollY+story.getBoundingClientRect().top+window.innerHeight*.68);
+ });
+ await page.waitForFunction(()=>document.querySelector('.fleet-road-stage')?.getAttribute('data-drive-step')==='1');
+ ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Discover the right fit.','Scroll reveals the detail chapter');
+ await page.evaluate(()=>{
+   const story=document.querySelector('.fleet-road-story');
+   if(!story)throw new Error('Scroll story missing');
+   window.scrollTo(0,window.scrollY+story.getBoundingClientRect().top+window.innerHeight*1.12);
+ });
+ await page.waitForFunction(()=>document.querySelector('.fleet-road-stage')?.getAttribute('data-drive-step')==='2');
+ ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Plan your next drive.','Scroll reveals the enquiry chapter');
  // Gallery must use ten distinct model photos or explicit model-specific placeholders.
  const cards=await page.locator('.fleet-editorial-tile').evaluateAll(nodes=>nodes.map(node=>({
   name:node.querySelector('.fleet-editorial-tile-foot strong')?.textContent?.trim(),
