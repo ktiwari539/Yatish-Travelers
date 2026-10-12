@@ -372,3 +372,19 @@
 /* Quick transitions are controlled, not abrupt. Reduced contrast keeps labels readable. */
 .cinema-director-legal{font-size:9px;line-height:1.4;letter-spacing:.045em;opacity:.85;white-space:nowrap}
 @media(max-width:760px){.cinema-director-legal{font-size:8px;white-space:normal;max-width:87%}}
+
+/* October 2026 polish: keep signature label clear of the fixed pill navigation. */
+@media(min-width:1181px){
+  .cinema-director-top{top:113px}
+}
+@media(min-width:761px) and (max-width:1180px){
+  .cinema-director-top{top:105px}
+}
+@media(max-width:760px){
+  .cinema-director-top{top:83px}
+  .cinema-director-backdrop,
+  .cinema-director-foreground,
+  .cinema-director-atmosphere span,
+  .cinema-director-haze{animation:none!important}
+}
+.cinematic-landing-scroll{display:none!important}
