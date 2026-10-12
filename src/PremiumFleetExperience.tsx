@@ -39,6 +39,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     setVideoEnded(false);
   },[activeName]);
   const road=useRef<HTMLDivElement|null>(null);
+  const railRef=useRef<HTMLDivElement|null>(null);
   const [driveStep,setDriveStep]=useState(0);
   const [reducedMotion,setReducedMotion]=useState(false);
   useEffect(()=>{
@@ -115,7 +116,19 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   useEffect(()=>setAngle(0),[activeName]);
   const choose=(index:number)=>{
     if(!vehicles.length)return;
-    onSelect(vehicles[(index+vehicles.length)%vehicles.length].name);
+    const next=(index+vehicles.length)%vehicles.length;
+    onSelect(vehicles[next].name);
+    const rail=railRef.current;
+    const tile=rail?.querySelectorAll<HTMLElement>('.fleet-editorial-tile')[next];
+    if(rail&&tile){
+      const left=tile.offsetLeft-rail.offsetLeft-16;
+      rail.scrollTo({left,behavior:'smooth'});
+    }
+  };
+  const browseRail=(direction:-1|1)=>{
+    const rail=railRef.current;
+    if(!rail)return;
+    rail.scrollBy({left:direction*Math.max(240,rail.clientWidth*.65),behavior:'smooth'});
   };
   if(!active)return null;
   const uniqueActive=hasUniquePhoto(active,chosenUrl);
@@ -218,9 +231,13 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     </div>
     <div className="fleet-editorial-strip-title">
       <span>EXPLORE THE FLEET — INDIVIDUAL VEHICLE REFERENCES</span>
-      <span>SELECT A VEHICLE <ArrowRight size={15}/></span>
+      <div className="fleet-rail-browse" role="group" aria-label="Browse fleet photographs">
+        <span>SCROLL THE COLLECTION</span>
+        <button type="button" aria-label="Scroll fleet left" onClick={()=>browseRail(-1)}><ChevronLeft size={18}/></button>
+        <button type="button" aria-label="Scroll fleet right" onClick={()=>browseRail(1)}><ChevronRight size={18}/></button>
+      </div>
     </div>
-    <div className="fleet-editorial-rail" role="group" aria-label="Select a vehicle by its own photograph">
+    <div className="fleet-editorial-rail" ref={railRef} role="group" aria-label="Select a vehicle by its own photograph">
       {vehicles.map((vehicle,index)=><button type="button" key={vehicle.name}
         className={'fleet-editorial-tile '+(index===activeIndex?'selected':'')}
         aria-pressed={index===activeIndex} onClick={()=>choose(index)}>
