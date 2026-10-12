@@ -50,7 +50,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const active=vehicles[activeIndex]??vehicles[0];
 
   useEffect(()=>{
-    const media=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const media=window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)');
     const change=()=>setReduceMotion(media.matches);
     change();
     media.addEventListener('change',change);
@@ -100,6 +100,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const chooseVehicle=(index:number)=>{
     if(index>=0&&index<vehicles.length)onChange(index);
   };
+  const progressKey=[scene,paused?'paused':'playing',visible?'visible':'hidden',sceneReady.filter(Boolean).length].join('-');
   if(!active)return null;
 
   return <div className={'cinema-director '+((paused||!visible||reduceMotion)?'is-paused':'')+(reduceMotion?' reduce-motion':'')}
@@ -172,7 +173,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
       </div>
     </div>
 
-    <div className="cinema-director-playback" aria-hidden="true" key={scene}>
+    <div className="cinema-director-playback" aria-hidden="true" key={progressKey}>
       <span className="cinema-director-progress"/>
     </div>
     <p className="cinema-director-legal">ILLUSTRATIVE TRAVEL SCENERY · YOUR BOOKING VEHICLE IS SELECTED SEPARATELY</p>
