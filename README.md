@@ -33,6 +33,24 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Premium Hero V6 — restored MPV concept and 2.5D motion (latest)
+
+The home hero now opens with the approved **white MPV / Ertiga-inspired golden-hour concept**, followed by a second mountain-road MPV visual. Both have separate transparent car layers for pointer-responsive depth. A **5-second lightweight muted MP4** animates the first scene on desktop, while CSS parallax and still images provide fallbacks. This is AI-generated illustrative media, **not an actual Maruti Ertiga photo/video or a real 3D OEM model**. The Gallery's Maruti Ertiga selection now features the same concept, clearly marked as travel inspiration.
+
+**The image/video files cannot be embedded in the GitHub text-only code update; one local installation is required.** Download the `mateshwari_cinematic_ertiga_pack.zip` file attached in our chat to your Mac's Downloads folder. Then run:
+
+```bash
+cd ~/Projects/Yatish-Travelers
+npm run visuals:install
+npm run dev:full
+```
+
+The installer validates the expected five file names and extracts them into `public/media/`. If the zip file was saved elsewhere, use `npm run visuals:install -- /absolute/path/to/mateshwari_cinematic_ertiga_pack.zip`. Alternatively, extract the ZIP directly into the project root using `unzip -o ~/Downloads/mateshwari_cinematic_ertiga_pack.zip`.
+
+Without this pack, the website falls back to earlier remotely hosted travel references and **cannot show the restored concept or animated video**. The MP4 is only 313 KB, loops silently and pauses when out of view. Mobile and reduced-motion clients receive still images. The original enquiry, CRM, phone, WhatsApp, email and rate features are unchanged.
+
+**Review gate:** Inspect the desktop opening image, foreground movement, smooth image transition and Model tab/Request Quote. Repeat on mobile/tablet; verify imagery is correctly labeled as a concept and the original fleet model photos are treated as references. GitHub CI covers API tests and the production build only, not real browser aesthetics or performance.
+
 ### Signature Journeys director's-cut hero — current review (October 2026)
 
 The front-screen design is now **one full-bleed cinematic scene** rather than a box alongside a separate headline. The route photography uses three **crossfading, independently mounted** scenes: mountain road, golden-hour drive and lake landscape. Foreground detail, atmosphere, moving light and background react subtly to pointer/scroll. These are **layered photographic motion effects, not video footage or a 3D vehicle model**.
