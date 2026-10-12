@@ -25,6 +25,17 @@ The GitHub Actions model-Scorpio-N screenshot shows a black test-video frame bec
 
 Toyota Innova's Stage 2 is a still-photo-based scroll motion and executive text reveal, **not** real door-opening footage. Do not claim such footage has been generated.
 
+## Updated with user-supplied replacements (local review only)
+
+The user provided seven higher-resolution reference pictures. An **integrity-checked ZIP** (`mateshwari_fleet_photography_safe_pack.zip`) contains locally processed WebP derivatives with identity-specific names. The user must still install the pack through `npm run fleet:install` after pulling the branch.
+
+- **Thar:** red front and rear studio references show the model word `THAR`, not a registration. The additional grey Thar frontal view had legible red registration markings; these were permanently mosaicked in the exported `mt-thar-grey-front-safe.webp`, while the moving grey side view has no readable plate in the submitted frame.
+- **XUV700:** new blue SUV driving photo shows a blank rear registration area. The separate front studio view has `XUV700` model branding, not a real plate. Both are distinct, model-correct references.
+- **Tempo Traveller:** the user-uploaded photo showed a yellow registration number on the front and a clipped side plate. Both original-resolution rectangles were permanently pixelated before downsampling and saving `mt-traveller-safe.webp`.
+- **No other catalog records, assigned cars or pricing have been altered.** The upgrade only activates if all seven files are installed, and never overwrites a custom CRM primary image or gallery.
+- **Rights are not verified.** Do not use these user-supplied reference images in a public release until permissions/attributions are cleared. Remaining default photos/angles still need independent inspection.
+- GitHub CI does not contain these licensed/unknown-rights binary photos; browser interactions use fallback sources. Preview the installed local pack in Safari and check every plate at full resolution before declaring the image privacy gate passed.
+
 ## Release hold
 
 - [ ] Permanently obscure the Thar, XUV700 and Tempo Traveller plate regions on the original source images and replace photo URLs
