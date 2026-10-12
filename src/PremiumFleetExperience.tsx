@@ -127,8 +127,13 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     setVideoEnded(false);
     void video.play().catch(()=>{});
   };
-  const chapters=[
-    {number:'01',label:'THE ARRIVAL',heading:'See the real vehicle.',detail:'A distinct model-reference photograph comes into focus as you scroll.'},
+  const isInnova=active.name==='Toyota Innova';
+  const chapters=isInnova?[
+    {number:'01',label:'THE EXECUTIVE ARRIVAL',heading:'Arrive with intention.',detail:'The Innova model comes into view. A considered choice for airport and executive travel.'},
+    {number:'02',label:'SPACE & COMFORT',heading:'Room for the journey.',detail:active.seats+' seating configuration · '+active.category+' · '+active.tag+'. Exact assigned vehicle is confirmed first.'},
+    {number:'03',label:'MAKE IT YOURS',heading:'Every detail, arranged.',detail:'Choose your route, passenger count and date to receive a final Innova quotation.'}
+  ]:[
+    {number:'01',label:'THE ARRIVAL',heading:'See the '+active.name+'.',detail:'The selected model-reference photograph comes into view as you scroll.'},
     {number:'02',label:'THE DETAILS',heading:'Discover the right fit.',detail:active.seats+' seating · '+active.category+' · '+active.tag+'.'},
     {number:'03',label:'THE JOURNEY',heading:'Plan your next drive.',detail:'Request this model, then confirm the assigned vehicle, availability and final fare.'}
   ];
@@ -144,7 +149,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
         <div className="fleet-road-story-top" aria-hidden="true">
           <span>REAL VEHICLE PHOTOGRAPHY</span><span>SCROLL TO REVEAL <span className="fleet-road-story-line"/></span>
         </div>
-    <div className="fleet-editorial-stage fleet-road-stage" data-drive-step={driveStep}>
+    <div className="fleet-editorial-stage fleet-road-stage" data-drive-step={driveStep} data-model={active.name}>
       <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
         <ModelImage vehicle={active} src={chosenUrl}
           alt={active.name+' model-specific vehicle reference photograph'} duplicate={!uniqueActive}/>
@@ -165,9 +170,14 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
             {videoEnded?'Replay arrival':'Replay film'} ↻
           </button>
         </>}
+        {isInnova&&<div className="fleet-innova-visual-note" aria-hidden="true">
+          <span>TOYOTA INNOVA</span>
+          <strong>{driveStep===0?'ARRIVE':driveStep===1?'SETTLE IN':'GO FURTHER'}</strong>
+          <i/>
+        </div>}
         <div className="fleet-drive-road-markings" aria-hidden="true"><span/><span/><span/></div>
         <div className="fleet-editorial-gradient"/>
-        <div className="fleet-editorial-frame-tag"><span/> {showScorpioFilm&&videoReady?'SCORPIO-N CINEMATIC CONCEPT':'MODEL-SPECIFIC REFERENCE'}</div>
+        <div className="fleet-editorial-frame-tag"><span/> {showScorpioFilm&&videoReady?'SCORPIO-N CINEMATIC CONCEPT':isInnova?'INNOVA · EXECUTIVE COLLECTION':'MODEL-SPECIFIC REFERENCE'}</div>
         <span className="fleet-editorial-frame-count">{String(activeIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span>
         <div className="fleet-editorial-frame-caption">
           {showScorpioFilm&&videoReady?'Edited cinematic concept video; not genuine footage of a fleet vehicle.':'Model reference photography, not a confirmed fleet vehicle. Vehicle and color verified on enquiry.'}
