@@ -13,6 +13,14 @@ const legacyUnsuitable=new Set(['Mahindra TUV','Mahindra Bolero','Tempo Travelle
 const isEditorialOnly=(vehicle:FleetReelVehicle)=>legacyUnsuitable.has(vehicle.name)&&
   /commons\.wikimedia\.org|wikipedia\.org/.test(vehicle.image);
 const preview=(vehicle:FleetReelVehicle,position:number)=>{
+ // Restore the previously approved golden-hour MPV concept to the Ertiga feature.
+ // This is illustrative artwork, never a claim about the specific fleet vehicle.
+ if(vehicle.name==='Maruti Ertiga')return {
+  src:luxuryMedia.hero.src,
+  fallback:vehicle.image,
+  alt:'Premium white MPV at golden hour: illustrated Ertiga-inspired travel concept',
+  editorial:true
+ };
  if(isEditorialOnly(vehicle))return {src:editorialScenes[position%editorialScenes.length].src,
   fallback:editorialScenes[position%editorialScenes.length].fallback,
   alt:editorialScenes[position%editorialScenes.length].alt,editorial:true};
