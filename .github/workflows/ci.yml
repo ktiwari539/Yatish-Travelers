@@ -34,3 +34,12 @@ jobs:
 
       - name: Chromium interaction smoke
         run: node scripts/hero-ui-smoke.mjs
+
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-visual-qa
+          path: artifacts/visual-evidence/
+          if-no-files-found: ignore
+          retention-days: 7
