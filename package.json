@@ -11,7 +11,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "visuals:install": "node scripts/install-visuals.mjs"
+    "visuals:install": "node scripts/install-visuals.mjs",
+    "scorpio:install": "node scripts/install-scorpio-media.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.545.0",
