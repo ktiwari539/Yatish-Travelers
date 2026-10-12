@@ -22,3 +22,4 @@ createRoot(document.getElementById('root')!).render(
 import './directors-cut.css';
 
 import './hero-energy-v6.css';
+import './hero-arrival-v7.css';
