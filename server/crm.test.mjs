@@ -79,7 +79,11 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   const publicCatalog=await fetch(root+'/api/catalog');
   assert.equal(publicCatalog.status,200);
   const catalog=await publicCatalog.json();
-  assert.equal(catalog.vehicles.length,6);
+  assert.equal(catalog.vehicles.length,10);
+  for(const name of ['Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens']){
+    assert.ok(catalog.vehicles.find(v=>v.name===name),'Missing model: '+name);
+  }
+  assert.ok(catalog.vehicles.find(v=>v.name==='Mahindra Bolero')?.image.includes('Gen%203'),'Bolero has distinct black vehicle photo');
   assert.equal(catalog.vehicles.find(v=>v.name==='Toyota Innova').rateMin,15);
 
   const forbidden=await fetch(root+'/api/admin/catalog',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({vehicles:[]})});
@@ -90,7 +94,7 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   const saved=await fetch(root+'/api/admin/catalog',{method:'PUT',headers,body:JSON.stringify({vehicles:modified})});
   assert.equal(saved.status,200);
   const reloaded=await (await fetch(root+'/api/catalog')).json();
-  assert.equal(reloaded.vehicles.length,7);
+  assert.equal(reloaded.vehicles.length,11);
   assert.equal(reloaded.vehicles.find(v=>v.name==='Toyota Innova').rateMin,21);
   
   const event=await fetch(root+'/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event:'quote_open',sessionId:'f5e4a111-2222-4444-8888-1234567890ab',vehicle:'Toyota Innova',source:'hero'})});
