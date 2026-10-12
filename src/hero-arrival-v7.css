@@ -130,3 +130,7 @@
  .cinema-director.cinematic-intro-finished .cinema-director-caption,
  .cinema-director.cinematic-intro-finished .cinema-director-top{animation:none!important}
 }
+
+/* Interactive overlays: transparent marketing text must not block the cinematic controls. */
+.hero.cinematic-landing .hero-copy.cinematic-landing-copy{pointer-events:none}
+.hero.cinematic-landing .hero-copy.cinematic-landing-copy :is(a,button){pointer-events:auto}
