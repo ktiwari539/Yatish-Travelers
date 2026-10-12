@@ -22,7 +22,8 @@ export const defaultCatalog=[
  :[]
 }));
 const text=(value,max=120)=>typeof value==='string'?value.trim().slice(0,max):'';
-const validImage=(url)=>{if(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(url))return true;try{const u=new URL(url);return u.protocol==='https:'&&url.length<=900&&!u.username&&!u.password;}catch{return false;}};
+const bundledPhoto=/^\/media\/mt-(?:xuv700-(?:driving|studio)|thar-(?:red-front|red-rear|grey-road|grey-front-safe)|traveller-safe)\.webp$/;
+const validImage=(url)=>{if(bundledPhoto.test(url))return true;if(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(url))return true;try{const u=new URL(url);return u.protocol==='https:'&&url.length<=900&&!u.username&&!u.password;}catch{return false;}};
 export function validateVehicle(input,previous={}) {
   const name=text(input.name,80),seats=text(input.seats,30),tag=text(input.tag,80),category=text(input.category,50),image=text(input.image,900);
   const capacity=Number(input.capacity),rateMin=Number(input.rateMin),rateMax=Number(input.rateMax);
@@ -35,8 +36,39 @@ export function validateVehicle(input,previous={}) {
   if(modelUrl&&!/^\/api\/models\/[a-f0-9-]{36}\.glb$/.test(modelUrl))throw new Error('3D model must be a locally uploaded GLB.');
   return {id:previous.id||randomUUID(),name,seats,tag,category,image,capacity,rateMin,rateMax,enabled:input.enabled!==false,gallery,modelUrl};
 }
+// Reviewed files are installed locally in public/media, not committed as
+// unlicensed binary assets. Never substitute across models or overwrite
+// staff-managed photos; only a matching bundled default may be upgraded.
+const previewMedia={
+ 'Mahindra Thar':{
+   image:'/media/mt-thar-red-front.webp',
+   gallery:['/media/mt-thar-red-rear.webp','/media/mt-thar-grey-road.webp','/media/mt-thar-grey-front-safe.webp']
+ },
+ 'Mahindra XUV700':{
+   image:'/media/mt-xuv700-driving.webp',
+   gallery:['/media/mt-xuv700-studio.webp']
+ },
+ 'Tempo Traveller':{
+   image:'/media/mt-traveller-safe.webp',gallery:[]
+ }
+};
+const localFile=(path)=>resolve('public'+path);
+export function applyReviewedFleetMedia(records){
+ return records.map(vehicle=>{
+   const candidate=previewMedia[vehicle.name];
+   if(!candidate)return vehicle;
+   const original=defaultCatalog.find(entry=>entry.name===vehicle.name);
+   if(!original || vehicle.image!==original.image)return vehicle;
+   const paths=[candidate.image,...candidate.gallery];
+   if(!paths.every(file=>existsSync(localFile(file))))return vehicle;
+   const priorGallery=vehicle.gallery||[];
+   const defaultGallery=original.gallery||[];
+   const unmodifiedGallery=JSON.stringify(priorGallery)===JSON.stringify(defaultGallery);
+   return {...vehicle,image:candidate.image,...(unmodifiedGallery?{gallery:candidate.gallery}:{})};
+ });
+}
 export function readCatalog(){
-  if(!existsSync(catalogPath)) return {vehicles:defaultCatalog.map(x=>({...x})),updatedAt:null};
+  if(!existsSync(catalogPath)) return {vehicles:applyReviewedFleetMedia(defaultCatalog.map(x=>({...x}))),updatedAt:null};
   const value=JSON.parse(readFileSync(catalogPath,'utf8'));
   if(!Array.isArray(value.vehicles)) throw new Error('Invalid stored catalog.');
   // Only migrate the exact previous bundled reference asset, never user-provided photos.
@@ -56,7 +88,7 @@ export function readCatalog(){
   const additions=Number(value.catalogVersion||1)<2
     ?defaultCatalog.filter(v=>newShowcaseNames.has(v.name)&&!existing.some(item=>item.name===v.name))
     :[];
-  return {...value,catalogVersion:2,vehicles:[...existing,...additions]};
+  return {...value,catalogVersion:2,vehicles:applyReviewedFleetMedia([...existing,...additions])};
 }
 export function writeCatalog(vehicles){
   if(!Array.isArray(vehicles)||vehicles.length>80) throw new Error('Catalog limit exceeded.');
