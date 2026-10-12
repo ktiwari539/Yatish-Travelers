@@ -1,10 +1,7 @@
 name: Fleet Photo Privacy Sources
 on:
-  push:
-    branches: [feature/mateshwari-cinematic-crm]
-    paths:
-      - scripts/fetch_privacy_sources.py
-      - .github/workflows/fleet-photo-privacy.yml
+  # Original third-party image hosts may return HTTP 429; never block
+  # normal PR CI or retry on every code push.
   workflow_dispatch:
 
 jobs:
