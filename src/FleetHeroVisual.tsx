@@ -39,9 +39,18 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const [visible,setVisible]=useState(true);
   const [sceneReady,setSceneReady]=useState<boolean[]>(()=>scenes.map(()=>false));
   const [cinematic,setCinematic]=useState(true);
+  const [introDone,setIntroDone]=useState(false);
   const [videoReady,setVideoReady]=useState(false);
   const video=useRef<HTMLVideoElement|null>(null);
   const active=vehicles[activeIndex]??vehicles[0];
+  const featured=vehicles.find(item=>item.name==='Maruti Ertiga')??active;
+  // Each full page mount runs the sequence once. Motion-sensitive clients skip it.
+  useEffect(()=>{
+    const media=window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)');
+    if(media.matches){setIntroDone(true);return;}
+    const timer=window.setTimeout(()=>setIntroDone(true),2550);
+    return()=>window.clearTimeout(timer);
+  },[]);
   useEffect(()=>{
     const node=video.current;
     if(!node)return;
@@ -98,13 +107,13 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
     setScene(index=>(index+delta+scenes.length)%scenes.length);
     setPaused(true);
   },[]);
-  const chooseVehicle=(index:number)=>{
-    if(index>=0&&index<vehicles.length)onChange(index);
-  };
+  // The cinematic artwork is a generated Ertiga-inspired MPV concept, not a
+  // model-accurate photo. Real vehicle selection belongs in the following gallery.
+  const chooseFeatured=()=>onQuote(featured.name);
   const progressKey=[scene,paused?'paused':'playing',visible?'visible':'hidden',sceneReady.filter(Boolean).length].join('-');
   if(!active)return null;
 
-  return <div className={'cinema-director cinematic-v6 '+((paused||!visible||reduceMotion)?'is-paused':'')+(reduceMotion?' reduce-motion':'')+(cinematic?' cinematic-enabled':' cinematic-disabled')}
+  return <div className={'cinema-director cinematic-v6 '+(!introDone?' cinematic-intro-running':' cinematic-intro-finished')+' '+((paused||!visible||reduceMotion)?'is-paused':'')+(reduceMotion?' reduce-motion':'')+(cinematic?' cinematic-enabled':' cinematic-disabled')}
     ref={host} aria-label="Cinematic journey scenes and selectable travel vehicles"
     style={{'--cinema-duration':SCENE_INTERVAL_MS+'ms'} as React.CSSProperties}
     onPointerMove={event=>{
@@ -122,7 +131,18 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
       event.currentTarget.style.setProperty('--cinema-car-y','0px');
     }}>
 
-    <div className="cinema-director-scenes" aria-hidden="true">
+    {!introDone&&<div className="cinema-arrival" aria-label="Mateshwari Travellers cinematic arrival">
+      <div className="cinema-arrival-scene" aria-hidden="true">
+        <ScenicImage src={luxuryMedia.hero.src} fallback={luxuryMedia.hero.fallback} alt="" fetchPriority="high" />
+      </div>
+      <div className="cinema-arrival-wash" aria-hidden="true"/>
+      <img src="/media/mt-hero-car-cutout.webp" className="cinema-arrival-vehicle" alt="" aria-hidden="true"
+        onError={event=>{event.currentTarget.style.visibility='hidden';}}/>
+      <span className="cinema-arrival-wordmark">MATESHWARI <em>TRAVELLERS</em></span>
+      <span className="cinema-arrival-subline">THE JOURNEY BEGINS HERE</span>
+      <button type="button" className="cinema-arrival-skip" onClick={()=>setIntroDone(true)}>Skip intro <ArrowUpRight size={15}/></button>
+    </div>}
+  <div className="cinema-director-scenes" aria-hidden="true">
       {scenes.map((item,i)=><div key={item.index}
         className={'cinema-director-scene '+(i===scene?'is-active':'')+(i===0&&videoReady?' has-video':'')}
         aria-hidden="true">
@@ -165,11 +185,11 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
     <div className="cinema-director-bottom">
       <div className="cinema-director-vehicle">
         <span>PLAN YOUR DRIVE</span>
-        <strong>{active.name}</strong>
-        <small>{active.seats} seats <i/> {active.category} <i/> ₹{active.rateMin??15}–₹{active.rateMax??25}/km indicative</small>
+        <strong>Family MPV · Ertiga-inspired concept</strong>
+        <small>{featured.seats} seats <i/> Reference artwork <i/> Actual model and fare confirmed in quotation</small>
       </div>
-      <button type="button" className="cinema-director-quote" onClick={()=>onQuote(active.name)}>
-        Request this vehicle <ArrowUpRight size={17}/>
+      <button type="button" className="cinema-director-quote" onClick={chooseFeatured}>
+        Enquire about Ertiga <ArrowUpRight size={17}/>
       </button>
     </div>
 
@@ -183,16 +203,14 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
           {paused?<Play size={15}/>:<Pause size={15}/>}
         </button>
       </div>
-      <div className="cinema-director-vehicle-tabs" role="group" aria-label="Select your vehicle">
-        {vehicles.map((vehicle,i)=><button type="button" key={vehicle.name}
-          className={i===activeIndex?'active':''} aria-pressed={i===activeIndex}
-          onClick={()=>chooseVehicle(i)}>{vehicle.name}</button>)}
+      <div className="cinema-director-vehicle-tabs cinema-gallery-action">
+        <a href="#motion-fleet">Explore all {vehicles.length} vehicles <ArrowUpRight size={15}/></a>
       </div>
     </div>
 
     <div className="cinema-director-playback" aria-hidden="true" key={progressKey}>
       <span className="cinema-director-progress"/>
     </div>
-    <p className="cinema-director-legal">ILLUSTRATIVE TRAVEL SCENERY · YOUR BOOKING VEHICLE IS SELECTED SEPARATELY</p>
+    <p className="cinema-director-legal">CINEMATIC CONCEPT · NOT ACTUAL FLEET PHOTOGRAPHY · CHOOSE YOUR VEHICLE BELOW</p>
   </div>;
 }
