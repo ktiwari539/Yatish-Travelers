@@ -149,10 +149,22 @@ async function smoke(){
  ensure(!await page.locator('.mobile-nav-panel').count(),'Mobile menu closes on navigation');
  ensure((await page.locator('.mobile-booking-bar a').first().getAttribute('href')||'').includes('wa.me/919340098177'),'Mobile WhatsApp');
  ensure((await page.locator('.mobile-booking-bar a').nth(1).getAttribute('href')||'').startsWith('tel:+919340098177'),'Mobile call');
+ const mobileEmail=await page.locator('.cinematic-landing-email').boundingBox();
+ const mobileBooking=await page.locator('.cinema-director-bottom').boundingBox();
+ ensure(mobileEmail&&mobileBooking&&mobileEmail.y+mobileEmail.height+6<mobileBooking.y,
+   'Mobile email CTA must not overlap the Ertiga booking panel');
  await page.screenshot({path:'artifacts/visual-evidence/mobile-quote-cta.png'});
  await page.locator('.mobile-booking-bar button').click();
  await page.locator('.quote-modal').waitFor({state:'visible'});
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
+ await page.locator('.quote-close').click();
+ await page.setViewportSize({width:375,height:812});
+ await page.reload({waitUntil:'domcontentloaded'});
+ const narrowEmail=await page.locator('.cinematic-landing-email').boundingBox();
+ const narrowBooking=await page.locator('.cinema-director-bottom').boundingBox();
+ ensure(narrowEmail&&narrowBooking&&narrowEmail.y+narrowEmail.height+4<narrowBooking.y,
+   '375px hero must not overlap the booking panel');
+ await page.screenshot({path:'artifacts/visual-evidence/mobile-375px.png'});
  await page.locator('.quote-close').click();
  // CRM photo-privacy regression: a current image cannot be published as
  // sanitized without pixelating a region or explicitly reviewing the whole photo.
