@@ -33,6 +33,14 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Scroll-road V8 — real vehicle photographs (review)
+
+The `#motion-fleet` section now uses a **scroll-driven sticky photographic scene** instead of another standalone 3D toy: the selected model's own reference photograph glides into place while the arrival, features and trip-enquiry chapters reveal in sequence. The same vehicle selection and quotation callback continue to work, and selecting another model does not get silently overridden by scrolling. The thumbnail rail and the lower sortable fleet comparison remain available.
+
+**Authenticity:** Pictures are photographs of actual car *models* with attributed Wikimedia Commons sources, **not proof they belong to the operator's fleet**. The existing illustrative MPV artwork is separate and still labeled as a hero concept; it is not used in this real-model scroll stage. No fabricated door-opening video or model-specific 3D animation is claimed. A convincing branded door-open or real driving shot requires licensed footage or an accurate licensed rigged car model for that vehicle.
+
+Scrolling effects are toned down on touch-size screens and fully disabled for `prefers-reduced-motion`. Chromium interaction smoke checks now cover the photo source, scroll chapters, model/quote synchronization, hero, navigation and mobile controls. Final Safari visuals, external photo loading, original image licensing and operator inventory details require release review.
+
 ### Fleet showcase update — 10 distinct vehicle references (October 12, 2026)
 
 The review catalog now contains the existing six models plus **Mahindra Scorpio-N, Mahindra Thar (red), Mahindra XUV700 (black), and Kia Carens**. The former Bolero reference has been replaced by a **black Mahindra Bolero** photograph. Every model uses a separate Wikimedia Commons source and linked license credit rather than recycling another car's photo.
