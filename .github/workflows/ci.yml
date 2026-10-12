@@ -25,3 +25,11 @@ jobs:
 
       - name: Type check and production build
         run: npm run build
+
+      - name: Install browser for UI smoke tests
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Chromium interaction smoke
+        run: node scripts/hero-ui-smoke.mjs
