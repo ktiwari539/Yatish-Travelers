@@ -10,7 +10,8 @@
     "test:api": "node --test server/crm.test.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "visuals:install": "node scripts/install-visuals.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.545.0",
