@@ -396,32 +396,28 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </nav>}
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-grid" />
-        <div className="hero-ambient" />
-        <div className="hero-copy">
-          <div className="eyebrow"><Sparkles size={16} /> Chauffeur-driven travel, done right.</div>
-          <h1>Every journey should feel <em>effortless.</em></h1>
-          <p>Local rides, outstation trips, airport transfers and multi-day travel with transparent pricing and planned chauffeur-led travel.</p>
-          <div className="hero-actions">
-            <a className="primary" href="#fare"><Calculator size={18} /> Calculate Fare</a>
-            <WhatsappLink source="hero" label="Chat on WhatsApp" className="secondary hero-whatsapp"/>
-            <a className="hero-email-link" href={contactEmail+'?subject='+encodeURIComponent('Travel quotation enquiry — Mateshwari Travellers')} onClick={()=>logInteraction('email_click','hero')}><Mail size={17}/> Email Us</a>
-            <a className="hero-fleet-link" href="#showroom">Explore Fleet <ArrowRight size={15}/></a>
-          </div>
-          <div className="trust-row">
-            <span><Check size={16}/> Transparent per-km pricing</span>
-            <span><ShieldCheck size={16}/> Dedicated journey coordination</span>
-            <span><MessageCircle size={16}/> Direct WhatsApp enquiries</span>
-          </div>
-        </div>
-
+      <section className="hero cinematic-landing" id="top" aria-label="Mateshwari Travellers signature journeys">
         <div className="car-stage fleet-hero-slot">
           <FleetHeroVisual vehicles={liveFleet}
             activeIndex={Math.min(heroIndex,Math.max(0,liveFleet.length-1))}
             onChange={index=>{const car=liveFleet[index];if(car)selectFeatured(car.name);}}
             onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
         </div>
+        <div className="hero-copy cinematic-landing-copy">
+          <div className="eyebrow"><Sparkles size={15}/> MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED</div>
+          <h1>Travel, arranged with <em>more thought.</em></h1>
+          <p>Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.</p>
+          <div className="hero-actions">
+            <button className="primary" type="button" onClick={()=>openQuote('quote','cinematic-hero')}>
+              Request a Quote <ArrowRight size={17}/>
+            </button>
+            <WhatsappLink source="hero" label="Chat on WhatsApp" className="secondary hero-whatsapp"/>
+            <a className="hero-fleet-link" href="#motion-fleet">Explore the Fleet <ArrowRight size={15}/></a>
+          </div>
+          <a className="cinematic-landing-email" href={contactEmail+'?subject='+encodeURIComponent('Travel enquiry — Mateshwari Travellers')}
+            onClick={()=>logInteraction('email_click','hero')}><Mail size={15}/> Prefer email? Contact us directly</a>
+        </div>
+        <div className="cinematic-landing-scroll" aria-hidden="true"><span>SCROLL TO EXPLORE</span><i/></div>
       </section>
 
       <section className="signature-strip reveal-3d" aria-label="Mateshwari Travellers service highlights">
