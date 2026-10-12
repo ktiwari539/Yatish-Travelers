@@ -90,6 +90,15 @@ async function smoke(){
   category:node.querySelector('.fleet-editorial-tile-photo > span')?.textContent?.trim()
  })));
  ensure(cards.length===10,'Ten distinct fleet cards are shown in local preview');
+ const rail=page.locator('.fleet-editorial-rail');
+ ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet rail is horizontally browsable instead of a crowded grid');
+ const beforeRail=await rail.evaluate(el=>el.scrollLeft);
+ await page.getByRole('button',{name:'Scroll fleet right'}).click();
+ await page.waitForFunction(()=>document.querySelector('.fleet-editorial-rail')?.scrollLeft>20);
+ ensure(await rail.evaluate(el=>el.scrollLeft)>beforeRail,'Fleet browse-right arrow scrolls the thumbnails');
+ await page.getByRole('button',{name:'Scroll fleet left'}).click();
+ await page.waitForFunction(()=>document.querySelector('.fleet-editorial-rail')?.scrollLeft<20);
+
  ensure(['Mahindra Bolero','Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens'].every(name=>cards.some(card=>card.name===name)), 'All five upgraded and added models are visible');
  ensure(cards.find(card=>card.name==='Mahindra Bolero')?.source?.includes('Gen%203')||cards.find(card=>card.name==='Mahindra Bolero')?.placeholder?.includes('Mahindra Bolero'),'Bolero uses updated black model photo');
  ensure(cards.every(card=>card.category!=='TRAVEL INSPIRATION'),'No fake scenic image is labeled as a vehicle');
