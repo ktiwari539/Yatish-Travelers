@@ -1,0 +1,31 @@
+/* Admin image privacy workbench: discreet luxury styling, clear confirmation.
+   Only user-reviewed transformed images are marked sanitized. */
+.fleet-photo-review-actions{
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  padding:12px 14px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(24,75,53,.06),rgba(177,134,73,.07));
+  border:1px solid rgba(77,104,75,.18);
+}
+.fleet-photo-review-actions button{
+  appearance:none;cursor:pointer;border:1px solid rgba(30,83,61,.34);
+  border-radius:999px;background:#fff;color:#154933;
+  font-size:12px;line-height:1.25;font-weight:800;
+  padding:11px 15px;
+}
+.fleet-photo-review-actions button:hover,.fleet-photo-review-actions button:focus-visible{
+  background:#e9f3ea;
+}
+.fleet-photo-review-actions button:disabled{opacity:.6;cursor:wait}
+.fleet-photo-review-actions small{font-size:11px;line-height:1.5;color:#637467}
+.privacy-review-confirm{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 16px;border:1px solid rgba(186,159,116,.35);
+  border-radius:12px;background:rgba(238,230,213,.65);
+  color:#244431;font-size:13px;font-weight:680;line-height:1.4;
+  margin:12px 0;
+}
+.privacy-review-confirm input{width:18px;height:18px;accent-color:#215c3f;flex-shrink:0;margin-top:1px}
+@media(max-width:650px){
+ .fleet-photo-review-actions button{width:100%}
+ .privacy-review-confirm{font-size:12px}
+}
