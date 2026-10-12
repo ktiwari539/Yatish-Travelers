@@ -9,12 +9,13 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
  const [selection,setSelection]=useState<Rect|null>(null);
  const start=useRef<{x:number;y:number}|null>(null);
  const [applied,setApplied]=useState(0);
+ const [noVisiblePlate,setNoVisiblePlate]=useState(false);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
  const [error,setError]=useState('');
  useEffect(()=>{
    let alive=true;
-   setLoading(true);setSelection(null);setApplied(0);setError('');
+   setLoading(true);setSelection(null);setApplied(0);setNoVisiblePlate(false);setError('');
    createImageBitmap(file).then(image=>{
      if(!alive){image.close();return;}
      original.current?.close();original.current=image;
@@ -60,14 +61,15 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
    context.imageSmoothingEnabled=false;
    context.drawImage(buffer,0,0,buffer.width,buffer.height,x,y,w,h);
    context.restore();
-   setApplied(n=>n+1);setSelection(null);
+   setApplied(n=>n+1);setNoVisiblePlate(false);setSelection(null);
  };
  const reset=()=>{
    const image=original.current,c=canvas.current;
-   if(image&&c){c.getContext('2d')?.drawImage(image,0,0,c.width,c.height);setApplied(0);setSelection(null);}
+   if(image&&c){c.getContext('2d')?.drawImage(image,0,0,c.width,c.height);setApplied(0);setSelection(null);setNoVisiblePlate(false);}
  };
  const finish=async()=>{
    const c=canvas.current;if(!c)return;
+   if(applied===0&&!noVisiblePlate){setError('Review the photo and pixelate visible registration plates, or confirm that no plate is visible.');return;}
    setSaving(true);setError('');
    try{
      const blob=await new Promise<Blob>((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Image export failed')),'image/webp',.82));
@@ -86,13 +88,18 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
        {selected&&<div className="privacy-selected" style={selected} aria-hidden="true"/>}
        {loading&&<span className="privacy-loading">Loading image...</span>}
      </div>
+     <label className="privacy-review-confirm">
+       <input type="checkbox" checked={noVisiblePlate&&applied===0} disabled={applied>0}
+         onChange={event=>setNoVisiblePlate(event.target.checked)}/>
+       <span>No registration number is visible in this photo (I reviewed the entire image)</span>
+     </label>
      <div className="privacy-toolbar">
        <span>{applied} region{applied===1?'':'s'} pixelated</span>
        <div><button type="button" onClick={reset}><RotateCcw size={15}/> Reset</button>
        <button type="button" disabled={!selection||selection.w<6||selection.h<6} onClick={mosaic}><ScanLine size={15}/> Pixelate selected area</button>
-       <button type="button" className="fleet-save" disabled={saving||loading||!!selection} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Uploading...':'Save sanitized photo'}</button></div>
+       <button type="button" className="fleet-save" disabled={saving||loading||!!selection||(applied===0&&!noVisiblePlate)} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Uploading...':'Save sanitized photo'}</button></div>
      </div>
-     <small>Review the whole image before saving. This permanently pixelates the selected area in the uploaded copy; there is no conspicuous grey bar. The original on your Mac is unchanged.</small>
+     <small>Review every visible plate, including cars in the background and alternate angles. Redactions are baked into the new copy; the original photo remains unchanged. If no plate is visible, explicitly confirm it above.</small>
    </div>
  </div>;
 }
