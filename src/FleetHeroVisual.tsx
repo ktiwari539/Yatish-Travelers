@@ -112,10 +112,14 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
       const bounds=event.currentTarget.getBoundingClientRect();
       event.currentTarget.style.setProperty('--cinema-x',(((event.clientX-bounds.left)/bounds.width-.5)*-23).toFixed(1)+'px');
       event.currentTarget.style.setProperty('--cinema-y',(((event.clientY-bounds.top)/bounds.height-.5)*-16).toFixed(1)+'px');
+      event.currentTarget.style.setProperty('--cinema-car-x',(((event.clientX-bounds.left)/bounds.width-.5)*28).toFixed(1)+'px');
+      event.currentTarget.style.setProperty('--cinema-car-y',(((event.clientY-bounds.top)/bounds.height-.5)*22).toFixed(1)+'px');
     }}
     onPointerLeave={event=>{
       event.currentTarget.style.setProperty('--cinema-x','0px');
       event.currentTarget.style.setProperty('--cinema-y','0px');
+      event.currentTarget.style.setProperty('--cinema-car-x','0px');
+      event.currentTarget.style.setProperty('--cinema-car-y','0px');
     }}>
 
     <div className="cinema-director-scenes" aria-hidden="true">
