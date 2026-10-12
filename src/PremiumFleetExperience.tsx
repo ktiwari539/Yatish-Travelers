@@ -41,7 +41,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     return owners;
   },[vehicles]);
   const hasUniquePhoto=(vehicle:FleetReelVehicle,src=vehicle.image)=>
-    Boolean(src)&&photoOwner.get(src)===vehicle.name;
+    Boolean(src)&&(!photoOwner.has(src)||photoOwner.get(src)===vehicle.name);
   const modelPhotos=active
     ?[active.image,...(active.gallery||[])].filter((url,index,list)=>Boolean(url)&&list.indexOf(url)===index)
     :[];
