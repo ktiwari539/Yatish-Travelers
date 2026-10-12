@@ -50,14 +50,16 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'visible'});
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
- // Gallery must use six distinct model photos or explicit model-specific placeholders.
+ // Gallery must use ten distinct model photos or explicit model-specific placeholders.
  const cards=await page.locator('.fleet-editorial-tile').evaluateAll(nodes=>nodes.map(node=>({
   name:node.querySelector('.fleet-editorial-tile-foot strong')?.textContent?.trim(),
   source:node.querySelector('img')?.getAttribute('src')||'',
   placeholder:node.querySelector('.fleet-model-image-missing')?.textContent?.trim()||'',
   category:node.querySelector('.fleet-editorial-tile-photo > span')?.textContent?.trim()
  })));
- ensure(cards.length===6,'Six distinct fleet cards are shown in local preview');
+ ensure(cards.length===10,'Ten distinct fleet cards are shown in local preview');
+ ensure(['Mahindra Bolero','Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens'].every(name=>cards.some(card=>card.name===name)), 'All five upgraded and added models are visible');
+ ensure(cards.find(card=>card.name==='Mahindra Bolero')?.source?.includes('Gen%203')||cards.find(card=>card.name==='Mahindra Bolero')?.placeholder?.includes('Mahindra Bolero'),'Bolero uses updated black model photo');
  ensure(cards.every(card=>card.category!=='TRAVEL INSPIRATION'),'No fake scenic image is labeled as a vehicle');
  ensure(cards.every(card=>Boolean(card.source)||card.placeholder.includes(card.name)),'Every card has its own model photo or named placeholder');
  const sources=cards.map(card=>card.source).filter(Boolean);
@@ -65,6 +67,14 @@ async function smoke(){
  ensure(cards.find(card=>card.name==='Tempo Traveller')?.source?.includes('Traveller')||
   cards.find(card=>card.name==='Tempo Traveller')?.placeholder?.includes('Tempo Traveller'),
   'Tempo Traveller shows its own reference or own placeholder, never a forest or a second MPV');
+ // A new model must update the quote state just as existing models do.
+ await page.locator('.fleet-editorial-tile').filter({hasText:'Mahindra Scorpio-N'}).click();
+ ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Mahindra Scorpio-N','New Scorpio model selection');
+ await page.locator('.fleet-editorial-request').click();
+ await page.locator('.quote-modal').waitFor({state:'visible'});
+ ensure((await page.locator('.quote-trip-card').innerText()).includes('Mahindra Scorpio-N'),'Scorpio quote remains synchronized');
+ await page.locator('.quote-close').click();
+ await page.locator('.quote-modal').waitFor({state:'detached'});
  // Selecting the actual Innova in the fleet must change the current fare/quote vehicle.
  await page.locator('.fleet-editorial-tile').filter({hasText:'Toyota Innova'}).click();
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Toyota Innova','Gallery model switched');
@@ -98,7 +108,7 @@ async function smoke(){
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
  await page.locator('.quote-close').click();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
- console.log('PASS: six distinct gallery vehicle images, brand navigation from home/stories, car intro, quote, scene controls, mobile links');
+ console.log('PASS: ten distinct gallery vehicle images, brand navigation from home/stories, car intro, quote, scene controls, mobile links');
 }
 try{await smoke();}
 finally{
