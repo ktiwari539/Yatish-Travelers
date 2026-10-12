@@ -33,6 +33,21 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Scorpio-N selected vehicle film — last reviewed edit (current)
+
+The Scorpio-N model now uses **only the last user-approved clean-motion edit**, compressed from the final review export into a 6.7-second, silent, 960×540 H.264 file (about 637 KB). It opens automatically only when Scorpio-N is the selected vehicle and the fleet scene is visible, plays once, holds the final frame, and offers an explicit **Replay film** button. Other vehicles always retain their own image. Reduced-motion devices use the original still photograph. If the clip isn't installed or fails to load, the accurate Scorpio-N model photo is shown instead. The video has a quiet *Mateshwari Travellers* brand caption applied in the UI, not permanently added to the media file.
+
+**One local install step is still necessary:** The binary file is in the downloadable chat attachment, not GitHub. Download `mateshwari_scorpio_website_pack.zip` to your Mac's Downloads folder, then run from the project root:
+
+```bash
+npm run scorpio:install
+CRM_ADMIN_TOKEN="YOUR_PRIVATE_TOKEN" npm run dev:full
+```
+
+The installer accepts an alternate absolute ZIP path after `--` and verifies the exact 3 file names and SHA-256 checksums. It does not overwrite any customer data or existing scenic media. Visit http://localhost:5173, scroll to **The Mateshwari Collection**, select **Mahindra Scorpio-N**, watch the edited arrival and door opening, then click **Replay film**. Clicking **Request this vehicle** must open a Scorpio-N quote, not an Ertiga or Innova quote.
+
+**Accuracy:** The footage is AI-assisted/generated and should be labeled an editorial concept, not real footage of a guaranteed assigned vehicle. It has a stronger motion effect but **does not show a physically real tire drift**, and this update does not claim otherwise. Do not deploy before Safari/mobile visual approval and any applicable image/video rights review.
+
 ### Scroll-road V8 — real vehicle photographs (review)
 
 The `#motion-fleet` section now uses a **scroll-driven sticky photographic scene** instead of another standalone 3D toy: the selected model's own reference photograph glides into place while the arrival, features and trip-enquiry chapters reveal in sequence. The same vehicle selection and quotation callback continue to work, and selecting another model does not get silently overridden by scrolling. The thumbnail rail and the lower sortable fleet comparison remain available.
