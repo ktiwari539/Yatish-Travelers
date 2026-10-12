@@ -9,8 +9,12 @@ export const defaultCatalog=[
  {name:'Maruti Ertiga',seats:'6+1',capacity:6,tag:'Family Favourite',category:'MPV',image:commons('Suzuki%20Ertiga%20GX%20%28Side%29%2C%20Jakarta%2C%20Indonesia.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Toyota Innova',seats:'6+1',capacity:6,tag:'Premium Comfort',category:'Premium MPV',image:commons('Toyota%20Innova%20Crysta%202.4%20Z%20side.jpg'),rateMin:15,rateMax:25,enabled:true},
  {name:'Mahindra TUV',seats:'6+1',capacity:6,tag:'Strong & Spacious',category:'SUV',image:commons('Mahindra%20TUV%20300%20%282016%29%20%2852715226367%29.jpg'),rateMin:15,rateMax:25,enabled:true},
- {name:'Mahindra Bolero',seats:'6+1',capacity:6,tag:'Reliable Traveller',category:'SUV',image:commons('Mahindra%20Bolero%20ZLX.jpg'),rateMin:15,rateMax:25,enabled:true},
- {name:'Tempo Traveller',seats:'12+1 / 17+1',capacity:17,tag:'Group Travel',category:'Traveller',image:commons('Force%20Traveller%20Luxury.jpg'),rateMin:15,rateMax:25,enabled:true}
+ {name:'Mahindra Bolero',seats:'6+1',capacity:6,tag:'Bold Black Edition · On request',category:'SUV',image:commons('Mahindra%20Bolero%20Gen%203.jpg'),rateMin:15,rateMax:25,enabled:true},
+ {name:'Tempo Traveller',seats:'12+1 / 17+1',capacity:17,tag:'Group Travel',category:'Traveller',image:commons('Force%20Traveller%20Luxury.jpg'),rateMin:15,rateMax:25,enabled:true},
+ {name:'Mahindra Scorpio-N',seats:'6+1',capacity:6,tag:'Statement SUV · On request',category:'Premium SUV',image:commons(encodeURIComponent('2024 Mahindra Scorpio Z8L front.jpg')),rateMin:15,rateMax:25,enabled:true},
+ {name:'Mahindra Thar',seats:'3+1',capacity:3,tag:'Red Rage Adventure · On request',category:'Adventure SUV',image:commons(encodeURIComponent('Mahindra Thar SUV in "Red Rage" color at Ashiana Brahmanda, East Singbhum India (Ank Kumar, Infosys limited) 02 (cropped).jpg')),rateMin:15,rateMax:25,enabled:true},
+ {name:'Mahindra XUV700',seats:'6+1',capacity:6,tag:'Black Executive · On request',category:'Premium SUV',image:commons(encodeURIComponent('A black Mahindra XUV700 SUV in Ashiana Brahmananda, Jamshedpur, India (Ank Kumar, Infosys Limited) 02.jpg')),rateMin:15,rateMax:25,enabled:true},
+ {name:'Kia Carens',seats:'6+1',capacity:6,tag:'Contemporary Family · On request',category:'Premium MPV',image:commons(encodeURIComponent('Kia Carens 2024 Model 2.jpg')),rateMin:15,rateMax:25,enabled:true}
 ].map((v)=>({...v,id:v.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),
  gallery:v.name==='Maruti Dzire' ? [commons('MIAS%202025%20-%20All-new%20Suzuki%20Dzire%20Hybrid%2004.jpg')]
  :v.name==='Maruti Ertiga' ? [commons('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Rear%20view%20-%20April%2026%202018.jpg')]
@@ -38,15 +42,24 @@ export function readCatalog(){
   // Only migrate the exact previous bundled reference asset, never user-provided photos.
   const previousErtiga=commons('Suzuki%20Ertiga%20GX%201.5%20-%20Indonesia%20International%20Motor%20Show%202018%20-%20Front%20view%20-%20April%2026%202018.jpg');
   const currentErtiga=defaultCatalog.find(v=>v.name==='Maruti Ertiga')?.image;
-  return {...value,vehicles:value.vehicles.map(v=>(
-    v.name==='Maruti Ertiga'&&v.image===previousErtiga&&currentErtiga
-      ?{...v,image:currentErtiga}
-      :v
-  ))};
+  const oldBolero=commons('Mahindra%20Bolero%20ZLX.jpg');
+  const blackBolero=defaultCatalog.find(v=>v.name==='Mahindra Bolero')?.image;
+  // Version-1 local catalogs predate these optional showcase entries. Add them once
+  // without overwriting staff-managed pricing, images, visibility or existing records.
+  // A version-2 catalog can intentionally remove vehicles without their return.
+  const existing=value.vehicles.map(v=>{
+    if(v.name==='Maruti Ertiga'&&v.image===previousErtiga&&currentErtiga)return {...v,image:currentErtiga};
+    if(v.name==='Mahindra Bolero'&&v.image===oldBolero&&blackBolero)return {...v,image:blackBolero};
+    return v;
+  });
+  const additions=Number(value.catalogVersion||1)<2
+    ?defaultCatalog.filter(v=>!existing.some(item=>item.name===v.name))
+    :[];
+  return {...value,catalogVersion:2,vehicles:[...existing,...additions]};
 }
 export function writeCatalog(vehicles){
   if(!Array.isArray(vehicles)||vehicles.length>80) throw new Error('Catalog limit exceeded.');
-  const next={vehicles,updatedAt:new Date().toISOString()};
+  const next={catalogVersion:2,vehicles,updatedAt:new Date().toISOString()};
   mkdirSync(dirname(catalogPath),{recursive:true,mode:0o700});
   const tmp=catalogPath+'.'+randomUUID()+'.tmp';
   writeFileSync(tmp,JSON.stringify(next,null,2),{mode:0o600});
