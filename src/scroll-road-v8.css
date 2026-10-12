@@ -1,0 +1,179 @@
+/* V8: cinematic scroll storytelling with photographs of the actual named models.
+   No generic 3D meshes, car emoji, fabricated door animation or swapped model art. */
+.fleet-editorial { overflow:clip; }
+.fleet-road-story {
+  --road-car-offset:30%;
+  --road-car-scale:1.17;
+  --road-marking-shift:0px;
+  --road-motion-progress:0;
+  position:relative;
+  height:235vh;
+  isolation:isolate;
+}
+.fleet-road-sticky {
+  position:sticky;
+  top:clamp(70px,8.5vh,110px);
+  height:calc(100svh - clamp(90px,11vh,126px));
+  min-height:570px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:17px;
+  max-width:1510px;
+  margin:0 auto;
+}
+.fleet-road-story-top {
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#9b7951;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.17em;
+  gap:15px;
+}
+.fleet-road-story-top>span:last-child { display:flex;align-items:center;gap:13px; }
+.fleet-road-story-line {width:48px;height:1px;background:#b4905d;}
+.fleet-road-stage {
+  margin:0 auto;
+  width:100%;
+  min-height:clamp(480px,68vh,695px);
+  box-shadow:0 45px 94px rgba(22,47,30,.2);
+}
+.fleet-road-stage .fleet-editorial-picture { min-height:100%; }
+.fleet-road-stage .fleet-editorial-picture>img {
+  transform:translate3d(var(--road-car-offset),0,0) scale(var(--road-car-scale));
+  transition:filter .26s linear;
+  will-change:transform;
+  object-position:center;
+  filter:saturate(1.05) contrast(1.06);
+}
+.fleet-road-stage .fleet-editorial-picture:hover>img {
+  transform:translate3d(var(--road-car-offset),0,0) scale(var(--road-car-scale));
+}
+.fleet-road-stage .fleet-editorial-picture .fleet-model-image-missing {
+  min-height:100%;
+  transform:none;
+}
+.fleet-drive-road-markings {
+  position:absolute;
+  pointer-events:none;
+  z-index:1;
+  bottom:-19%;
+  left:-12%;
+  right:-12%;
+  height:34%;
+  transform:perspective(680px) rotateX(63deg) translate3d(0,var(--road-marking-shift),0);
+  background:linear-gradient(180deg,rgba(14,28,28,0),rgba(12,24,24,.28) 55%,rgba(10,19,18,.47));
+  opacity:.78;
+  overflow:hidden;
+}
+.fleet-drive-road-markings span {
+  display:block;
+  position:absolute;
+  bottom:34%;
+  left:6%;
+  height:2px;
+  border-radius:50px;
+  background:rgba(255,235,196,.63);
+  box-shadow:0 1px 17px rgba(255,225,178,.2);
+  transform:skewX(-33deg);
+}
+.fleet-drive-road-markings span:first-child {width:29%;opacity:.45}
+.fleet-drive-road-markings span:nth-child(2){left:43%;width:13%;opacity:.7}
+.fleet-drive-road-markings span:nth-child(3){left:78%;width:31%;opacity:.5}
+.fleet-road-stage .fleet-editorial-gradient {z-index:2;}
+.fleet-road-stage .fleet-editorial-frame-tag,
+.fleet-road-stage .fleet-editorial-frame-count,
+.fleet-road-stage .fleet-editorial-frame-caption,
+.fleet-road-stage .fleet-editorial-angles {z-index:3;}
+.fleet-road-stage .fleet-editorial-description {
+  gap:16px;
+  padding-top:30px;
+  padding-bottom:30px;
+}
+.fleet-drive-story-chapter {
+  min-height:85px;
+  display:flex;
+  flex-direction:column;
+  align-items:start;
+  justify-content:center;
+  gap:6px;
+  border-left:2px solid #e1be85;
+  padding-left:17px;
+  animation:fleetV8Chapter .45s cubic-bezier(.2,.7,.3,1) both;
+}
+.fleet-drive-story-chapter>span {
+  font-size:9px;
+  letter-spacing:.18em;
+  color:#ebca96;
+  font-weight:900;
+}
+.fleet-drive-story-chapter>strong {
+  font-size:clamp(20px,2.15vw,31px);
+  line-height:1.1;
+  color:#fff7e7;
+  letter-spacing:-.04em;
+}
+.fleet-drive-story-chapter>p {
+  font-size:10px;
+  line-height:1.5;
+  color:#cdded0;
+  max-width:330px;
+}
+.fleet-road-stage .fleet-editorial-model {gap:10px}
+.fleet-road-stage .fleet-editorial-model h3 {font-size:clamp(31px,3.5vw,54px)}
+.fleet-road-stage .fleet-editorial-model>p {font-size:11px;line-height:1.58}
+.fleet-road-story-progress {
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:4px;
+  z-index:6;
+  background:rgba(255,255,255,.1);
+  pointer-events:none;
+}
+.fleet-road-story-progress i {
+  display:block;
+  width:calc(var(--road-motion-progress) * 100%);
+  height:100%;
+  background:linear-gradient(90deg,#bc995e,#f8d9a5);
+}
+.fleet-road-stage .fleet-editorial-frame-caption {max-width:440px;}
+@keyframes fleetV8Chapter {
+  from {opacity:0;transform:translate3d(0,13px,0);}
+  to {opacity:1;transform:none;}
+}
+@media (max-width:1180px) {
+  .fleet-road-story {height:190vh}
+  .fleet-road-sticky {min-height:520px}
+  .fleet-road-stage {min-height:520px}
+  .fleet-road-stage .fleet-editorial-description {padding:21px;gap:9px}
+  .fleet-drive-story-chapter {min-height:69px}
+  .fleet-drive-story-chapter>strong{font-size:23px}
+}
+@media (max-width:760px) {
+  .fleet-road-story {height:auto}
+  .fleet-road-sticky {position:static;height:auto;min-height:0;display:block}
+  .fleet-road-story-top{margin-bottom:14px;font-size:8px}
+  .fleet-road-story-top>span:last-child{display:none}
+  .fleet-road-stage{min-height:0}
+  .fleet-road-stage .fleet-editorial-picture{min-height:300px;height:330px}
+  .fleet-road-stage .fleet-editorial-picture>img,
+  .fleet-road-stage .fleet-editorial-picture:hover>img {transform:none!important;will-change:auto}
+  .fleet-drive-road-markings {display:none}
+  .fleet-road-stage .fleet-editorial-description{gap:14px;padding:22px}
+  .fleet-drive-story-chapter{min-height:70px}
+  .fleet-road-story-progress{display:none}
+}
+@media (prefers-reduced-motion:reduce) {
+  .fleet-road-story{height:auto}
+  .fleet-road-sticky{position:static;height:auto;min-height:0}
+  .fleet-road-stage .fleet-editorial-picture>img,
+  .fleet-road-stage .fleet-editorial-picture:hover>img{transform:none!important;will-change:auto}
+  .fleet-drive-road-markings{display:none}
+  .fleet-drive-story-chapter{animation:none}
+  .fleet-road-story-progress{display:none}
+}
