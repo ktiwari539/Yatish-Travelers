@@ -129,6 +129,18 @@ async function smoke(){
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Toyota Innova'),'Fleet quote uses selected Toyota Innova');
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
+ // Full gallery visual-evidence audit: the privacy reviewer must inspect every
+ // model and all configured angles. These are screenshots, NOT sanitized images.
+ for(const card of cards){
+   const name=card.name;
+   await page.locator('.fleet-editorial-tile').filter({hasText:name}).click();
+   await page.waitForTimeout(180);
+   const slug=String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+   await page.locator('.fleet-road-stage').screenshot({
+     path:'artifacts/visual-evidence/model-'+slug+'.png',
+     animations:'disabled'
+   });
+ }
  // Brand takes the visitor back to the actual homepage from a lower-page section.
  await page.locator('#fleet').scrollIntoViewIfNeeded();
  ensure(await page.evaluate(()=>window.scrollY)>150,'Scrolled down to check brand navigation');
