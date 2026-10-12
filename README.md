@@ -33,6 +33,14 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Fleet showcase update — 10 distinct vehicle references (October 12, 2026)
+
+The review catalog now contains the existing six models plus **Mahindra Scorpio-N, Mahindra Thar (red), Mahindra XUV700 (black), and Kia Carens**. The former Bolero reference has been replaced by a **black Mahindra Bolero** photograph. Every model uses a separate Wikimedia Commons source and linked license credit rather than recycling another car's photo.
+
+The public fleet and local CRM load from the same catalog. Existing saved catalogs from before this addition are expanded **once** to include the four new models without overwriting staff-managed vehicle entries, photos, prices or visibility; a catalog saved after the update records schema version 2, so staff removals stay removed. Existing enquiries and CRM data are untouched.
+
+The newly added models are **reference options for enquiry**, not proof of ownership or guaranteed availability. The present fare estimator uses indicative prototype rates, and final seating, vehicle availability and pricing must be verified with the operator before public release. The automated API migration and UI smoke tests cover catalog continuity, model uniqueness, and Scorpio-N quotation selection.
+
 ### Hero V7 — short entry animation and consistent vehicle selection (current)
 
 **Hero V7** fixes the actual cause of the Toyota Innova mismatch: the app previously maintained a separate `heroIndex=2` while the fare calculator selected Ertiga. Now there is **one selected vehicle state** shared by calculator, fleet and quotation; the hero is a dedicated **Ertiga-inspired cinematic editorial** rather than pretending its generated picture shows whichever vehicle is selected. The hero offers **Enquire about Ertiga** (uses the real Ertiga quote form) and **Explore all vehicles** (opens the separate accurate vehicle gallery). The full fleet gallery still supports Innova and the other vehicle selections.
