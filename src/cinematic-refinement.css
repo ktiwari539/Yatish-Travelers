@@ -168,3 +168,49 @@
  .film-hero-scene img{filter:none}
  .fleet-editorial-picture:hover>img,.fleet-editorial-tile:hover{transform:none!important}
 }
+
+/* Distinct model imagery — a failed or duplicate photo becomes a named, styled
+   vehicle-specific placeholder. Never display a forest or another make as a car. */
+.fleet-model-image-missing{
+  position:relative;isolation:isolate;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  height:100%;width:100%;box-sizing:border-box;padding:15px;text-align:center;
+  background:radial-gradient(circle at 73% 16%,rgba(224,189,142,.38),transparent 48%),
+             linear-gradient(145deg,#e9e8dc,#cad8ca 65%,#a8bbab);
+  color:#194732;overflow:hidden;
+}
+.fleet-model-image-missing:before{
+  content:'';position:absolute;z-index:-1;width:140%;height:90%;
+  left:-20%;top:12%;border:1px solid rgba(35,77,47,.17);
+  border-radius:50%;transform:rotate(-18deg);
+}
+.fleet-model-image-emblem{
+  display:grid;place-items:center;width:60px;height:60px;border-radius:50%;
+  border:1px solid rgba(38,77,55,.3);background:rgba(255,255,255,.46);
+  color:#366c50;
+}
+.fleet-model-image-name{
+  font-weight:850;line-height:1.15;font-size:clamp(15px,2vw,26px);letter-spacing:-.045em;
+}
+.fleet-model-image-missing small{font-size:10px;color:#637e6a;letter-spacing:.035em}
+.fleet-editorial-tile-photo .fleet-model-image-missing{gap:5px;padding:10px}
+.fleet-editorial-tile-photo .fleet-model-image-emblem{width:42px;height:42px}
+.fleet-editorial-tile-photo .fleet-model-image-emblem svg{width:25px;height:25px}
+.fleet-editorial-tile-photo .fleet-model-image-name{font-size:12px}
+.fleet-editorial-tile-photo .fleet-model-image-missing small{font-size:9px}
+.fleet-editorial-picture .fleet-model-image-missing .fleet-model-image-emblem{
+  width:92px;height:92px;border-radius:32px;background:rgba(252,251,241,.74);
+}
+.fleet-editorial-picture .fleet-model-image-missing .fleet-model-image-emblem svg{width:58px;height:58px}
+.fleet-editorial-picture .fleet-model-image-missing .fleet-model-image-name{font-size:clamp(28px,4vw,57px)}
+.fleet-editorial-picture .fleet-model-image-missing small{font-size:13px;color:#2c6345}
+.fleet-editorial-tile-photo img{
+  object-fit:contain;
+  object-position:center;
+  background:linear-gradient(120deg,#e4e7dd,#c7d2c4);
+}
+.fleet-editorial-tile-photo[data-vehicle="Maruti Dzire"] img{
+  object-fit:cover;object-position:50% 44%;
+}
+.fleet-editorial-tile:hover .fleet-editorial-tile-photo img{transform:scale(1.045)}
+.fleet-editorial-tile.selected .fleet-editorial-tile-foot strong{color:#926c3e}
