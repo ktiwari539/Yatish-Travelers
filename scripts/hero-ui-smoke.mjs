@@ -116,6 +116,11 @@ async function smoke(){
  // Selecting the actual Innova in the fleet must change the current fare/quote vehicle.
  await page.locator('.fleet-editorial-tile').filter({hasText:'Toyota Innova'}).click();
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Toyota Innova','Gallery model switched');
+ ensure((await page.locator('.fleet-road-stage').getAttribute('data-model'))==='Toyota Innova','Innova has a separate cinematic chapter');
+ ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Every detail, arranged.','Innova copy matches current journey chapter');
+ ensure(await page.locator('.fleet-innova-visual-note').count()===1,'Innova has its own executive visual');
+ ensure(await page.locator('.fleet-scorpio-film').count()===0,'Innova never shows the Scorpio movie');
+
  await page.locator('.fleet-editorial-request').click();
  await page.locator('.quote-modal').waitFor({state:'visible'});
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Toyota Innova'),'Fleet quote uses selected Toyota Innova');
@@ -145,8 +150,47 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'visible'});
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
  await page.locator('.quote-close').click();
+ // CRM photo-privacy regression: a current image cannot be published as
+ // sanitized without pixelating a region or explicitly reviewing the whole photo.
+ const tinyPng='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==';
+ const adminVehicle={id:'preview-car',name:'Toyota Innova',category:'Premium MPV',seats:'6+1',
+   tag:'Premium Comfort',capacity:6,image:tinyPng,rateMin:20,rateMax:30,enabled:true,gallery:[]};
+ let editedImageUrl='',savedCatalogName='';
+ await page.route('**/api/admin/**',async route=>{
+   const url=new URL(route.request().url());
+   let response={};
+   if(url.pathname==='/api/admin/catalog'){
+     if(route.request().method()==='PUT'){
+       const body=route.request().postDataJSON();
+       savedCatalogName=body.vehicles?.[0]?.name||'';
+       response={vehicles:body.vehicles};
+     }else response={vehicles:[adminVehicle]};
+   }else if(url.pathname==='/api/admin/images'){
+     editedImageUrl='/api/uploads/11111111-2222-4333-8444-555555555555.webp';
+     response={url:editedImageUrl};
+   }else if(url.pathname==='/api/admin/enquiries')response={items:[]};
+   else if(url.pathname==='/api/admin/engagement')response={total:0,counts:{},sessions:0,recent:[]};
+   else if(url.pathname==='/api/admin/notifications')response={config:{mode:'preview'},items:[]};
+   await route.fulfill({status:url.pathname==='/api/admin/images'?201:200,
+     contentType:'application/json',body:JSON.stringify(response)});
+ });
+ await page.addInitScript(()=>sessionStorage.setItem('mt-crm-token','smoke-test-local-only'));
+ await page.goto('http://127.0.0.1:'+port+'/admin',{waitUntil:'domcontentloaded'});
+ await page.getByRole('button',{name:'Cars & pricing'}).click();
+ await page.getByRole('button',{name:'Review current photo / hide plates'}).click();
+ const editor=page.getByRole('dialog',{name:'Vehicle photo privacy editor'});
+ await editor.waitFor({state:'visible'});
+ const saveSanitized=editor.getByRole('button',{name:'Save sanitized photo'});
+ ensure(await saveSanitized.isDisabled(),'Privacy editor must block saving unchecked existing plates');
+ await editor.getByRole('checkbox',{name:/No registration number is visible/}).check();
+ ensure(await saveSanitized.isEnabled(),'Explicit no-plate review unlocks sanitized image export');
+ await saveSanitized.click();
+ await editor.waitFor({state:'detached'});
+ ensure(Boolean(editedImageUrl),'Sanitized local image uploaded after explicit review');
+ await page.locator('.fleet-admin-head .fleet-save').click();
+ ensure(savedCatalogName==='Toyota Innova','Fleet catalog save retains identity after privacy review');
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
- console.log('PASS: ten distinct gallery vehicle images, brand navigation from home/stories, car intro, quote, scene controls, mobile links');
+ console.log('PASS: 10 distinct vehicles, Innova cinematic chapter, Scorpio MP4, quote navigation, mobile CTAs and admin privacy-review gate');
 }
 try{await smoke();}
 finally{
