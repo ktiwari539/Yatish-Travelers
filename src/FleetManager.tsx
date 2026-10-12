@@ -17,7 +17,7 @@ export function FleetManager({token}:Props) {
  const [loaded,setLoaded]=useState(false);
  const [uploading,setUploading]=useState<number|null>(null);
  const [uploadingModel,setUploadingModel]=useState<number|null>(null);
- const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File}|null>(null);
+ const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File;angleIndex?:number}|null>(null);
  const [reviewingPhoto,setReviewingPhoto]=useState<number|null>(null);
  const load=useCallback(async()=>{
    setError('');
@@ -33,7 +33,7 @@ export function FleetManager({token}:Props) {
   setVehicles(current=>current.map((v,i)=>i===index?{...v,...patch}:v));
   setSuccess('');
  };
- const reviewCurrentPhoto=async(index:number,src:string)=>{
+ const reviewCurrentPhoto=async(index:number,src:string,angleIndex?:number)=>{
    setError('');setSuccess('');setReviewingPhoto(index);
    try{
      // Browser CORS: no credentials or untrusted internal proxy. Wikimedia allows
@@ -44,13 +44,13 @@ export function FleetManager({token}:Props) {
      if(!bytes.type.startsWith('image/')||bytes.size>15_000_000)
        throw new Error('The image cannot be safely opened for review.');
      const type=/^image\/(jpeg|png|webp)$/.test(bytes.type)?bytes.type:'image/jpeg';
-     setEditingPhoto({index,file:new File([bytes],
+     setEditingPhoto({index,angleIndex,file:new File([bytes],
        'review-'+vehicles[index].name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.jpg',{type})});
    }catch(e){
      setError('Cannot load this external image into the privacy editor. Download its licensed photo to your Mac and choose Upload / edit vehicle photo. This is a browser cross-origin restriction, not proof the image is plate-free.');
    }finally{setReviewingPhoto(null);}
  };
- const uploadPhoto=async(index:number,file:File|undefined)=>{
+ const uploadPhoto=async(index:number,file:File|undefined,angleIndex?:number)=>{
    if(!file)return;
    setError('');setSuccess('');
    if(file.size>3_000_000||!['image/jpeg','image/png','image/webp'].includes(file.type)){
@@ -67,7 +67,9 @@ export function FleetManager({token}:Props) {
      const response=await fetch('/api/admin/images',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({mime:file.type,data:encoded})});
      const body=await response.json();
      if(!response.ok)throw new Error(body.error||'Image upload failed');
-     change(index,{image:body.url});setSuccess('Image uploaded locally. Press Save Changes to publish the new vehicle photo in the local preview.');
+     if(angleIndex===undefined)change(index,{image:body.url});
+     else change(index,{gallery:(vehicles[index].gallery||[]).map((url,i)=>i===angleIndex?body.url:url)});
+     setSuccess((angleIndex===undefined?'Main photo':'Alternate angle '+(angleIndex+1))+' reviewed and uploaded locally. Press Save Changes to use the privacy-safe copy.');
    }catch(e){setError(e instanceof Error?e.message:'Upload failed');throw e;}
    finally{setUploading(null);}
  };
@@ -136,6 +138,15 @@ export function FleetManager({token}:Props) {
           </button>
           <small>Inspect original registration details before allowing this photo into production. Edited copy replaces the linked photo after Save changes.</small>
         </div>
+        {(v.gallery||[]).length>0&&<div className="fleet-photo-review-actions fleet-alternate-reviews">
+          <strong>Review alternate photo angles</strong>
+          {(v.gallery||[]).map((src,angleIndex)=><button type="button" key={angleIndex}
+            disabled={!src||reviewingPhoto===index}
+            onClick={()=>void reviewCurrentPhoto(index,src,angleIndex)}>
+            {reviewingPhoto===index?'Loading photo…':'Review / hide plates · angle '+(angleIndex+1)}
+          </button>)}
+          <small>Every alternate angle is a separate photograph and needs a full privacy review.</small>
+        </div>}
         <label className="fleet-photo-upload">Upload / edit vehicle photo · hide plates (JPG/PNG/WebP up to 3 MB)
           <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading===index} onChange={e=>{const selected=e.target.files?.[0];if(selected)setEditingPhoto({index,file:selected});e.target.value='';}}/>
           {uploading===index&&<span>Uploading image locally...</span>}
@@ -163,7 +174,7 @@ export function FleetManager({token}:Props) {
      <button type="button" className="fleet-add" onClick={()=>setVehicles(current=>[...current,blank()])}><Plus size={16}/> Add another vehicle</button>
      <button type="button" className="fleet-save" disabled={saving} onClick={()=>void save()}><Save size={16}/> {saving?'Saving...':'Save fleet & pricing'}</button>
    </div>
-   {editingPhoto&&<PhotoPrivacyEditor file={editingPhoto.file} onCancel={()=>setEditingPhoto(null)} onComplete={f=>uploadPhoto(editingPhoto.index,f)}/>}
+   {editingPhoto&&<PhotoPrivacyEditor file={editingPhoto.file} onCancel={()=>setEditingPhoto(null)} onComplete={f=>uploadPhoto(editingPhoto.index,f,editingPhoto.angleIndex)}/>}
    <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored only on your Mac) or linked using HTTPS URLs. Every existing external photo and every alternate angle must be reviewed separately before production. A link alone does not anonymize plate numbers. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
  </section>;
 }
