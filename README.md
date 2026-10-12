@@ -33,6 +33,16 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Signature Journeys director's-cut hero — current review (October 2026)
+
+The front-screen design is now **one full-bleed cinematic scene** rather than a box alongside a separate headline. The route photography uses three **crossfading, independently mounted** scenes: mountain road, golden-hour drive and lake landscape. Foreground detail, atmosphere, moving light and background react subtly to pointer/scroll. These are **layered photographic motion effects, not video footage or a 3D vehicle model**.
+
+The hero overlays only the essential marketing message and Get Quote / WhatsApp / Explore Fleet actions, with a less-prominent direct Email link. The fleet selector is now **thin underline tabs**, plus small scene navigation/pause controls and a progress line. A compact vehicle panel shows the current model, passenger capacity and CRM-defined indicative per-km price. Editorial imagery is explicitly distinguished from the selected vehicle.
+
+Animation does not auto-cycle when the section is out of view, and it respects reduced-motion settings. Layout breakpoints rearrange the selector and contact controls for phones and tablets. The enquiry modal and staff CRM are not changed by this component.
+
+**Local visual QA remains mandatory** for Safari, Chrome, iPhone, tablet and widths 375 / 768 / 1024 / 1440 before this is suitable to merge. If images from `public/media` are not installed, remote photo fallbacks load; remote-only media and local image licensing must be reviewed before production. No Netlify deployment or live notification activation.
+
 ### Cinematic fleet redesign — latest local review
 
 The old hero with enlarged low-quality catalog photography, **duplicate side cards and two repeated marquees has been removed**. The current first screen is a full-bleed travel film with soft scene transitions and a separate, honest vehicle selector. TUV/Bolero/Traveller reference photos no longer become oversized hero posters.
