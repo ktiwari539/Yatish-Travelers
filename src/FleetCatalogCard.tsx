@@ -8,7 +8,7 @@ export function FleetCatalogCard({car,index,onEstimate}:{car:FleetReelVehicle;in
  const photos=[car.image,...(car.gallery||[])].filter(Boolean).slice(0,6);
  const src=photos[angle]??car.image;
  useEffect(()=>setFailed(false),[src]);
- return <article className="fleet-card premium-catalog-card" style={{animationDelay:`${index*70}ms`}}>
+ return <article className="fleet-card premium-catalog-card" data-model={car.name} style={{animationDelay:`${index*70}ms`}}>
   <div className="fleet-visual premium-catalog-visual">
    {!failed?<img src={src} alt={car.name+' photo angle '+(angle+1)} loading="lazy" decoding="async" onError={()=>setFailed(true)}/>:
     <div className="premium-catalog-fallback" role="img" aria-label={'Photo unavailable for '+car.name}>{car.name}<small>Image unavailable</small></div>}
