@@ -44,7 +44,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
    </div>
    <div className="fleet-editorial-stage">
     <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
-     {showEditorial?<ScenicImage src={item.fallback&&failed?item.fallback:item.src} fallback={item.fallback} alt={item.alt} loading="lazy"/>:
+     {showEditorial?<ScenicImage src={failed?luxuryMedia.mountains.src:item.src} fallback={failed?luxuryMedia.mountains.fallback:item.fallback} alt={failed?'Travel inspiration photo — selected model reference unavailable':item.alt} loading="lazy"/>:
        <img src={chosenUrl} alt={active.name+' vehicle reference photograph'} loading="lazy" onError={()=>setFailed(true)}/>}
      <div className="fleet-editorial-gradient"/>
      <div className="fleet-editorial-frame-tag"><span/> {showEditorial?'JOURNEY INSPIRATION':'MODEL REFERENCE PHOTO'}</div>
