@@ -39,7 +39,16 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const [visible,setVisible]=useState(true);
   const [sceneReady,setSceneReady]=useState<boolean[]>(()=>scenes.map(()=>false));
   const [cinematic,setCinematic]=useState(true);
+  const [videoReady,setVideoReady]=useState(false);
+  const video=useRef<HTMLVideoElement|null>(null);
   const active=vehicles[activeIndex]??vehicles[0];
+  useEffect(()=>{
+    const node=video.current;
+    if(!node)return;
+    if(scene===0&&visible&&!reduceMotion&&cinematic){
+      void node.play().catch(()=>{setVideoReady(false);});
+    }else{node.pause();}
+  },[scene,visible,reduceMotion,cinematic,videoReady]);
 
   useEffect(()=>{
     const media=window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)');
@@ -111,12 +120,18 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
 
     <div className="cinema-director-scenes" aria-hidden="true">
       {scenes.map((item,i)=><div key={item.index}
-        className={'cinema-director-scene '+(i===scene?'is-active':'')}
+        className={'cinema-director-scene '+(i===scene?'is-active':'')+(i===0&&videoReady?' has-video':'')}
         aria-hidden="true">
         <div className="cinema-director-backdrop">
           <ScenicImage src={item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt=""
             loading="eager" decoding="async" fetchPriority={i===0?'high':'low'}
             onLoad={()=>setSceneReady(previous=>previous[i]?previous:previous.map((ready,index)=>index===i?true:ready))}/>
+          {i===0&&!reduceMotion&&<video ref={video}
+            className={'cinema-director-video '+(videoReady?'is-ready':'')} muted playsInline loop autoPlay
+            preload="metadata" aria-hidden="true" poster="/media/mt-hero-sunset.webp"
+            onCanPlay={()=>setVideoReady(true)} onError={()=>setVideoReady(false)}>
+            <source src="/media/mt-cinematic-drive.mp4" type="video/mp4"/>
+          </video>}
         </div>
         {item.foreground&&<div className="cinema-director-foreground cinema-director-car-depth" aria-hidden="true">
           <img src={item.foreground} alt="" loading="lazy" decoding="async"
