@@ -69,7 +69,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
     const update=()=>{
       const rect=element.getBoundingClientRect();
       const fraction=Math.max(-1,Math.min(1,(window.innerHeight*.5-(rect.top+rect.height*.5))/Math.max(window.innerHeight,1)));
-      element.style.setProperty('--cinema-scroll',fraction.toFixed(3));
+      element.style.setProperty('--cinema-scroll-y',(fraction*30).toFixed(1)+'px');
       raf.current=0;
     };
     const onScroll=()=>{if(!raf.current)raf.current=requestAnimationFrame(update);};
@@ -97,12 +97,12 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
     onPointerMove={event=>{
       if(reduceMotion||event.pointerType==='touch')return;
       const bounds=event.currentTarget.getBoundingClientRect();
-      event.currentTarget.style.setProperty('--cinema-x',((event.clientX-bounds.left)/bounds.width-.5).toFixed(3));
-      event.currentTarget.style.setProperty('--cinema-y',((event.clientY-bounds.top)/bounds.height-.5).toFixed(3));
+      event.currentTarget.style.setProperty('--cinema-x',(((event.clientX-bounds.left)/bounds.width-.5)*-23).toFixed(1)+'px');
+      event.currentTarget.style.setProperty('--cinema-y',(((event.clientY-bounds.top)/bounds.height-.5)*-16).toFixed(1)+'px');
     }}
     onPointerLeave={event=>{
-      event.currentTarget.style.setProperty('--cinema-x','0');
-      event.currentTarget.style.setProperty('--cinema-y','0');
+      event.currentTarget.style.setProperty('--cinema-x','0px');
+      event.currentTarget.style.setProperty('--cinema-y','0px');
     }}>
 
     <div className="cinema-director-scenes" aria-hidden="true">
