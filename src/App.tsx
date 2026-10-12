@@ -98,7 +98,7 @@ const fleet: FleetVehicle[] = [
   {
     name: 'Mahindra Thar',
     seats: '3+1',
-    tag: 'Red Rage Adventure · On request',
+    tag: 'Bold Adventure · On request',
     category: 'Adventure SUV',
     image: commonsImage(encodeURIComponent('Mahindra Thar SUV in "Red Rage" color at Ashiana Brahmanda, East Singbhum India (Ank Kumar, Infosys limited) 02 (cropped).jpg')),
     imageSource: 'https://commons.wikimedia.org/wiki/File:Mahindra_Thar_SUV_in_%22Red_Rage%22_color_at_Ashiana_Brahmanda,_East_Singbhum_India_(Ank_Kumar,_Infosys_limited)_02_(cropped).jpg',
@@ -108,7 +108,7 @@ const fleet: FleetVehicle[] = [
   {
     name: 'Mahindra XUV700',
     seats: '6+1',
-    tag: 'Black Executive · On request',
+    tag: 'Executive SUV · On request',
     category: 'Premium SUV',
     image: commonsImage(encodeURIComponent('A black Mahindra XUV700 SUV in Ashiana Brahmananda, Jamshedpur, India (Ank Kumar, Infosys Limited) 02.jpg')),
     imageSource: 'https://commons.wikimedia.org/wiki/File:A_black_Mahindra_XUV700_SUV_in_Ashiana_Brahmananda,_Jamshedpur,_India_(Ank_Kumar,_Infosys_Limited)_02.jpg',
@@ -297,8 +297,13 @@ export function App() {
     fetch('/api/catalog').then(res=>res.ok?res.json():Promise.reject()).then(data=>{
       if(!active || !Array.isArray(data.vehicles))return;
       const next=data.vehicles.map((car:FleetVehicle)=>{
-        const initial=fleet.find(v=>v.name===car.name && v.image===car.image);
-        return {...car,imageSource:initial?.imageSource||car.image,imageCredit:initial?.imageCredit||'Fleet administration',license:initial?.license||'Check image rights'};
+        const original=fleet.find(v=>v.name===car.name);
+        const isBundledPreview=car.image.startsWith('/media/mt-');
+        const isKnownOriginal=Boolean(original&&original.image===car.image);
+        return {...car,
+          imageSource:isBundledPreview?car.image:(isKnownOriginal?original!.imageSource:car.image),
+          imageCredit:isBundledPreview?'User-supplied model reference':(isKnownOriginal?original!.imageCredit:'Fleet administration'),
+          license:isBundledPreview?'Usage rights pending review':(isKnownOriginal?original!.license:'Check image rights')};
       });
       setLiveFleet(next);
     }).catch(()=>{/* offline frontend keeps preview vehicles */});
