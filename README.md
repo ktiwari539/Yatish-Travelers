@@ -33,6 +33,16 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
+### Hero V7 — short entry animation and consistent vehicle selection (current)
+
+**Hero V7** fixes the actual cause of the Toyota Innova mismatch: the app previously maintained a separate `heroIndex=2` while the fare calculator selected Ertiga. Now there is **one selected vehicle state** shared by calculator, fleet and quotation; the hero is a dedicated **Ertiga-inspired cinematic editorial** rather than pretending its generated picture shows whichever vehicle is selected. The hero offers **Enquire about Ertiga** (uses the real Ertiga quote form) and **Explore all vehicles** (opens the separate accurate vehicle gallery). The full fleet gallery still supports Innova and the other vehicle selections.
+
+On every fresh desktop homepage load a **2.55-second entrance sequence** brings the transparent MPV foreground into frame before revealing the hero copy and controls. A `Skip intro` button is provided. Reduced-motion and small screens bypass this entry entirely. The previously installed five-file local media pack is still required for the exact approved animated Ertiga-inspired concept; without it, the remote scenic fallback appears.
+
+Added **automated desktop/mobile Chromium UI smoke tests** (run in PR CI) to exercise Skip, scene arrows, quote modal, Ertiga/Innova selection, email/WhatsApp links and mobile sticky actions. A real pointer-interception defect discovered by the browser test was fixed by preventing the transparent hero marketing container from covering scene controls. Build-only checks were insufficient.
+
+**Important:** the entrance is CSS-animated 2.5D concept media rather than a modeled 3D car, and browser automation cannot establish subjective visual quality; Safari and real-device QA remain required. The reviewed visual assets are illustrative, not photographs of actual assigned vehicles. No Netlify deployment or merge.
+
 ### Premium Hero V6 — restored MPV concept and 2.5D motion (latest)
 
 The home hero now opens with the approved **white MPV / Ertiga-inspired golden-hour concept**, followed by a second mountain-road MPV visual. Both have separate transparent car layers for pointer-responsive depth. A **5-second lightweight muted MP4** animates the first scene on desktop, while CSS parallax and still images provide fallbacks. This is AI-generated illustrative media, **not an actual Maruti Ertiga photo/video or a real 3D OEM model**. The Gallery's Maruti Ertiga selection now features the same concept, clearly marked as travel inspiration.
