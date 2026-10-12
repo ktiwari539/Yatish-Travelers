@@ -52,8 +52,9 @@ export function readCatalog(){
     if(v.name==='Mahindra Bolero'&&v.image===oldBolero&&blackBolero)return {...v,image:blackBolero};
     return v;
   });
+  const newShowcaseNames=new Set(['Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens']);
   const additions=Number(value.catalogVersion||1)<2
-    ?defaultCatalog.filter(v=>!existing.some(item=>item.name===v.name))
+    ?defaultCatalog.filter(v=>newShowcaseNames.has(v.name)&&!existing.some(item=>item.name===v.name))
     :[];
   return {...value,catalogVersion:2,vehicles:[...existing,...additions]};
 }
