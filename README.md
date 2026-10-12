@@ -33,24 +33,20 @@ The default notification mode is **preview**, so **nothing is sent externally**.
 
 Detailed integration gates: [Email, WhatsApp and visual QA](docs/notification-and-visual-qa.md).
 
-### Phase 1 + 2: the premium moving fleet homepage (current build)
+### Cinematic fleet redesign — latest local review
 
-The hero now features **a real fleet-model photo carousel** with an emphasized central vehicle and smaller adjacent previews. Change vehicles using the arrow controls or model dots. Desktop rotation is automatic until someone interacts; on mobile, manual selection avoids distracting motion.
+The old hero with enlarged low-quality catalog photography, **duplicate side cards and two repeated marquees has been removed**. The current first screen is a full-bleed travel film with soft scene transitions and a separate, honest vehicle selector. TUV/Bolero/Traveller reference photos no longer become oversized hero posters.
 
-Directly below the hero, **Fleet in Motion** contains:
-- a large focal gallery synced with the hero's vehicle, current model label, seats and **per-car prices from CRM**;
-- previous/next cards, clickable model selector and available alternate-angle buttons;
-- **two continuous, seamless rows** of actual model-reference photos that pause on mouse hover, keyboard focus or the Pause button. On phones they become swipeable, snap-aligned photo rows rather than moving marquees. Reduced-motion settings are respected;
-- a clear **Request this vehicle** button that opens the saved local enquiry workflow.
+Below the hero is a single premium **vehicle gallery**, a quiet left-to-right editorial composition with one selected image, clear model information, seat class, **rate read from local CRM**, next/previous controls and a quotation button. Its bottom rail shows **six unique entries, once each**, and supports touch scrolling on phones/tablets. The three catalog references previously unsuitable for enlargement show **explicitly labeled editorial travel scenes** until locally uploaded, approved vehicle photography is available. The vehicle comparison lower on the page continues to identify each exact model, and the CRM allows staff to replace its images.
 
-The normal fleet catalog has an explicit **next angle** button wherever licensed alternate views exist. Only real supplied color variants will be shown as such; the application does **not** recolor a vehicle photo and misrepresent it as an actual available fleet color. Admin can add more images (up to five additional URLs per vehicle) under **Cars & pricing**.
+The first-screen scenic film is **illustrative**: a selected car name in the separate booking area does not mean the background image depicts that precise car. Scene rotation pauses on request, respects reduced-motion settings and is manually controlled on phones.
 
-Other changes: a new **Why Mateshwari** planning section, fare estimator moved earlier, a final full-width booking invitation, direct email/phone/WhatsApp contact, accessible mobile navigation, and a **fixed mobile WhatsApp / Call / Get Quote** bar. Corporate, road stories, trip selector, quotes and CRM remain.
+Fare calculator, Why Mateshwari, corporate, stories, manual lead logging, customer forms, outbound message preview and responsive mobile WhatsApp/Call/Quote actions remain.
 
-Manual responsive review sizes: **360, 390, 768, 1024, 1440 px**. Test vehicle selection → fare estimator → enquiry saving → /admin status tracking, and check carousel touch behavior, load failures, sticky links and keyboard focus. CI cannot assess visual quality. Do not merge or deploy until manually reviewed.
+Review at 360px, 390px, 768px, 1024px and 1440px. Check image aspect ratio, hero scene controls, the fleet gallery, the selected car quotation flow and /admin. **CI validates code but not Safari/mobile image quality.** No deployment or merge without approval.
 
 ### Scenic luxury visual refresh — current review
-The homepage hero now foregrounds a **moving fleet of actual vehicle-model reference photos** with model names and indicative rates. The golden-hour travel concepts remain in the scenic journey sections (not misrepresented as fleet cars). The fleet cards continue to identify actual car models, instead of relabeling an unrelated scenic SUV as an Innova.
+The opening now emphasizes **editorial mountain-road photography** with a separate accurate fleet selector. Photos labeled travel inspiration must never be represented as the actual TUV, Bolero, Traveller or other assigned vehicle.
 
 **Approved cinematic image pack (optional for local preview):** Download `mateshwari_visual_pack.zip` from the project conversation, then extract it into your local repository root:
 
