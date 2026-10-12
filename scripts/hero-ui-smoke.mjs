@@ -105,6 +105,8 @@ async function smoke(){
  await page.locator('.fleet-scorpio-film.is-ready').waitFor({state:'visible'});
  ensure((await page.locator('.fleet-scorpio-film').getAttribute('src'))==='/media/mt-scorpio-arrival.mp4','Only Scorpio uses approved video source');
  ensure(await page.getByRole('button',{name:'Replay Scorpio-N arrival film'}).isVisible(),'Scorpio video has replay button');
+ mkdirSync('artifacts/visual-evidence',{recursive:true});
+ await page.locator('.fleet-road-stage').screenshot({path:'artifacts/visual-evidence/scorpio-desktop.png'});
  await page.getByRole('button',{name:'Replay Scorpio-N arrival film'}).click();
  ensure(await page.locator('.fleet-scorpio-film').evaluate(el=>el.readyState>=1),'Scorpio video loads real media metadata in Chromium');
 
@@ -119,6 +121,7 @@ async function smoke(){
  ensure((await page.locator('.fleet-road-stage').getAttribute('data-model'))==='Toyota Innova','Innova has a separate cinematic chapter');
  ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Every detail, arranged.','Innova copy matches current journey chapter');
  ensure(await page.locator('.fleet-innova-visual-note').count()===1,'Innova has its own executive visual');
+ await page.locator('.fleet-road-stage').screenshot({path:'artifacts/visual-evidence/innova-desktop.png'});
  ensure(await page.locator('.fleet-scorpio-film').count()===0,'Innova never shows the Scorpio movie');
 
  await page.locator('.fleet-editorial-request').click();
@@ -146,6 +149,7 @@ async function smoke(){
  ensure(!await page.locator('.mobile-nav-panel').count(),'Mobile menu closes on navigation');
  ensure((await page.locator('.mobile-booking-bar a').first().getAttribute('href')||'').includes('wa.me/919340098177'),'Mobile WhatsApp');
  ensure((await page.locator('.mobile-booking-bar a').nth(1).getAttribute('href')||'').startsWith('tel:+919340098177'),'Mobile call');
+ await page.screenshot({path:'artifacts/visual-evidence/mobile-quote-cta.png'});
  await page.locator('.mobile-booking-bar button').click();
  await page.locator('.quote-modal').waitFor({state:'visible'});
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
