@@ -373,7 +373,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   return (
     <main>
       <header className="nav">
-        <a className="brand" href="#top">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
         <nav>
           <a href="#motion-fleet">Experience</a>
           <a href="#fleet">Fleet</a>
