@@ -20,7 +20,8 @@ test('new showcase models migrate once without changing staff-managed inventory'
   const {defaultCatalog,readCatalog,writeCatalog}=await import('./catalog.mjs?test=showcase-upgrade');
   const first=readCatalog();
   assert.equal(first.catalogVersion,2);
-  assert.equal(first.vehicles.length,10);
+  assert.ok(!first.vehicles.some(v=>v.name==='Toyota Innova'),'A previously removed model must not be silently reintroduced');
+  assert.equal(first.vehicles.length,5);
   assert.deepEqual(first.vehicles.find(v=>v.name==='Mahindra Bolero'),savedBolero);
   assert.equal(first.updatedAt,'2026-10-01T00:00:00Z');
   for(const name of ['Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens']){
@@ -30,7 +31,7 @@ test('new showcase models migrate once without changing staff-managed inventory'
   writeCatalog(first.vehicles.filter(v=>v.name!=='Mahindra Thar'));
   const later=readCatalog();
   assert.equal(later.catalogVersion,2);
-  assert.equal(later.vehicles.length,9);
+  assert.equal(later.vehicles.length,4);
   assert.ok(!later.vehicles.some(v=>v.name==='Mahindra Thar'),'Staff removal must remain removed');
   assert.equal(JSON.parse(readFileSync(process.env.CRM_CATALOG_FILE,'utf8')).catalogVersion,2);
 });
