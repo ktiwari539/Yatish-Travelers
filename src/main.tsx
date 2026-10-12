@@ -28,3 +28,5 @@ import './scroll-road-v8.css';
 import './scorpio-film-v9.css';
 
 import './photo-privacy-v10.css';
+
+import './visual-contrast-v11.css';
