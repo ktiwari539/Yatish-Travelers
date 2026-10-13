@@ -40,3 +40,5 @@ import './fleet-admin-import-v14.css';
 import './adventure-reel-v15.css';
 
 import './ride-showroom-v17.css';
+
+import './cinematic-garage-v18.css';
