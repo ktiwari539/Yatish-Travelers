@@ -96,13 +96,21 @@ async function smoke(){
  })));
  ensure(cards.length===10,'Ten distinct fleet cards are shown in local preview');
  const rail=page.locator('.fleet-editorial-rail');
- ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet rail is horizontally browsable instead of a crowded grid');
- const beforeRail=await rail.evaluate(el=>el.scrollLeft);
- await page.getByRole('button',{name:'Scroll fleet right'}).click();
- await page.waitForFunction(()=>document.querySelector('.fleet-editorial-rail')?.scrollLeft>20);
- ensure(await rail.evaluate(el=>el.scrollLeft)>beforeRail,'Fleet browse-right arrow scrolls the thumbnails');
- await page.getByRole('button',{name:'Scroll fleet left'}).click();
- await page.waitForFunction(()=>document.querySelector('.fleet-editorial-rail')?.scrollLeft<20);
+ ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet reel has a genuine horizontally scrollable collection');
+ ensure(await page.getByRole('button',{name:'Pause fleet reel'}).isVisible(),
+   'Fleet advances hands-free, with optional pause rather than next/previous controls');
+ ensure(await page.getByRole('button',{name:'Scroll fleet right'}).count()===0,
+   'Old mandatory fleet navigation buttons are removed');
+ await rail.scrollIntoViewIfNeeded();
+ await page.mouse.move(0,0);
+ await page.waitForFunction(()=>document.querySelector('.fleet-editorial-rail')?.scrollLeft>20,null,{timeout:8000});
+ ensure(await rail.evaluate(el=>el.scrollLeft)>20,'Fleet reel advances automatically without a click');
+ // The automatic reel must never select another vehicle on a visitor's behalf.
+ ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Maruti Ertiga',
+   'Auto-rolling photo rail does not change the selected or quoted model');
+ await page.getByRole('button',{name:'Pause fleet reel'}).click();
+ ensure(await page.getByRole('button',{name:'Resume fleet reel'}).isVisible(),
+   'Visitors can pause and restart reel motion');
 
  ensure(['Mahindra Bolero','Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens'].every(name=>cards.some(card=>card.name===name)), 'All five upgraded and added models are visible');
  ensure(cards.find(card=>card.name==='Mahindra Bolero')?.source?.includes('Gen%203')||cards.find(card=>card.name==='Mahindra Bolero')?.placeholder?.includes('Mahindra Bolero'),'Bolero uses updated black model photo');
@@ -358,8 +366,28 @@ async function smoke(){
    'Admin order survives browser reload');
  ensure((await page.locator('.fleet-order-number').first().innerText()).includes('#01'),
    'Reloaded first vehicle retains priority #01');
+ // Each editorial image navigates to its own detailed adventure page.
+ const journeyPage=await browser.newPage({viewport:{width:1280,height:800}});
+ await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ const adventureLinks=await journeyPage.locator('.route-tile-image-link').evaluateAll(links=>links.map(a=>a.getAttribute('href')));
+ ensure(JSON.stringify(adventureLinks)===JSON.stringify([
+   '/journeys/mountain-roads','/journeys/sunset-drive','/journeys/green-adventure']),
+   'All three photographic cards link to different route/adventure pages');
+ ensure((await journeyPage.locator('.route-tile-2 .scenic-image').getAttribute('src'))==='/media/mt-thar-grey-road.webp',
+   'The third travel card now shows a reviewed vehicle-on-road photo, not forest scenery alone');
+ const expectedTitles=['Beyond the familiar.','Take the scenic route.','Where the road breathes.'];
+ for(let i=0;i<adventureLinks.length;i++){
+   await journeyPage.goto('http://127.0.0.1:'+port+adventureLinks[i],{waitUntil:'domcontentloaded'});
+   ensure((await journeyPage.locator('.adventure-hero h1').innerText())===expectedTitles[i],
+     'Adventure '+(i+1)+' opens its distinct journey page');
+   ensure(await journeyPage.locator('.adventure-chapter-grid article').count()===3,
+     'Adventure '+(i+1)+' includes three route-specific planning stages');
+   ensure((await journeyPage.locator('.adventure-hero-copy>a').getAttribute('href'))==='/#fare',
+     'Adventure '+(i+1)+' safely continues to existing quotation form');
+ }
+ await journeyPage.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
- console.log('PASS: 10 distinct vehicles, Innova cinematic chapter, Scorpio MP4, quote navigation, mobile CTAs and admin privacy-review gate');
+ console.log('PASS: three distinct adventure pages, auto-rolling fleet, 10 vehicles, Innova/Scorpio, quotes, mobile and Admin gates');
 }
 try{await smoke();}
 finally{
