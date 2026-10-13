@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtempSync,mkdirSync,writeFileSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join,dirname } from 'node:path';
-import { applyReviewedFleetMedia,defaultCatalog,validateVehicle } from './catalog.mjs';
+import { applyReviewedFleetMedia,defaultCatalog,validateVehicle,isKnownPlateBearingSource } from './catalog.mjs';
 
 const names=[
  'mt-xuv700-driving.webp','mt-xuv700-studio.webp',
@@ -66,4 +66,21 @@ test('partially installed photo pack never mixes old and new angles',t=>{
  const actual=applyReviewedFleetMedia(originals,dir);
  assert.equal(actual.find(v=>v.name==='Mahindra XUV700').image,'/media/mt-xuv700-driving.webp');
  assert.deepEqual(actual.find(v=>v.name==='Mahindra XUV700').gallery,[]);
+});
+
+test('encoded legacy source URLs with visible plates are not permitted as fallback',()=>{
+ assert.equal(isKnownPlateBearingSource('Mahindra Thar',
+   'https://commons.wikimedia.org/wiki/Special:FilePath/Mahindra%20Thar%20SUV%20in%20Red%20Rage.jpg'),true);
+ assert.equal(isKnownPlateBearingSource('Mahindra XUV700',
+   'https://commons.wikimedia.org/wiki/File:A_black_Mahindra_XUV700_SUV_in_Drive.jpg'),true);
+ assert.equal(isKnownPlateBearingSource('Tempo Traveller',
+   'https://commons.wikimedia.org/wiki/File:Force_Traveller_Luxury.jpg'),true);
+ assert.equal(isKnownPlateBearingSource('Mahindra Thar',
+   'https://example.org/authorized-red-thar.webp'),false);
+ const old=defaultCatalog.find(v=>v.name==='Mahindra Thar');
+ const saved={...old,image:'https://commons.wikimedia.org/wiki/Special:FilePath/Mahindra%20Thar%20SUV%20in%20Red%20Rage.jpg',
+   gallery:['https://commons.wikimedia.org/wiki/File:Mahindra_Thar_SUV_in_another_angle.jpg','https://example.org/approved-gallery.webp']};
+ const updated=applyReviewedFleetMedia([saved],'/tmp/mateshwari-missing-images-test-dir')[0];
+ assert.equal(updated.image,'/media/mt-thar-red-front.webp');
+ assert.deepEqual(updated.gallery,['https://example.org/approved-gallery.webp']);
 });
