@@ -65,6 +65,46 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'visible'});
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
+ // New car-studio acceptance: only visitor clicks open the immersive viewport.
+ await page.getByRole('button',{name:'Enter the Car Studio'}).click();
+ const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
+ await studio.waitFor({state:'visible'});
+ ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
+   'The studio starts with the currently selected model');
+ ensure(await studio.locator('.ride-studio-car-image').count()===1,
+   'Full-screen showroom uses the car model reference photo');
+ ensure((await page.evaluate(()=>document.body.style.overflow))==='hidden',
+   'Fullscreen studio locks background scrolling');
+ await studio.getByRole('button',{name:'Next vehicle'}).click();
+ ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Toyota Innova',
+   'Console-style model selection changes the showcased car');
+ await studio.getByRole('button',{name:'Next photo angle'}).click();
+ ensure((await studio.locator('.ride-studio-photo-pending').innerText()).includes('Registration-plate review pending'),
+   'Unreviewed Innova angle stays hidden even at full-screen size');
+ await studio.getByRole('button',{name:'Explore this vehicle'}).click();
+ ensure(await studio.locator('.ride-studio-facts').isVisible(),
+   'Visitor can inspect grounded seats, class, fare and photo-angle details');
+ ensure((await studio.locator('.ride-studio-facts').innerText()).includes('Confirm before booking'),
+   'Studio does not invent available colours or trim variants');
+ await studio.getByRole('button',{name:'Previous vehicle'}).click();
+ ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
+   'Previous model navigation returns to the originally selected car');
+ await studio.getByRole('button',{name:'Request Maruti Ertiga quotation'}).click();
+ await studio.waitFor({state:'detached'});
+ await page.locator('.quote-modal').waitFor({state:'visible'});
+ ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),
+   'A studio quote uses precisely the displayed model');
+ await page.locator('.quote-close').click();
+ await page.locator('.quote-modal').waitFor({state:'detached'});
+ ensure((await page.evaluate(()=>document.body.style.overflow))!=='hidden',
+   'Closing the studio restores background page scrolling');
+ await page.locator('.premium-catalog-card[data-model="Mahindra Thar"]')
+   .getByRole('button',{name:'Open full-screen car studio for Mahindra Thar'}).click();
+ await studio.waitFor({state:'visible'});
+ ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Mahindra Thar',
+   'Individual fleet cards open the studio on their own model');
+ await page.keyboard.press('Escape');
+ await studio.waitFor({state:'detached'});
  // Scroll narrative uses actual model reference images, not generic 3D or concept art.
  ensure(await page.locator('.fleet-road-story').count()===1,'Scroll storytelling stage is present');
  ensure(await page.locator('#motion-fleet').evaluate(el=>el.nextElementSibling?.id==='contact'),
@@ -99,7 +139,11 @@ async function smoke(){
  const rail=page.locator('.fleet-editorial-rail');
  const track=page.locator('.fleet-reel-track');
  ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet reel contains more than one viewport of vehicles');
- ensure(await page.locator('.fleet-reel-group').count()===2,
+ ensure((await page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile').first().boundingBox())?.width>=430,
+   'Desktop rolling collection uses large premium photo cards');
+ ensure((await page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile-photo').first().boundingBox())?.height>=280,
+   'Desktop rolling card has generous image height');
+  ensure(await page.locator('.fleet-reel-group').count()===2,
    'Seamless reel renders two identical vehicle sets');
  ensure(await page.locator('.fleet-reel-group[data-copy="1"]').getAttribute('aria-hidden')==='true',
    'Duplicate visuals are hidden from screen readers');
@@ -413,7 +457,7 @@ async function smoke(){
  }
  await journeyPage.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
- console.log('PASS: three distinct adventure pages, auto-rolling fleet, 10 vehicles, Innova/Scorpio, quotes, mobile and Admin gates');
+ console.log('PASS: immersive car studio, enlarged seamless fleet reel, three adventures, 10 cars, quote sync, mobile and Admin gates');
 }
 try{await smoke();}
 finally{
