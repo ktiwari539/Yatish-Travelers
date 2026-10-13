@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw } from 'lucide-react';
+import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw, ArrowUp, ArrowDown, ChevronsUp, GripVertical } from 'lucide-react';
 import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
 
 export type CatalogVehicle = {
  id:string;name:string;seats:string;capacity:number;tag:string;category:string;image:string;
- rateMin:number;rateMax:number;enabled:boolean;gallery?:string[];modelUrl?:string;
+ rateMin:number;rateMax:number;enabled:boolean;gallery?:string[];modelUrl?:string;displayOrder?:number;
 };
 type Props={token:string};
 const blank=():CatalogVehicle=>({id:'',name:'',seats:'4+1',capacity:4,tag:'Comfortable travel',category:'Sedan',image:'',rateMin:15,rateMax:25,enabled:false,gallery:[],modelUrl:''});
@@ -15,6 +15,7 @@ export function FleetManager({token}:Props) {
  const [error,setError]=useState('');
  const [success,setSuccess]=useState('');
  const [loaded,setLoaded]=useState(false);
+ const [dirty,setDirty]=useState(false);
  const [uploading,setUploading]=useState<number|null>(null);
  const [uploadingModel,setUploadingModel]=useState<number|null>(null);
  const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File;angleIndex?:number}|null>(null);
@@ -25,13 +26,24 @@ export function FleetManager({token}:Props) {
      const response=await fetch('/api/admin/catalog',{headers:{Authorization:'Bearer '+token}});
      const body=await response.json();
      if(!response.ok) throw new Error(body.error||'Failed to load fleet');
-     setVehicles(body.vehicles||[]);setLoaded(true);
+     setVehicles(body.vehicles||[]);setLoaded(true);setDirty(false);
    } catch(e){setError(e instanceof Error?e.message:'Failed to load fleet');}
  },[token]);
  useEffect(()=>{void load();},[load]);
  const change=(index:number,patch:Partial<CatalogVehicle>)=>{
   setVehicles(current=>current.map((v,i)=>i===index?{...v,...patch}:v));
+  setSuccess('');setDirty(true);
+ };
+ const moveVehicle=(from:number,to:number)=>{
+  if(to<0||to>=vehicles.length||from===to)return;
+  setVehicles(current=>{
+    const next=[...current];
+    const [item]=next.splice(from,1);
+    next.splice(to,0,item);
+    return next.map((car,index)=>({...car,displayOrder:index+1}));
+  });
   setSuccess('');
+  setDirty(true);
  };
  const reviewCurrentPhoto=async(index:number,src:string,angleIndex?:number)=>{
    setError('');setSuccess('');setReviewingPhoto(index);
@@ -101,23 +113,34 @@ export function FleetManager({token}:Props) {
      const response=await fetch('/api/admin/catalog',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({vehicles})});
      const body=await response.json();
      if(!response.ok)throw new Error(body.error||'Unable to save fleet');
-     setVehicles(body.vehicles);setSuccess('Fleet and rates saved. Refresh the public website to see changes.');
+     setVehicles(body.vehicles);setDirty(false);setSuccess('Vehicle priority, visibility, images and rates saved. Refresh the public website to see the new featured order.');
    }catch(e){setError(e instanceof Error?e.message:'Save failed');}
    finally{setSaving(false);}
  };
  return <section className="fleet-admin">
-   <div className="fleet-admin-head"><div><span className="crm-eyebrow">Fleet control</span><h2>Manage vehicles & pricing.</h2>
-      <p>Edit the actual inventory, vehicle details, reference image URL, visibility and indicative per-km range.</p></div>
+   <div className="fleet-admin-head"><div><span className="crm-eyebrow">Fleet control · display priority</span><h2>Manage vehicles, prices & order.</h2>
+      <p>Arrange the cards in the exact order customers see them. Move a vehicle up, down or to the first position. Click <strong>Save Changes</strong> to publish the sequence to the local website.</p></div>
       <div><button className="crm-refresh" onClick={()=>void load()} type="button"><RefreshCw size={16}/> Reload</button>
         <button className="fleet-save" onClick={()=>void save()} type="button" disabled={saving}>{saving?'Saving...':<><Save size={16}/> Save Changes</>}</button></div>
    </div>
    {error&&<div role="alert" className="crm-error">{error}</div>}
    {success&&<div role="status" className="fleet-admin-success"><CheckCircle2 size={17}/>{success}</div>}
    {!loaded&&<p>Loading fleet...</p>}
+   {loaded&&<div className="fleet-order-help" role="status">
+      <GripVertical size={18}/>
+      <span><strong>Website featured order</strong> · Position 01 displays first in the Fleet and cinematic vehicle reel. Hidden models keep their position but do not appear publicly.</span>
+      {dirty&&<span className="fleet-unsaved">Unsaved changes</span>}
+   </div>}
    <div className="fleet-admin-grid">{vehicles.map((v,index)=><article className="fleet-editor" key={v.id||index}>
       <div className="fleet-editor-visual">{v.image?<img src={v.image} alt={v.name} loading="lazy"/>:<div><ImagePlus size={26}/> Add HTTPS photo URL below</div>}
        <span>{v.enabled?'Visible on website':'Hidden from website'}</span></div>
       <div className="fleet-editor-fields">
+        <div className="fleet-order-controls" role="group" aria-label={'Display priority controls for '+v.name}>
+          <span className="fleet-order-number" aria-label={'Position '+(index+1)}>#{String(index+1).padStart(2,'0')} <small>DISPLAY ORDER</small></span>
+          <button type="button" disabled={index===0} aria-label={'Move '+v.name+' to first'} title="Move to first" onClick={()=>moveVehicle(index,0)}><ChevronsUp size={15}/> First</button>
+          <button type="button" disabled={index===0} aria-label={'Move '+v.name+' up'} title="Move up" onClick={()=>moveVehicle(index,index-1)}><ArrowUp size={16}/> Up</button>
+          <button type="button" disabled={index===vehicles.length-1} aria-label={'Move '+v.name+' down'} title="Move down" onClick={()=>moveVehicle(index,index+1)}><ArrowDown size={16}/> Down</button>
+        </div>
         <label>Vehicle name<input value={v.name} onChange={e=>change(index,{name:e.target.value})} placeholder="e.g. Toyota Fortuner"/></label>
         <div className="fleet-editor-row">
           <label>Seats label<input value={v.seats} onChange={e=>change(index,{seats:e.target.value})}/></label>
@@ -166,12 +189,12 @@ export function FleetManager({token}:Props) {
         </div>
         <div className="fleet-editor-actions">
           <label className="fleet-visible-toggle"><input type="checkbox" checked={v.enabled} onChange={e=>change(index,{enabled:e.target.checked})}/> Display on public website</label>
-          <button type="button" onClick={()=>setVehicles(current=>current.filter((_,i)=>i!==index))}><Trash2 size={14}/> Remove</button>
+          <button type="button" onClick={()=>{setVehicles(current=>current.filter((_,i)=>i!==index));setDirty(true);setSuccess('');}}><Trash2 size={14}/> Remove</button>
         </div>
       </div>
    </article>)}</div>
    <div className="fleet-admin-bottom">
-     <button type="button" className="fleet-add" onClick={()=>setVehicles(current=>[...current,blank()])}><Plus size={16}/> Add another vehicle</button>
+     <button type="button" className="fleet-add" onClick={()=>{setVehicles(current=>[...current,blank()]);setDirty(true);setSuccess('');}}><Plus size={16}/> Add another vehicle</button>
      <button type="button" className="fleet-save" disabled={saving} onClick={()=>void save()}><Save size={16}/> {saving?'Saving...':'Save fleet & pricing'}</button>
    </div>
    {editingPhoto&&<PhotoPrivacyEditor file={editingPhoto.file} onCancel={()=>setEditingPhoto(null)} onComplete={f=>uploadPhoto(editingPhoto.index,f,editingPhoto.angleIndex)}/>}
