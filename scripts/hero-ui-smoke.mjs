@@ -138,7 +138,9 @@ async function smoke(){
  ensure(await page.locator('.fleet-editorial-angles button').count()===3,
    'Innova offers three distinct model-reference angles');
  ensure(await page.getByRole('button',{name:'View photo angle 3'}).getAttribute('aria-pressed')==='true',
-   'Innova third scroll chapter presents third model-reference photo');
+   'Innova third scroll chapter points to its third reference slot');
+ ensure((await page.locator('.fleet-road-stage .fleet-model-image-missing').innerText()).includes('Registration-plate review pending'),
+   'Unreviewed Innova front-right reference with readable plate is never rendered');
  await page.locator('.fleet-road-stage').screenshot({path:'artifacts/visual-evidence/innova-desktop.png'});
  ensure(await page.locator('.fleet-scorpio-film').count()===0,'Innova never shows the Scorpio movie');
  await page.getByRole('button',{name:'View photo angle 2'}).click();
@@ -245,6 +247,12 @@ async function smoke(){
  ensure((await cardAngle.innerText()).includes('1/3'),'Innova gallery starts at the first of three photos');
  await cardAngle.click();
  ensure((await cardAngle.innerText()).includes('2/3'),'Public card gallery advances to the second photo');
+ ensure((await innovaCard.locator('.premium-catalog-fallback').innerText()).includes('Registration plate review pending'),
+   'Innova rear reference is withheld until plate-safe replacement');
+ await cardAngle.click();
+ ensure((await cardAngle.innerText()).includes('3/3'),'Public gallery can reach third photo slot');
+ ensure((await innovaCard.locator('.premium-catalog-fallback').innerText()).includes('Registration plate review pending'),
+   'Innova front reference with visible registration is withheld');
  await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).click();
  ensure(await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).getAttribute('aria-pressed')==='true',
    'Cinematic gallery activates the requested alternate angle even if external photo delivery fails');
