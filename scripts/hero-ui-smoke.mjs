@@ -186,7 +186,13 @@ async function smoke(){
  await page.locator('.quote-close').click();
  await page.setViewportSize({width:375,height:812});
  await page.reload({waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>{await document.fonts.ready;});
+ await page.evaluate(async()=>{
+   await document.fonts.ready;
+   // Mobile reload can restore a scrolled document instead of the hero.
+   history.scrollRestoration='manual';
+   window.scrollTo({top:0,behavior:'instant'});
+ });
+ await page.waitForFunction(()=>window.scrollY<2);
  await page.waitForTimeout(120);
  const narrowEmail=await page.locator('.cinematic-landing-email').boundingBox();
  const narrowBooking=await page.locator('.cinema-director-bottom').boundingBox();
