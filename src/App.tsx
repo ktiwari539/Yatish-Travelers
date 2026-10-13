@@ -291,6 +291,7 @@ export function App() {
   const [quoteDelivery,setQuoteDelivery]=useState<Array<{channel:string;purpose:string;status:string}>>([]);
   const [copied, setCopied] = useState(false);
   const [liveFleet,setLiveFleet]=useState<FleetVehicle[]>(fleet);
+  const [missingFleetMedia,setMissingFleetMedia]=useState(false);
   const [quoteSource,setQuoteSource]=useState('website');
   useEffect(()=>{
     let active=true;
@@ -306,6 +307,14 @@ export function App() {
           license:isBundledPreview?'Usage rights pending review':(isKnownOriginal?original!.license:'Check image rights')};
       });
       setLiveFleet(next);
+      // These three original reference URLs have exposed registration plates.
+      // Show an explicit preview warning rather than quietly reverting to them.
+      const previewPaths=next.map(car=>car.image).filter((path:string)=>path.startsWith('/media/mt-thar-')||path.startsWith('/media/mt-xuv700-')||path.startsWith('/media/mt-traveller-'));
+      if(previewPaths.length){
+        void Promise.all(previewPaths.map((path:string)=>
+          fetch(path,{method:'HEAD'}).then(r=>r.ok&&(r.headers.get('content-type')||'').includes('image/webp')).catch(()=>false)
+        )).then(results=>{if(active)setMissingFleetMedia(results.some(x=>!x));});
+      }else setMissingFleetMedia(false);
       // On initial load, show the operator's #1 published vehicle. Selecting a
       // different vehicle later must never be reset by background refresh.
       if(next.length) setVehicle(current=>current===fleet[1].name?next[0].name:current);
@@ -480,6 +489,10 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
       <section className="section reveal-3d" id="fleet">
+        {import.meta.env.DEV&&missingFleetMedia&&<div className="fleet-photo-media-warning" role="status">
+          <ShieldCheck size={19}/>
+          <span><strong>Local photo pack not installed.</strong> The Thar, XUV700 and Traveller use safe model placeholders rather than old registration-plate photos. Download the seven-photo ZIP from our conversation to <code>~/Downloads/</code>, run <code>npm run fleet:install</code> and restart <code>npm run dev:full</code>.</span>
+        </div>}
         <div className="section-heading">
           <div><span className="kicker">Our Fleet</span><h2>Choose your ride.</h2></div>
           <p>Clean, comfortable vehicles for solo travel, families, business trips and long-distance journeys.</p>
