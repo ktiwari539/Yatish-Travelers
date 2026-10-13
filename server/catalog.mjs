@@ -57,13 +57,29 @@ const previewMedia={
    image:'/media/mt-traveller-safe.webp',gallery:[]
  }
 };
+// Legacy saved catalogs may use different URL encodings of these same known
+// plate-bearing source photos. Never expose those URLs as a fallback.
+export function isKnownPlateBearingSource(name,source){
+ if(typeof source!=='string'||!source.startsWith('https://'))return false;
+ let normalized=source.toLowerCase();
+ try{normalized=decodeURIComponent(source).toLowerCase();}catch{}
+ const marker={
+  'Mahindra Thar':'mahindra_thar_suv_in_',
+  'Mahindra XUV700':'a_black_mahindra_xuv700_suv_in_',
+  'Tempo Traveller':'force_traveller_luxury'
+ }[name];
+ return Boolean(marker&&normalized.replace(/%20/g,'_').includes(marker));
+}
 export function applyReviewedFleetMedia(records,rootDir=resolve('public')){
  const localFile=(path)=>resolve(rootDir,path.slice(1));
  return records.map(vehicle=>{
    const candidate=previewMedia[vehicle.name];
    if(!candidate)return vehicle;
    const original=defaultCatalog.find(entry=>entry.name===vehicle.name);
-   if(!original || vehicle.image!==original.image)return vehicle;
+   if(!original)return vehicle;
+   const flaggedGallery=(vehicle.gallery||[]).filter(image=>!isKnownPlateBearingSource(vehicle.name,image));
+   const oldUnsafe=vehicle.image===original.image||isKnownPlateBearingSource(vehicle.name,vehicle.image);
+   if(!oldUnsafe)return {...vehicle,gallery:flaggedGallery};
    const paths=[candidate.image,...candidate.gallery];
    const ready=paths.every(file=>existsSync(localFile(file)));
    const priorGallery=vehicle.gallery||[];
@@ -73,7 +89,7 @@ export function applyReviewedFleetMedia(records,rootDir=resolve('public')){
    // reviewed pack is missing. The client shows a named model placeholder.
    return {...vehicle,
      image:candidate.image,
-     ...(unmodifiedGallery?{gallery:ready?candidate.gallery:[]}:{})
+     gallery:unmodifiedGallery?(ready?candidate.gallery:[]):flaggedGallery
    };
  });
 }
