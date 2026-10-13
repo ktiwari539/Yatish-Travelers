@@ -88,7 +88,8 @@ async function smoke(){
  await page.waitForFunction(()=>document.querySelector('.fleet-road-stage')?.getAttribute('data-drive-step')==='2');
  ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Plan your next drive.','Scroll reveals the enquiry chapter');
  // Gallery must use ten distinct model photos or explicit model-specific placeholders.
- const cards=await page.locator('.fleet-editorial-tile').evaluateAll(nodes=>nodes.map(node=>({
+ const primaryRailTiles=page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile');
+ const cards=await primaryRailTiles.evaluateAll(nodes=>nodes.map(node=>({
   name:node.querySelector('.fleet-editorial-tile-foot strong')?.textContent?.trim(),
   source:node.querySelector('img')?.getAttribute('src')||'',
   placeholder:node.querySelector('.fleet-model-image-missing')?.textContent?.trim()||'',
@@ -96,22 +97,43 @@ async function smoke(){
  })));
  ensure(cards.length===10,'Ten distinct fleet cards are shown in local preview');
  const rail=page.locator('.fleet-editorial-rail');
- ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet reel has a genuine horizontally scrollable collection');
+ const track=page.locator('.fleet-reel-track');
+ ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet reel contains more than one viewport of vehicles');
+ ensure(await page.locator('.fleet-reel-group').count()===2,
+   'Seamless reel renders two identical vehicle sets');
+ ensure(await page.locator('.fleet-reel-group[data-copy="1"]').getAttribute('aria-hidden')==='true',
+   'Duplicate visuals are hidden from screen readers');
+ ensure(await page.locator('.fleet-reel-group[data-copy="1"] .fleet-editorial-tile').count()===cards.length,
+   'Cloned group contains exactly the original ten models');
+ ensure(await track.evaluate(el=>getComputedStyle(el).animationName==='mtFleetReelScroll'),
+   'Fleet uses continuous GPU transform animation, not scrollBy timer jumps');
+ const seam=await track.evaluate(el=>{
+   const groups=el.querySelectorAll('.fleet-reel-group');
+   return {first:groups[0].getBoundingClientRect().width,
+     second:groups[1].getBoundingClientRect().width,
+     track:el.scrollWidth};
+ });
+ ensure(Math.abs(seam.first-seam.second)<1&&Math.abs(seam.track-2*seam.first)<2,
+   'Two equal-width photo groups provide a seamless 50% loop boundary');
  ensure(await page.getByRole('button',{name:'Pause fleet reel'}).isVisible(),
-   'Fleet advances hands-free, with optional pause rather than next/previous controls');
+   'Optional pause control is available');
  ensure(await page.getByRole('button',{name:'Scroll fleet right'}).count()===0,
-   'Old mandatory fleet navigation buttons are removed');
+   'Stepped next/previous gallery controls are absent');
  await rail.scrollIntoViewIfNeeded();
  await page.mouse.move(0,0);
- await page.waitForFunction(()=>document.querySelector('.fleet-editorial-rail')?.scrollLeft>20,null,{timeout:8000});
- ensure(await rail.evaluate(el=>el.scrollLeft)>20,'Fleet reel advances automatically without a click');
- // The automatic reel must never select another vehicle on a visitor's behalf.
+ await page.waitForFunction(()=>document.querySelector('.fleet-reel-track')?.getBoundingClientRect().left!==undefined);
+ const xBefore=await track.evaluate(el=>el.getBoundingClientRect().left);
+ await page.waitForTimeout(1000);
+ const xAfter=await track.evaluate(el=>el.getBoundingClientRect().left);
+ ensure(xAfter<xBefore-5,'Fleet reel moves continuously without any click');
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Maruti Ertiga',
-   'Auto-rolling photo rail does not change the selected or quoted model');
+   'Reel motion never changes selected or quoted vehicle');
  await page.getByRole('button',{name:'Pause fleet reel'}).click();
  ensure(await page.getByRole('button',{name:'Resume fleet reel'}).isVisible(),
-   'Visitors can pause and restart reel motion');
-
+   'User can pause the continuous reel');
+ // Freeze the track at its initial transform for subsequent deterministic
+ // card interactions and screenshots; the motion itself was already tested.
+ await page.addStyleTag({content:'.fleet-reel-track{animation:none!important;transform:none!important;}'});
  ensure(['Mahindra Bolero','Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens'].every(name=>cards.some(card=>card.name===name)), 'All five upgraded and added models are visible');
  ensure(cards.find(card=>card.name==='Mahindra Bolero')?.source?.includes('Gen%203')||cards.find(card=>card.name==='Mahindra Bolero')?.placeholder?.includes('Mahindra Bolero'),'Bolero uses updated black model photo');
  ensure(cards.every(card=>card.category!=='TRAVEL INSPIRATION'),'No fake scenic image is labeled as a vehicle');
@@ -122,7 +144,7 @@ async function smoke(){
   cards.find(card=>card.name==='Tempo Traveller')?.placeholder?.includes('Tempo Traveller'),
   'Tempo Traveller must use the reviewed photo path or its named safe placeholder, not an old plate-bearing source');
  // A new model must update the quote state just as existing models do.
- await page.locator('.fleet-editorial-tile').filter({hasText:'Mahindra Scorpio-N'}).click();
+ await primaryRailTiles.filter({hasText:'Mahindra Scorpio-N'}).click();
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Mahindra Scorpio-N','New Scorpio model selection');
  await page.locator('.fleet-scorpio-film.is-ready').waitFor({state:'visible'});
  ensure((await page.locator('.fleet-scorpio-film').getAttribute('src'))==='/media/mt-scorpio-arrival.mp4','Only Scorpio uses approved video source');
@@ -138,7 +160,7 @@ async function smoke(){
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
  // Selecting the actual Innova in the fleet must change the current fare/quote vehicle.
- await page.locator('.fleet-editorial-tile').filter({hasText:'Toyota Innova'}).click();
+ await primaryRailTiles.filter({hasText:'Toyota Innova'}).click();
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Toyota Innova','Gallery model switched');
  ensure((await page.locator('.fleet-road-stage').getAttribute('data-model'))==='Toyota Innova','Innova has a separate cinematic chapter');
  ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Every detail, arranged.','Innova copy matches current journey chapter');
@@ -169,7 +191,7 @@ async function smoke(){
  // model and all configured angles. These are screenshots, NOT sanitized images.
  for(const card of cards){
    const name=card.name;
-   await page.locator('.fleet-editorial-tile').filter({hasText:name}).click();
+   await primaryRailTiles.filter({hasText:name}).click();
    await page.waitForTimeout(180);
    const slug=String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-');
    await page.locator('.fleet-road-stage').screenshot({
