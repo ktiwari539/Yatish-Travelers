@@ -153,3 +153,15 @@
  .ride-studio-backdrop,.ride-studio-car-image,.fleet-studio-launch-visual>img{animation:none!important;transition:none!important}
  .fleet-studio-launch-copy button:hover{transform:none}
 }
+
+/* Independent studio entry from each public fleet card. */
+.fleet-card .premium-catalog-visual{position:relative}
+.fleet-card .fleet-showroom-card-cta{
+ position:absolute;z-index:8;bottom:15px;left:15px;
+ display:inline-flex;align-items:center;gap:8px;padding:10px 14px;
+ border:1px solid rgba(255,255,255,.64);border-radius:100px;
+ background:rgba(12,48,31,.91);color:#fff8e8;font-weight:900;font-size:11px;
+ cursor:pointer;box-shadow:0 7px 20px rgba(0,0,0,.15);
+}
+.fleet-card .fleet-showroom-card-cta:hover{background:#23714a}
+.fleet-card .fleet-showroom-card-cta:focus-visible{outline:3px solid #eac38a;outline-offset:3px}
