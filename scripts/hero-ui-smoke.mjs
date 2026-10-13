@@ -73,6 +73,8 @@ async function smoke(){
   'Main entry invites visitors into the garage rather than repeating the catalogue title');
  ensure(await page.locator('.fleet-grid.fleet-compare-list').count()===1,
   'Public fleet cards are reorganized into a compact comparison rather than a second photo gallery');
+ await page.locator('.fleet-grid.fleet-compare-list').screenshot({
+   path:'artifacts/visual-evidence/fleet-quick-comparison-desktop.png',animations:'disabled'});
  ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===2,
   'Desktop shows two-column condensed specifications');
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
@@ -299,6 +301,10 @@ async function smoke(){
  ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
    'Mobile full-screen studio has a visible exit control');
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
+ const mobileFrame=await studio.locator('.ride-studio-vehicle-frame').boundingBox();
+ const mobileCameraControls=await studio.locator('.ride-studio-stage-footer').boundingBox();
+ ensure(mobileFrame&&mobileCameraControls&&mobileFrame.y+mobileFrame.height+5<=mobileCameraControls.y,
+   'Mobile cinematic car frame does not overlap the camera-angle footer');
  await studio.getByRole('button',{name:'Close car studio'}).click();
  await studio.waitFor({state:'detached'});
  await page.locator('.mobile-booking-bar button').click();
