@@ -510,28 +510,31 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <span><strong>Local photo pack not installed.</strong> The Thar, XUV700 and Traveller use safe model placeholders rather than old registration-plate photos. Download the seven-photo ZIP from our conversation to <code>~/Downloads/</code>, run <code>npm run fleet:install</code> and restart <code>npm run dev:full</code>.</span>
         </div>}
         <div className="section-heading">
-          <div><span className="kicker">Our Fleet</span><h2>Choose your ride.</h2></div>
-          <p>Clean, comfortable vehicles for solo travel, families, business trips and long-distance journeys.</p>
+          <div><span className="kicker">THE FLEET EXPERIENCE</span><h2>Choose your ride.</h2></div>
+          <p>Pick a model in the cinematic garage, then compare the practical details below. The vehicle you choose stays linked to your quotation.</p>
         </div>
 
-        <div className="fleet-studio-launch" aria-label="Interactive full-screen car studio">
+        <div className="fleet-studio-launch fleet-studio-launch-v18" aria-label="Enter interactive cinematic vehicle garage">
+          <div className="fleet-launch-scanlines" aria-hidden="true"/>
+          <div className="fleet-launch-rays" aria-hidden="true"><i/><i/><i/></div>
           <div className="fleet-studio-launch-copy">
-            <span><Sparkles size={17}/> THE NEXT LEVEL OF CHOOSING YOUR RIDE</span>
-            <h3>Meet your next <em>ride.</em></h3>
-            <p>Go full-screen. Explore dramatic model reveals, browse real car photo angles, compare seats and categories, then inspect details before requesting a quotation.</p>
+            <span><Sparkles size={17}/> THE MATESHWARI GARAGE · INTERACTIVE EXPERIENCE</span>
+            <h3>The garage <em>is open.</em></h3>
+            <p>Your next ride deserves an entrance. Enter the full-screen garage, watch each vehicle roll into the spotlight, switch camera angles and unlock its specifications.</p>
             <button type="button" onClick={()=>setStudioVehicle(selected.name)}>
               <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
             </button>
-            <small className="fleet-studio-launch-note">Interactive model-reference preview · Exact car, colour and variants confirmed before booking</small>
+            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> ENGINE READY <b>•</b> FULL-SCREEN REVEAL <b>•</b> 10 MODEL REFERENCES</small>
           </div>
           <div className="fleet-studio-launch-visual">
+            <div className="fleet-launch-portal" aria-hidden="true"><i/><i/><i/></div>
             {!studioLaunchPhotoFailed?
-              <img src="/media/mt-xuv700-driving.webp" alt="Reviewed XUV700 model-reference vehicle for the interactive car studio" loading="lazy"
+              <img src="/media/mt-xuv700-driving.webp" alt="Reviewed XUV700 reference vehicle promoting the interactive studio" loading="lazy"
                 onError={()=>setStudioLaunchPhotoFailed(true)}/>:
               <div className="fleet-studio-launch-fallback" role="img" aria-label="Vehicle photograph pending local media installation">
-                <CarFront size={102} strokeWidth={1.1}/><strong>THE CAR STUDIO</strong><small>Full-screen model selection awaits you</small>
+                <CarFront size={102} strokeWidth={1.1}/><strong>THE GARAGE AWAITS</strong><small>Start your full-screen vehicle experience</small>
               </div>}
-            <span>SELECT / EXPLORE / REQUEST</span>
+            <span className="fleet-launch-chapter">GARAGE SESSION / PRESS START <ArrowRight size={17}/></span>
           </div>
         </div>
 
@@ -575,12 +578,12 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           </label>
         </div>
 
-        <div className="fleet-match-note">
-          <strong>{filteredFleet.length} vehicles</strong>
-          <span>{fleetSort==='featured'?'in operator-defined featured order':`sorted for ${passengers} traveler${passengers === 1 ? '' : 's'}`}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''}</span>
+        <div className="fleet-match-note fleet-compare-heading">
+          <strong>THE LINEUP · QUICK COMPARISON</strong>
+          <span>{filteredFleet.length} vehicles · {fleetSort==='featured'?'admin featured order':`sorted for ${passengers} travelers`}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''} · Select to enter the studio or estimate your fare</span>
         </div>
 
-        <div className="fleet-grid">
+        <div className="fleet-grid fleet-compare-list">
           {filteredFleet.map((car,index)=>(
             <FleetCatalogCard car={car} index={index} key={car.name}
               onExplore={()=>setStudioVehicle(car.name)}
