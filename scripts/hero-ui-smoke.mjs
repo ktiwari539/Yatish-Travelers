@@ -69,9 +69,22 @@ async function smoke(){
  mkdirSync('artifacts/visual-evidence',{recursive:true});
  await page.locator('.fleet-studio-launch').screenshot({
    path:'artifacts/visual-evidence/ride-studio-launcher-desktop.png',animations:'disabled'});
+ ensure((await page.locator('.fleet-studio-launch h3').innerText()).includes('The garage'),
+  'Main entry invites visitors into the garage rather than repeating the catalogue title');
+ ensure(await page.locator('.fleet-grid.fleet-compare-list').count()===1,
+  'Public fleet cards are reorganized into a compact comparison rather than a second photo gallery');
+ ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===2,
+  'Desktop shows two-column condensed specifications');
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
+ ensure(await studio.locator('.ride-studio-reveal').count()===1,
+  'Garage introduction has an automatic full-screen vehicle initialization sequence');
+ ensure(await studio.locator('.ride-studio-vehicle-frame').evaluate(el=>getComputedStyle(el).animationName==='rideGarageVehicleEntry'),
+  'Garage car rolls in with a 3D-perspective animation');
+ ensure(await studio.locator('.ride-studio-grid').evaluate(el=>getComputedStyle(el).animationName==='rideGarageFloor'),
+  'Showroom includes animated floor perspective and lighting');
+ await page.waitForTimeout(1700);
  await studio.screenshot({path:'artifacts/visual-evidence/ride-studio-desktop.png',animations:'disabled'});
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
    'The studio starts with the currently selected model');
@@ -80,6 +93,8 @@ async function smoke(){
  ensure((await page.evaluate(()=>document.body.style.overflow))==='hidden',
    'Fullscreen studio locks background scrolling');
  await studio.getByRole('button',{name:'Next vehicle'}).click();
+ ensure(await studio.locator('.ride-studio-reveal').count()===1,
+  'Switching vehicles launches a new garage reveal');
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Toyota Innova',
    'Console-style model selection changes the showcased car');
  await studio.getByRole('button',{name:'Next photo angle'}).click();
@@ -143,10 +158,12 @@ async function smoke(){
  const rail=page.locator('.fleet-editorial-rail');
  const track=page.locator('.fleet-reel-track');
  ensure(await rail.evaluate(el=>el.scrollWidth>el.clientWidth),'Fleet reel contains more than one viewport of vehicles');
- ensure((await page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile').first().boundingBox())?.width>=430,
-   'Desktop rolling collection uses large premium photo cards');
- ensure((await page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile-photo').first().boundingBox())?.height>=280,
-   'Desktop rolling card has generous image height');
+ const resizedReelCard=await page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile').first().boundingBox();
+ const resizedReelImage=await page.locator('.fleet-reel-group[data-copy="0"] .fleet-editorial-tile-photo').first().boundingBox();
+ ensure(resizedReelCard&&resizedReelCard.width>=370&&resizedReelCard.width<=475,
+   'Rolling reel cards have been reduced by about 20% from the previous large specification');
+ ensure(resizedReelImage&&resizedReelImage.height>=270&&resizedReelImage.height<=310,
+   'Rolling images are also about 20% smaller');
   ensure(await page.locator('.fleet-reel-group').count()===2,
    'Seamless reel renders two identical vehicle sets');
  ensure(await page.locator('.fleet-reel-group[data-copy="1"]').getAttribute('aria-hidden')==='true',
