@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, CarFront, ChevronLeft, ChevronRight, Compass, MoveUpRight } from 'lucide-react';
+import { needsInnovaPlateReview } from './mediaSafety';
 
 export type FleetReelVehicle={
   name:string;seats:string;tag:string;category:string;image:string;
@@ -16,11 +17,12 @@ type ModelImageProps={vehicle:FleetReelVehicle;src:string;alt:string;duplicate?:
 function ModelImage({vehicle,src,alt,duplicate=false}:ModelImageProps){
   const [failed,setFailed]=useState(false);
   useEffect(()=>setFailed(false),[src]);
-  if(!src||duplicate||failed){
-    return <div className="fleet-model-image-missing" role="img" aria-label={vehicle.name+' — vehicle image pending'}>
+  const reviewPending=needsInnovaPlateReview(vehicle.name,src);
+  if(!src||duplicate||failed||reviewPending){
+    return <div className="fleet-model-image-missing" role="img" aria-label={vehicle.name+' — '+(reviewPending?'plate review pending':'vehicle image pending')}>
       <span className="fleet-model-image-emblem"><CarFront size={32} strokeWidth={1.35}/></span>
       <span className="fleet-model-image-name">{vehicle.name}</span>
-      <small>{duplicate?'Distinct photo needed':'Vehicle photo pending'}</small>
+      <small>{reviewPending?'Registration-plate review pending':duplicate?'Distinct photo needed':'Vehicle photo pending'}</small>
     </div>;
   }
   return <img src={src} alt={alt} loading="lazy" decoding="async" onError={()=>setFailed(true)}/>;
