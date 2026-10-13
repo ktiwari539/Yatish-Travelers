@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, RotateCw } from 'lucide-react';
+import { ArrowRight, Maximize2, RotateCw } from 'lucide-react';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 import { needsInnovaPlateReview } from './mediaSafety';
 
-export function FleetCatalogCard({car,index,onEstimate}:{car:FleetReelVehicle;index:number;onEstimate:()=>void}){
+export function FleetCatalogCard({car,index,onEstimate,onExplore}:{car:FleetReelVehicle;index:number;onEstimate:()=>void;onExplore?:()=>void}){
  const [angle,setAngle]=useState(0);
  const [failed,setFailed]=useState(false);
  const photos=[car.image,...(car.gallery||[])].filter(Boolean).slice(0,6);
@@ -15,6 +15,7 @@ export function FleetCatalogCard({car,index,onEstimate}:{car:FleetReelVehicle;in
    {!failed&&!reviewPending?<img src={src} alt={car.name+' photo angle '+(angle+1)} loading="lazy" decoding="async" onError={()=>setFailed(true)}/>:
     <div className="premium-catalog-fallback" role="img" aria-label={reviewPending?'Registration plate review pending for '+car.name:'Photo unavailable for '+car.name}>{car.name}<small>{reviewPending?'Registration plate review pending':'Image unavailable'}</small></div>}
    <div className="fleet-shade"/>
+   {onExplore&&<button type="button" className="fleet-showroom-card-cta" onClick={onExplore} aria-label={'Open full-screen car studio for '+car.name}><Maximize2 size={15}/> View in studio</button>}
    <div className="fleet-number">{String(index+1).padStart(2,'0')}</div>
    <span className="fleet-type">{car.category}</span>
    {photos.length>1&&<button type="button" className="catalog-angle-button"
