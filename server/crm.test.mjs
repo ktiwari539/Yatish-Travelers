@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -157,5 +157,32 @@ test('CRM saves enquiries and protects staff operations',async(t)=>{
   const updatedWithPhoto=reloaded.vehicles.map((v,i)=>i===0?{...v,image:uploadBody.url}:v);
   const catalogWithPhoto=await fetch(root+'/api/admin/catalog',{method:'PUT',headers,body:JSON.stringify({vehicles:updatedWithPhoto})});
   assert.equal(catalogWithPhoto.status,200);
+
+  // Real authenticated API + disk regression for First / Up / Down save semantics.
+  const currentCatalog=(await (await fetch(root+'/api/admin/catalog',{headers})).json()).vehicles;
+  const traveller=currentCatalog.find(car=>car.name==='Tempo Traveller');
+  const rearranged=[{...traveller},...currentCatalog.filter(car=>car.id!==traveller.id).map(car=>
+    car.name==='Mahindra Bolero'?{...car,enabled:false}:car)];
+  const updateOrder=await fetch(root+'/api/admin/catalog',{
+    method:'PUT',headers,body:JSON.stringify({vehicles:rearranged})
+  });
+  assert.equal(updateOrder.status,200);
+  const savedOrder=(await updateOrder.json()).vehicles;
+  assert.equal(savedOrder[0].name,'Tempo Traveller');
+  assert.deepEqual(savedOrder.map(car=>car.displayOrder),savedOrder.map((_,i)=>i+1));
+  const afterReload=(await (await fetch(root+'/api/admin/catalog',{headers})).json()).vehicles;
+  assert.deepEqual(afterReload.map(car=>car.name),rearranged.map(car=>car.name));
+  const persisted=JSON.parse(readFileSync(join(directory,'catalog.json'),'utf8'));
+  assert.deepEqual(persisted.vehicles.map(car=>car.name),rearranged.map(car=>car.name));
+  const publicOrder=(await (await fetch(root+'/api/catalog')).json()).vehicles;
+  assert.deepEqual(publicOrder.map(car=>car.name),rearranged.filter(car=>car.enabled).map(car=>car.name));
+  assert.equal(publicOrder.some(car=>car.name==='Mahindra Bolero'),false);
+  assert.equal(afterReload.find(car=>car.name==='Toyota Innova').rateMin,21,'Reordering preserves saved rates');
+  const integrity=(await (await fetch(root+'/api/admin/fleet-media/status',{headers})).json());
+  assert.equal(integrity.total,7);
+  assert.ok(Array.isArray(integrity.missing));
+  assert.ok(Array.isArray(integrity.invalid));
+  assert.equal(typeof integrity.catalogApplied,'boolean');
+  assert.equal(typeof integrity.persistedCatalogApplied,'boolean');
 
 });
