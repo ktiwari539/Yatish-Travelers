@@ -7,18 +7,25 @@ import { resolve, join } from 'node:path';
 // When the user has downloaded the exact ZIP to Downloads, install it safely
 // before starting Vite/API. The installer verifies the archive SHA-256 and
 // refuses to overwrite customized media files.
+const completePack=join(homedir(),'Downloads','mateshwari_complete_media_review.zip');
 const safePack=join(homedir(),'Downloads','mateshwari_fleet_photography_safe_pack.zip');
 const fleetFiles=['mt-thar-red-front.webp','mt-xuv700-driving.webp','mt-traveller-safe.webp'];
-if(existsSync(safePack)){
+if(existsSync(completePack)){
+  try{
+    execFileSync(process.execPath,[resolve('scripts/install-complete-media.mjs')],{stdio:'inherit'});
+  }catch{
+    console.warn('Complete media install was skipped. Run npm run media:install for details.');
+  }
+}else if(existsSync(safePack)){
   try{
     execFileSync(process.execPath,[resolve('scripts/install-fleet-media.mjs')],{stdio:'inherit'});
   }catch{
-    console.warn('Fleet media automatic install skipped. Run npm run fleet:install to see why.');
+    console.warn('Fleet media automatic install skipped. Run npm run fleet:install for details.');
   }
 }
 if(fleetFiles.some(file=>!existsSync(resolve('public/media',file)))){
   console.warn('\n[FLEET PHOTO PACK MISSING] Thar, XUV700 and Traveller will show safe model placeholders, not old photos with registration numbers.');
-  console.warn('Download mateshwari_fleet_photography_safe_pack.zip from the chat into ~/Downloads and restart npm run dev:full.\n');
+  console.warn('Download mateshwari_complete_media_review.zip from the chat into ~/Downloads and restart npm run dev:full.\n');
 }
 
 const children = [
