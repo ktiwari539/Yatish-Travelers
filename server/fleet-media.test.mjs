@@ -17,7 +17,13 @@ test('reviewed fleet photos install only for the right models and preserve staff
  t.after(()=>rmSync(dir,{force:true,recursive:true}));
  const original=defaultCatalog.map(v=>({...v}));
  const notInstalled=applyReviewedFleetMedia(original,dir);
- assert.deepEqual(notInstalled,original,'Never display broken local assets before installation');
+ for(const name of ['Mahindra Thar','Mahindra XUV700','Tempo Traveller']){
+  const before=original.find(v=>v.name===name);
+  const after=notInstalled.find(v=>v.name===name);
+  assert.notEqual(after.image,before.image,'Never expose old registration-plate photos without safe pack');
+  assert.ok(after.image.startsWith('/media/mt-'),'Show only the named safe image path');
+  assert.deepEqual(after.gallery,[],'No unverified alternate-angle fallback');
+ }
  for(const name of names){
   const p=join(dir,'media',name);
   mkdirSync(dirname(p),{recursive:true});
@@ -58,5 +64,6 @@ test('partially installed photo pack never mixes old and new angles',t=>{
  mkdirSync(dirname(p),{recursive:true});writeFileSync(p,'image');
  const originals=defaultCatalog.map(v=>({...v}));
  const actual=applyReviewedFleetMedia(originals,dir);
- assert.equal(actual.find(v=>v.name==='Mahindra XUV700').image,originals.find(v=>v.name==='Mahindra XUV700').image);
+ assert.equal(actual.find(v=>v.name==='Mahindra XUV700').image,'/media/mt-xuv700-driving.webp');
+ assert.deepEqual(actual.find(v=>v.name==='Mahindra XUV700').gallery,[]);
 });
