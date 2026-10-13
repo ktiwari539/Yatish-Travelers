@@ -131,7 +131,17 @@
 }
 @media(max-width:390px){
   .hero.cinematic-landing{height:810px;min-height:810px}
-  .cinematic-landing .hero-copy.cinematic-landing-copy{top:20.5%!important}
-  .hero.cinematic-landing .hero-copy h1{font-size:45px}
-  .cinematic-v6 .cinema-director-bottom{bottom:142px!important}
+  .cinematic-landing .hero-copy.cinematic-landing-copy{top:15%!important}
+  .hero.cinematic-landing .hero-copy h1{
+    font-size:40px;line-height:1;letter-spacing:-.052em;
+    margin:7px 0 10px
+  }
+  .hero.cinematic-landing .hero-copy>p{
+    font-size:11px;line-height:1.4;margin-bottom:10px
+  }
+  .hero.cinematic-landing .hero-actions{gap:5px}
+  .hero.cinematic-landing .hero-actions .primary,
+  .hero.cinematic-landing .hero-whatsapp{padding:10px 7px;font-size:9px}
+  .cinematic-landing .cinematic-landing-email{margin-top:3px;font-size:9px}
+  .cinematic-v6 .cinema-director-bottom{bottom:121px!important;padding:10px}
 }
