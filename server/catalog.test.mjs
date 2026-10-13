@@ -22,7 +22,7 @@ test('new showcase models migrate once without changing staff-managed inventory'
   assert.equal(first.catalogVersion,2);
   assert.ok(!first.vehicles.some(v=>v.name==='Toyota Innova'),'A previously removed model must not be silently reintroduced');
   assert.equal(first.vehicles.length,5);
-  assert.deepEqual(first.vehicles.find(v=>v.name==='Mahindra Bolero'),savedBolero);
+  assert.deepEqual(first.vehicles.find(v=>v.name==='Mahindra Bolero'),{...savedBolero,displayOrder:1});
   assert.equal(first.updatedAt,'2026-10-01T00:00:00Z');
   for(const name of ['Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens']){
     assert.ok(first.vehicles.find(v=>v.name===name),'New model missing: '+name);
@@ -32,6 +32,24 @@ test('new showcase models migrate once without changing staff-managed inventory'
   const later=readCatalog();
   assert.equal(later.catalogVersion,2);
   assert.equal(later.vehicles.length,4);
+  assert.deepEqual(later.vehicles.map(v=>v.displayOrder),[1,2,3,4]);
   assert.ok(!later.vehicles.some(v=>v.name==='Mahindra Thar'),'Staff removal must remain removed');
   assert.equal(JSON.parse(readFileSync(process.env.CRM_CATALOG_FILE,'utf8')).catalogVersion,2);
+});
+
+
+test('admin reordering persists as explicit display order without changing prices', async t=>{
+ const dir=mkdtempSync(join(tmpdir(),'mt-order-'));
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ process.env.CRM_CATALOG_FILE=join(dir,'catalog.json');
+ const {readCatalog,writeCatalog,defaultCatalog}=await import('./catalog.mjs?test=ordering');
+ const input=[defaultCatalog[5],defaultCatalog[1],defaultCatalog[2]].map(v=>({...v}));
+ const saved=writeCatalog(input);
+ assert.deepEqual(saved.vehicles.map(v=>v.name),['Tempo Traveller','Maruti Ertiga','Toyota Innova']);
+ assert.deepEqual(saved.vehicles.map(v=>v.displayOrder),[1,2,3]);
+ const fetched=readCatalog();
+ assert.deepEqual(fetched.vehicles.map(v=>v.name),['Tempo Traveller','Maruti Ertiga','Toyota Innova']);
+ assert.deepEqual(fetched.vehicles.map(v=>v.displayOrder),[1,2,3]);
+ assert.equal(fetched.vehicles[0].rateMin,defaultCatalog[5].rateMin);
+ assert.equal(fetched.vehicles[0].enabled,true);
 });
