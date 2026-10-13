@@ -3,7 +3,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { dirname, resolve } from 'node:path';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readCatalog, writeCatalog, validateVehicle } from './catalog.mjs';
-import { importReviewedFleetZip, MEDIA_FILES, SUPPORTED_MODELS } from './fleet-photo-import.mjs';
+import { importReviewedFleetZip, inspectReviewedFleetMedia } from './fleet-photo-import.mjs';
 import { notifications, notificationConfig, notifyNewEnquiry, prepareQuote } from './notifications.mjs';
 
 const port = Number(process.env.CRM_PORT || 8787);
@@ -192,11 +192,9 @@ const server = http.createServer(async (req,res)=>{
       }
             if(url.pathname==='/api/admin/engagement' && req.method==='GET') return reply(res,200,engagement());
       if(url.pathname==='/api/admin/fleet-media/status'&&req.method==='GET'){
-        const images=Object.keys(MEDIA_FILES).map(path=>({path:path.slice('public'.length),installed:existsSync(resolve(path))}));
-        const missing=images.filter(image=>!image.installed).map(image=>image.path);
-        return reply(res,200,{ready:missing.length===0,installed:images.length-missing.length,
-          total:images.length,missing,
-          models:Object.keys(SUPPORTED_MODELS)});
+        // Files on disk and saved photo URLs must be verified independently.
+        // Never report a damaged or incomplete local pack as ready.
+        return reply(res,200,inspectReviewedFleetMedia());
       }
       if(url.pathname==='/api/admin/fleet-media/import'&&req.method==='POST'){
         const data=await readBody(req,2_600_000);
