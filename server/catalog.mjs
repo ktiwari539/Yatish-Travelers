@@ -21,6 +21,11 @@ export const defaultCatalog=[
  :v.name==='Toyota Innova' ? [commons('Toyota%20Innova%20Crysta%202.4%20Z%20rear%20left.jpg'),commons('Toyota%20Innova%20Crysta%202.4%20Z%20front%20right.jpg')]
  :[]
 }));
+// Persist array priority explicitly so CRM, homepage and visitors agree on
+// the same featured ordering. Historic catalogs without rank keep file order.
+export const withDisplayOrder=(vehicles)=>vehicles.map((vehicle,index)=>({
+  ...vehicle,displayOrder:index+1
+}));
 const text=(value,max=120)=>typeof value==='string'?value.trim().slice(0,max):'';
 const bundledPhoto=/^\/media\/mt-(?:xuv700-(?:driving|studio)|thar-(?:red-front|red-rear|grey-road|grey-front-safe)|traveller-safe)\.webp$/;
 const validImage=(url)=>{if(bundledPhoto.test(url))return true;if(/^\/api\/uploads\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(url))return true;try{const u=new URL(url);return u.protocol==='https:'&&url.length<=900&&!u.username&&!u.password;}catch{return false;}};
@@ -68,7 +73,7 @@ export function applyReviewedFleetMedia(records,rootDir=resolve('public')){
  });
 }
 export function readCatalog(){
-  if(!existsSync(catalogPath)) return {vehicles:applyReviewedFleetMedia(defaultCatalog.map(x=>({...x}))),updatedAt:null};
+  if(!existsSync(catalogPath)) return {vehicles:withDisplayOrder(applyReviewedFleetMedia(defaultCatalog.map(x=>({...x})))),updatedAt:null};
   const value=JSON.parse(readFileSync(catalogPath,'utf8'));
   if(!Array.isArray(value.vehicles)) throw new Error('Invalid stored catalog.');
   // Only migrate the exact previous bundled reference asset, never user-provided photos.
@@ -88,11 +93,11 @@ export function readCatalog(){
   const additions=Number(value.catalogVersion||1)<2
     ?defaultCatalog.filter(v=>newShowcaseNames.has(v.name)&&!existing.some(item=>item.name===v.name))
     :[];
-  return {...value,catalogVersion:2,vehicles:applyReviewedFleetMedia([...existing,...additions])};
+  return {...value,catalogVersion:2,vehicles:withDisplayOrder(applyReviewedFleetMedia([...existing,...additions]))};
 }
 export function writeCatalog(vehicles){
   if(!Array.isArray(vehicles)||vehicles.length>80) throw new Error('Catalog limit exceeded.');
-  const next={catalogVersion:2,vehicles,updatedAt:new Date().toISOString()};
+  const next={catalogVersion:2,vehicles:withDisplayOrder(vehicles),updatedAt:new Date().toISOString()};
   mkdirSync(dirname(catalogPath),{recursive:true,mode:0o700});
   const tmp=catalogPath+'.'+randomUUID()+'.tmp';
   writeFileSync(tmp,JSON.stringify(next,null,2),{mode:0o600});
