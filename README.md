@@ -25,6 +25,21 @@ Keep the terminal open and enter your **private** token at http://localhost:5173
 | http://localhost:5173/stories | Story submission placeholder and scenic inspiration (not fake testimonials) |
 | http://localhost:5173/admin | CRM: enquiries, activity tracking, vehicle configuration |
 
+### One-download solution to missing pictures and videos (current)
+
+The website code is on GitHub, but the user-provided visual assets are separate binaries. A Git pull alone cannot show them.
+
+Download the **single** `mateshwari_complete_media_review.zip` attachment from our conversation. It contains 14 media files: five Ertiga assets, two Scorpio film/poster assets, and seven plate-reviewed Thar/XUV700/Traveller images.
+
+1. Save ZIP as `~/Downloads/mateshwari_complete_media_review.zip`.
+2. From the project root, run `npm run media:install`. SHA-256 checks verify the exact approved asset contents.
+3. Restart `CRM_ADMIN_TOKEN="YOUR_PRIVATE_TOKEN" npm run dev:full` and hard-refresh `http://localhost:5173`.
+4. Alternatively, if the ZIP is in Downloads, restarting `npm run dev:full` automatically attempts the verified installation.
+
+The installer does not replace customized image files or touch CRM customer data. Without the pack, the named Thar/XUV700/Traveller placeholders are intentional: do not show old photos with readable registration plates.
+
+**Review only:** image licensing, manufacturer/model-year matching, true vehicle inventory and all other registrations must be cleared before publishing.
+
 ### Featured ordering and final-scene placement — current review
 
 - **Admin → Cars & pricing:** Every vehicle card displays its current priority and **First**, **Up**, and **Down** buttons. Move cards, then click **Save Changes**. The backend writes the array in that order plus explicit `displayOrder: 1, 2, 3, ...` and returns the same order from `/api/admin/catalog` and `/api/catalog`. Hidden vehicles remain in the saved sequence but do not appear publicly.
