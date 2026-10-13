@@ -279,7 +279,7 @@ export function App() {
   const [days, setDays] = useState(1);
   const [nightStay, setNightStay] = useState(false);
   const [fleetFilter, setFleetFilter] = useState<FleetFilter>('All');
-  const [fleetSort, setFleetSort] = useState('smart');
+  const [fleetSort, setFleetSort] = useState('featured');
   const [passengers, setPassengers] = useState(4);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
@@ -306,6 +306,9 @@ export function App() {
           license:isBundledPreview?'Usage rights pending review':(isKnownOriginal?original!.license:'Check image rights')};
       });
       setLiveFleet(next);
+      // On initial load, show the operator's #1 published vehicle. Selecting a
+      // different vehicle later must never be reset by background refresh.
+      if(next.length) setVehicle(current=>current===fleet[1].name?next[0].name:current);
     }).catch(()=>{/* offline frontend keeps preview vehicles */});
     return ()=>{active=false;};
   },[]);
@@ -356,6 +359,7 @@ export function App() {
       ]).includes(fleetFilter)
     ));
 
+    if(fleetSort==='featured')return filtered;
     return [...filtered].sort((a, b) => {
       const aProfile=vehicleProfiles[a.name]??{capacity:a.capacity||4,useCases:['Family'],priority:50};
       const bProfile=vehicleProfiles[b.name]??{capacity:b.capacity||4,useCases:['Family'],priority:50};
@@ -475,8 +479,6 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div><small>04</small><strong>Clear Quotations</strong><span>Know the major charges before travel</span></div>
       </section>
 
-      <PremiumFleetExperience vehicles={liveFleet} activeName={heroVehicle.name}
-        onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet',name);}}/>
       <section className="section reveal-3d" id="fleet">
         <div className="section-heading">
           <div><span className="kicker">Our Fleet</span><h2>Choose your ride.</h2></div>
@@ -514,6 +516,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <label className="sort-control">
             <span>Sort</span>
             <select value={fleetSort} onChange={(event) => setFleetSort(event.target.value)}>
+              <option value="featured">Featured order (admin)</option>
               <option value="smart">Smart Match</option>
               <option value="premium">Premium First</option>
               <option value="seats-desc">Most Seats</option>
@@ -524,7 +527,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
         <div className="fleet-match-note">
           <strong>{filteredFleet.length} vehicles</strong>
-          <span>sorted for {passengers} traveler{passengers === 1 ? '' : 's'}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''}</span>
+          <span>{fleetSort==='featured'?'in operator-defined featured order':`sorted for ${passengers} traveler${passengers === 1 ? '' : 's'}`}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''}</span>
         </div>
 
         <div className="fleet-grid">
@@ -700,6 +703,13 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <a href="tel:+919340098177"><Phone size={17}/> Call us</a>
         </div>
       </section>
+      <div className="fleet-final-intro">
+        <span className="kicker">THE FINAL CHAPTER · CHOOSE YOUR RIDE</span>
+        <h2>Before the journey begins, <em>meet your ride.</em></h2>
+        <p>One collection, thoughtfully arranged. Scroll through real model references, compare the details and choose the vehicle that feels right for your route. Your quotation is only a click away.</p>
+      </div>
+      <PremiumFleetExperience vehicles={liveFleet} activeName={heroVehicle.name}
+        onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet',name);}}/>
       <footer id="contact">
         <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
         <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
