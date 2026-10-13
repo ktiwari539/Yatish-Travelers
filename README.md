@@ -25,6 +25,16 @@ Keep the terminal open and enter your **private** token at http://localhost:5173
 | http://localhost:5173/stories | Story submission placeholder and scenic inspiration (not fake testimonials) |
 | http://localhost:5173/admin | CRM: enquiries, activity tracking, vehicle configuration |
 
+### Featured ordering and final-scene placement — current review
+
+- **Admin → Cars & pricing:** Every vehicle card displays its current priority and **First**, **Up**, and **Down** buttons. Move cards, then click **Save Changes**. The backend writes the array in that order plus explicit `displayOrder: 1, 2, 3, ...` and returns the same order from `/api/admin/catalog` and `/api/catalog`. Hidden vehicles remain in the saved sequence but do not appear publicly.
+- **Public homepage:** The default Fleet sort is **Featured order (admin)**. Visitors can still opt into Smart Match, Premium First, Compact First, and Most Seats. The first published vehicle is the selected reference on initial API load. Quote and fare selection still refer to the actual selected car; no auto-selection while scrolling.
+- **Cinematic rolling collection:** Moved from immediately below the hero to the **last full section just before the footer**, introduced by: “Before the journey begins, meet your ride.” The ten-car scroll gallery is distinct from the initial fleet comparison. Video/photographic motion respects reduced motion; only Scorpio-N plays the reviewed edited video when its pack is installed.
+- **Missing photos / privacy:** Old unreviewed Thar, XUV700 and Traveller URLs with exposed number plates are **not used as public fallbacks anymore**. The corresponding vehicle shows a named safe placeholder if `public/media` lacks the approved photo. On localhost a visible explanatory notice appears. The real photos cannot show until their ZIP is present on that Mac.
+- **Easier installation:** After downloading the exact `mateshwari_fleet_photography_safe_pack.zip` into `~/Downloads`, starting `npm run dev:full` now automatically invokes the checksum-verified installer if necessary. You can still run `npm run fleet:install` manually. A simple `git pull` does **not** transfer the seven binary images; they are a separate user-uploaded ZIP.
+
+**Test steps:** After starting the full local CRM, visit `/admin`, move Toyota Innova or Scorpio-N to position #01, click Save Changes, reload `/admin`, and confirm the saved order. Then hard-refresh the homepage and confirm Fleet defaults to the same order and the final cinematic reel appears directly above the footer. Open a quote for an explicitly selected vehicle to verify no mismatch. Finally confirm all seven local photos have loaded and no plate characters are readable.
+
 ### User-provided premium fleet photos — Thar / XUV700 / Traveller
 
 The new **seven-photo local media pack** is supplied as a separate downloadable ZIP in our conversation: `mateshwari_fleet_photography_safe_pack.zip`. It includes a dynamic XUV700 driving image and studio front angle, red Thar front/rear renders, grey Thar driving and plate-sanitized front views, and the plate-sanitized Force Traveller photograph. The remaining seven model identities are unchanged.
