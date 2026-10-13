@@ -185,6 +185,8 @@ async function smoke(){
  await page.locator('.quote-close').click();
  await page.setViewportSize({width:375,height:812});
  await page.reload({waitUntil:'domcontentloaded'});
+ await page.evaluate(async()=>{await document.fonts.ready;});
+ await page.waitForTimeout(120);
  const narrowEmail=await page.locator('.cinematic-landing-email').boundingBox();
  const narrowBooking=await page.locator('.cinema-director-bottom').boundingBox();
  ensure(narrowEmail&&narrowBooking&&narrowEmail.y+narrowEmail.height+4<narrowBooking.y,
