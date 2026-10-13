@@ -98,3 +98,65 @@
  .cinematic-route-editorial .route-tile-visual .scenic-image{transition:none;transform:none!important}
  .fleet-editorial .fleet-editorial-rail{scroll-behavior:auto;}
 }
+
+/* V16 — continuous seamless fleet marquee.
+   Two equal-width groups each include their trailing gap, so translation by
+   50% lands at an identical frame without the previous end-of-strip jump. */
+.fleet-editorial .fleet-editorial-rail{
+ display:block!important;
+ position:relative;
+ width:100%;
+ max-width:1510px;
+ overflow:hidden!important;
+ scroll-snap-type:none!important;
+ scroll-behavior:auto!important;
+ scrollbar-width:none;
+}
+.fleet-editorial .fleet-editorial-rail::-webkit-scrollbar{display:none}
+.fleet-editorial .fleet-reel-track{
+ display:flex;
+ align-items:stretch;
+ gap:0;
+ width:max-content;
+ min-width:100%;
+ animation:mtFleetReelScroll var(--fleet-reel-duration,54s) linear infinite;
+ will-change:transform;
+}
+.fleet-editorial .fleet-reel-group{
+ display:flex;
+ align-items:stretch;
+ gap:15px;
+ width:max-content;
+ flex:0 0 auto;
+ padding-right:15px;
+}
+.fleet-editorial .fleet-reel-group .fleet-editorial-tile{
+ display:block;
+ flex:0 0 clamp(205px,19vw,256px)!important;
+ width:clamp(205px,19vw,256px);
+ margin:0;
+}
+.fleet-editorial .fleet-editorial-rail:is(.is-paused,:hover,:focus-within) .fleet-reel-track{
+ animation-play-state:paused;
+}
+@keyframes mtFleetReelScroll{
+ from{transform:translate3d(0,0,0)}
+ to{transform:translate3d(-50%,0,0)}
+}
+@media(max-width:760px){
+ .fleet-editorial .fleet-reel-group{gap:12px;padding-right:12px}
+ .fleet-editorial .fleet-reel-group .fleet-editorial-tile{
+  flex:0 0 clamp(190px,63vw,240px)!important;
+  width:clamp(190px,63vw,240px);
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .fleet-editorial .fleet-editorial-rail{
+   overflow-x:auto!important;
+   mask-image:none;
+   scroll-snap-type:x proximity!important;
+ }
+ .fleet-editorial .fleet-reel-track{animation:none!important;will-change:auto;}
+ .fleet-editorial .fleet-reel-group[data-copy="1"]{display:none}
+ .fleet-editorial .fleet-reel-group .fleet-editorial-tile{scroll-snap-align:start}
+}
