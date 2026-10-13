@@ -4,6 +4,7 @@ import { strict as assert } from 'node:assert';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { chromium } from 'playwright';
+import { defaultCatalog } from '../server/catalog.mjs';
 
 const testVideo='public/media/mt-scorpio-arrival.mp4';
 const fixtureCreated=!existsSync(testVideo);
@@ -192,6 +193,45 @@ async function smoke(){
  ensure(narrowEmail&&narrowBooking&&narrowEmail.y+narrowEmail.height+4<narrowBooking.y,
    '375px hero must not overlap the booking panel');
  await page.screenshot({path:'artifacts/visual-evidence/mobile-375px.png'});
+ // Verify the actual PUBLIC catalog feed controls first card, selected fare, gallery
+ // and visibility, rather than checking only a mocked Admin PUT request.
+ await page.setViewportSize({width:1440,height:900});
+ const innova=defaultCatalog.find(car=>car.name==='Toyota Innova');
+ const orderedFixture=[innova,...defaultCatalog.filter(car=>car.name!=='Toyota Innova')]
+   .map(car=>car.name==='Mahindra Bolero'?{...car,enabled:false}:car);
+ await page.route('**/api/catalog',route=>route.fulfill({
+   status:200,contentType:'application/json',
+   body:JSON.stringify({vehicles:orderedFixture.filter(car=>car.enabled),updatedAt:'2026-10-13T00:00:00Z'})
+ }));
+ await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('.selected-vehicle strong')?.textContent==='Toyota Innova');
+ ensure((await page.locator('.sort-control select').inputValue())==='featured',
+   'Public site still defaults to Admin Featured order');
+ ensure((await page.locator('.premium-catalog-card').first().getAttribute('data-model'))==='Toyota Innova',
+   'Public fleet first card reflects saved priority');
+ ensure((await page.locator('.fleet-editorial-tile').first().innerText()).includes('Toyota Innova'),
+   'Cinematic rail follows the same admin order');
+ ensure((await page.locator('.premium-catalog-card[data-model="Mahindra Bolero"]').count())===0,
+   'Hidden admin fleet entry is not rendered publicly');
+ const innovaCard=page.locator('.premium-catalog-card[data-model="Toyota Innova"]');
+ const firstPhoto=await innovaCard.locator('img').getAttribute('src');
+ await innovaCard.getByRole('button',{name:'Show another angle of Toyota Innova'}).click();
+ ensure((await innovaCard.locator('img').getAttribute('src'))!==firstPhoto,
+   'Public card gallery button changes the model-specific angle');
+ const stagePhoto=await page.locator('.fleet-editorial-picture img').getAttribute('src');
+ await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).click();
+ ensure((await page.locator('.fleet-editorial-picture img').getAttribute('src'))!==stagePhoto,
+   'Cinematic gallery angle navigation changes the correct vehicle image');
+ await page.locator('.sort-control select').selectOption('seats-desc');
+ ensure((await page.locator('.premium-catalog-card').first().getAttribute('data-model'))==='Tempo Traveller',
+   'Most Seats sorting remains functional as a visitor override');
+ await page.locator('.sort-control select').selectOption('featured');
+ ensure((await page.locator('.premium-catalog-card').first().getAttribute('data-model'))==='Toyota Innova',
+   'Featured order correctly restores admin sequencing');
+ await innovaCard.getByRole('button',{name:'Estimate fare'}).click();
+ ensure((await page.locator('.selected-vehicle strong').innerText())==='Toyota Innova',
+   'Fare calculator retains the correct first model');
+
  // CRM photo-privacy regression: a current image cannot be published as
  // sanitized without pixelating a region or explicitly reviewing the whole photo.
  const tinyPng='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==';
