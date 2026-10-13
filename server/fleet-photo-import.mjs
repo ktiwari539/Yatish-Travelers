@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, rmSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { readCatalog, writeCatalog } from './catalog.mjs';
+import { catalogPath, readCatalog, writeCatalog } from './catalog.mjs';
 
 export const REQUIRED_ZIP_SHA256='ea09331069edb95fe65ee0ae17fbdf5ad1220ba81dca047de2911bab9166d927';
 export const MEDIA_FILES={
@@ -37,10 +37,14 @@ export function inspectReviewedFleetMedia({root=resolve('.'),vehicles=readCatalo
      return {path:publicPath,status:hash(readFileSync(file))===expected?'verified':'invalid'};
    }catch{return {path:publicPath,status:'unreadable'};}
  });
+ const samePhotos=(vehicle,expected)=>Boolean(vehicle&&vehicle.image===expected.image&&
+   JSON.stringify(vehicle.gallery||[])===JSON.stringify(expected.gallery));
+ const stored=existsSync(catalogPath)?JSON.parse(readFileSync(catalogPath,'utf8')).vehicles:null;
  const modelLinks=Object.entries(SUPPORTED_MODELS).map(([name,expected])=>{
    const actual=vehicles.find(v=>v.name===name);
-   return {name,present:Boolean(actual),matches:Boolean(actual&&actual.image===expected.image&&
-     JSON.stringify(actual.gallery||[])===JSON.stringify(expected.gallery))};
+   const persisted=Array.isArray(stored)?stored.find(v=>v.name===name):null;
+   return {name,present:Boolean(actual),matches:samePhotos(actual,expected),
+     persistedMatches:Array.isArray(stored)?samePhotos(persisted,expected):null};
  });
  return {
    ready:images.every(x=>x.status==='verified'),
@@ -49,6 +53,7 @@ export function inspectReviewedFleetMedia({root=resolve('.'),vehicles=readCatalo
    missing:images.filter(x=>x.status==='missing').map(x=>x.path),
    invalid:images.filter(x=>x.status==='invalid'||x.status==='unreadable').map(x=>x.path),
    catalogApplied:modelLinks.every(x=>x.matches),
+   persistedCatalogApplied:Array.isArray(stored)?modelLinks.every(x=>x.persistedMatches):null,
    modelLinks
  };
 }
