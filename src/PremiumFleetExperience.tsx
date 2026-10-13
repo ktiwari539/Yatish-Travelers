@@ -44,7 +44,6 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   const road=useRef<HTMLDivElement|null>(null);
   const railRef=useRef<HTMLDivElement|null>(null);
   const railTouchTimer=useRef<number|null>(null);
-  const [railVisible,setRailVisible]=useState(false);
   const [railPaused,setRailPaused]=useState(false);
   const [userPaused,setUserPaused]=useState(false);
   const [driveStep,setDriveStep]=useState(0);
@@ -145,35 +144,10 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     if(!vehicles.length)return;
     const next=(index+vehicles.length)%vehicles.length;
     onSelect(vehicles[next].name);
-    const rail=railRef.current;
-    const tile=rail?.querySelectorAll<HTMLElement>('.fleet-editorial-tile')[next];
-    if(rail&&tile){
-      const left=tile.offsetLeft-rail.offsetLeft-16;
-      rail.scrollTo({left,behavior:'smooth'});
-    }
   };
-  // The thumbnail collection is a passive reel, not a carousel that needs
-  // visitors to click arrows. It does not change the selected or quoted car.
-  // Pause whenever visitors hover, focus or touch the reel.
-  useEffect(()=>{
-    const rail=railRef.current;
-    if(!rail)return;
-    const observer=new IntersectionObserver(([entry])=>setRailVisible(Boolean(entry?.isIntersecting)),{threshold:.2});
-    observer.observe(rail);
-    return()=>observer.disconnect();
-  },[vehicles.length]);
-  useEffect(()=>{
-    if(reducedMotion||!railVisible||railPaused||userPaused||vehicles.length<2)return;
-    const timer=window.setInterval(()=>{
-      const rail=railRef.current;
-      if(!rail||rail.scrollWidth<=rail.clientWidth+8)return;
-      const first=rail.querySelector<HTMLElement>('.fleet-editorial-tile');
-      const nextStep=(first?.offsetWidth||220)+15;
-      const max=rail.scrollWidth-rail.clientWidth;
-      rail.scrollTo({left:rail.scrollLeft>=max-nextStep*.5?0:Math.min(max,rail.scrollLeft+nextStep),behavior:'smooth'});
-    },2300);
-    return()=>window.clearInterval(timer);
-  },[vehicles.length,reducedMotion,railVisible,railPaused,userPaused]);
+  // The reel moves via an endlessly repeating CSS track instead of scrolling
+  // one thumbnail per timer tick. Hover, keyboard focus, touch or the toggle
+  // can pause it without changing the selected vehicle or quotation.
   useEffect(()=>()=>{if(railTouchTimer.current!==null)window.clearTimeout(railTouchTimer.current);},[]);
   const onRailTouchEnd=()=>{
     if(railTouchTimer.current!==null)window.clearTimeout(railTouchTimer.current);
@@ -280,33 +254,40 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     <div className="fleet-editorial-strip-title">
       <span>EXPLORE THE FLEET — INDIVIDUAL VEHICLE REFERENCES</span>
       <div className="fleet-rail-browse" role="group" aria-label="Fleet reel playback">
-        <span>{reducedMotion?'SWIPE TO EXPLORE':userPaused?'REEL PAUSED':'ROLLING COLLECTION · PAUSES ON HOVER'}</span>
+        <span>{reducedMotion?'SWIPE TO EXPLORE':userPaused?'REEL PAUSED':'CONTINUOUS ROLLING REEL · CLICK A VEHICLE'}</span>
         {!reducedMotion&&<button type="button" aria-label={userPaused?'Resume fleet reel':'Pause fleet reel'}
           aria-pressed={userPaused} onClick={()=>setUserPaused(current=>!current)}>
           {userPaused?'▶':'Ⅱ'}
         </button>}
       </div>
     </div>
-    <div className="fleet-editorial-rail" ref={railRef} role="group" aria-label="Automatically rolling fleet collection; focus or hover to pause"
+    <div className={'fleet-editorial-rail'+(userPaused||railPaused?' is-paused':'')} ref={railRef}
+      role="group" aria-label="Continuous vehicle showcase; hover or focus to pause"
       onMouseEnter={()=>setRailPaused(true)} onMouseLeave={()=>setRailPaused(false)}
       onFocusCapture={()=>setRailPaused(true)}
       onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setRailPaused(false);}}
       onTouchStart={()=>{if(railTouchTimer.current!==null)window.clearTimeout(railTouchTimer.current);setRailPaused(true);}}
       onTouchEnd={onRailTouchEnd} onTouchCancel={onRailTouchEnd}>
-      {vehicles.map((vehicle,index)=><button type="button" key={vehicle.name}
-        className={'fleet-editorial-tile '+(index===activeIndex?'selected':'')}
-        aria-pressed={index===activeIndex} onClick={()=>choose(index)}>
-        <div className="fleet-editorial-tile-photo" data-vehicle={vehicle.name}>
-          <ModelImage vehicle={vehicle} src={vehicle.image}
-            alt={vehicle.name+' model reference photo'}
-            duplicate={!hasUniquePhoto(vehicle)}/>
-          <span>{vehicle.category.toUpperCase()}</span>
-        </div>
-        <div className="fleet-editorial-tile-foot">
-          <span>{String(index+1).padStart(2,'0')}</span>
-          <strong>{vehicle.name}</strong><ArrowUpRight size={16}/>
-        </div>
-      </button>)}
+      <div className="fleet-reel-track" style={{'--fleet-reel-duration':Math.max(24,vehicles.length*5.4)+'s'} as React.CSSProperties}>
+        {[0,1].map(copy=><div className="fleet-reel-group" data-copy={copy} key={copy} aria-hidden={copy===1?true:undefined}>
+          {vehicles.map((vehicle,index)=><button type="button" key={vehicle.name}
+            className={'fleet-editorial-tile '+(index===activeIndex?'selected':'')}
+            tabIndex={copy===1?-1:0}
+            aria-pressed={copy===1?undefined:index===activeIndex}
+            onClick={()=>choose(index)}>
+            <div className="fleet-editorial-tile-photo" data-vehicle={vehicle.name}>
+              <ModelImage vehicle={vehicle} src={vehicle.image}
+                alt={vehicle.name+' model reference photo'}
+                duplicate={!hasUniquePhoto(vehicle)}/>
+              <span>{vehicle.category.toUpperCase()}</span>
+            </div>
+            <div className="fleet-editorial-tile-foot">
+              <span>{String(index+1).padStart(2,'0')}</span>
+              <strong>{vehicle.name}</strong><ArrowUpRight size={16}/>
+            </div>
+          </button>)}
+        </div>)}
+      </div>
     </div>
     <div className="fleet-editorial-footer">
       <p>Each thumbnail represents its named vehicle model. Unavailable or duplicate photos show a placeholder—not another model or unrelated scenery. Exact color, vehicle and fare are confirmed before booking.</p>
