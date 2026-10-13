@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
 import { PremiumFleetExperience } from './PremiumFleetExperience';
+import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
 
 import { AdminDashboard } from './AdminDashboard';
@@ -284,6 +285,7 @@ export function App() {
   const [fleetSort, setFleetSort] = useState('featured');
   const [passengers, setPassengers] = useState(4);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [studioVehicle,setStudioVehicle]=useState<string|null>(null);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
@@ -511,6 +513,22 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <p>Clean, comfortable vehicles for solo travel, families, business trips and long-distance journeys.</p>
         </div>
 
+        <div className="fleet-studio-launch" aria-label="Interactive full-screen car studio">
+          <div className="fleet-studio-launch-copy">
+            <span><Sparkles size={17}/> THE NEXT LEVEL OF CHOOSING YOUR RIDE</span>
+            <h3>Meet your next <em>ride.</em></h3>
+            <p>Go full-screen. Explore dramatic model reveals, browse real car photo angles, compare seats and categories, then inspect details before requesting a quotation.</p>
+            <button type="button" onClick={()=>setStudioVehicle(selected.name)}>
+              <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
+            </button>
+            <small className="fleet-studio-launch-note">Interactive model-reference preview · Exact car, colour and variants confirmed before booking</small>
+          </div>
+          <div className="fleet-studio-launch-visual">
+            <img src="/media/mt-xuv700-driving.webp" alt="Reviewed XUV700 model-reference vehicle for the interactive car studio" loading="lazy"/>
+            <span>SELECT / EXPLORE / REQUEST</span>
+          </div>
+        </div>
+
         <div className="fleet-tools">
           <div className="fleet-filter-block">
             <span><SlidersHorizontal size={15}/> Best for</span>
@@ -559,6 +577,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="fleet-grid">
           {filteredFleet.map((car,index)=>(
             <FleetCatalogCard car={car} index={index} key={car.name}
+              onExplore={()=>setStudioVehicle(car.name)}
               onEstimate={()=>{selectFeatured(car.name);logInteraction('vehicle_explore','fleet',car.name);document.getElementById('fare')?.scrollIntoView({behavior:'smooth'});}}/>
           ))}       </div>
       </section>
@@ -736,6 +755,9 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </div>
       <PremiumFleetExperience vehicles={liveFleet} activeName={heroVehicle.name}
         onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet',name);}}/>
+      {studioVehicle&&<RideShowroom vehicles={liveFleet} initialName={studioVehicle}
+        onClose={()=>setStudioVehicle(null)}
+        onQuote={name=>{selectFeatured(name);setStudioVehicle(null);openQuote('quote','car-studio',name);}}/>}
       <footer id="contact">
         <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
         <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
