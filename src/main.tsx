@@ -36,3 +36,5 @@ import './fleet-photography-v12.css';
 import './fleet-order-v13.css';
 
 import './fleet-admin-import-v14.css';
+
+import './adventure-reel-v15.css';
