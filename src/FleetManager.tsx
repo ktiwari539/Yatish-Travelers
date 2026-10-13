@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw, ArrowUp, ArrowDown, ChevronsUp, ListOrdered } from 'lucide-react';
+import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw, ArrowUp, ArrowDown, ChevronsUp, ListOrdered, UploadCloud, Images } from 'lucide-react';
 import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
 
 export type CatalogVehicle = {
@@ -20,6 +20,10 @@ export function FleetManager({token}:Props) {
  const [uploadingModel,setUploadingModel]=useState<number|null>(null);
  const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File;angleIndex?:number}|null>(null);
  const [reviewingPhoto,setReviewingPhoto]=useState<number|null>(null);
+ const [mediaStatus,setMediaStatus]=useState<{ready:boolean;installed:number;total:number;missing:string[]}|null>(null);
+ const [importFile,setImportFile]=useState<File|null>(null);
+ const [confirmImport,setConfirmImport]=useState(false);
+ const [importBusy,setImportBusy]=useState(false);
  const load=useCallback(async()=>{
    setError('');
    try {
@@ -27,9 +31,40 @@ export function FleetManager({token}:Props) {
      const body=await response.json();
      if(!response.ok) throw new Error(body.error||'Failed to load fleet');
      setVehicles(body.vehicles||[]);setLoaded(true);setDirty(false);
+     const status=await fetch('/api/admin/fleet-media/status',{headers:{Authorization:'Bearer '+token}});
+     if(status.ok)setMediaStatus(await status.json());
    } catch(e){setError(e instanceof Error?e.message:'Failed to load fleet');}
  },[token]);
  useEffect(()=>{void load();},[load]);
+ const importFleetPhotos=async()=>{
+   if(!importFile||!confirmImport||importBusy)return;
+   if(dirty){
+     setError('Save or reload your pending vehicle changes before applying the photo pack.');
+     return;
+   }
+   if(importFile.size>1_800_000||importFile.size<100){
+     setError('Select the original reviewed seven-photo ZIP (maximum 1.8 MB).');return;
+   }
+   setImportBusy(true);setError('');setSuccess('');
+   try{
+     const encoded=await new Promise<string>((resolve,reject)=>{
+       const reader=new FileReader();
+       reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+       reader.onerror=()=>reject(new Error('Could not read ZIP.'));
+       reader.readAsDataURL(importFile);
+     });
+     const response=await fetch('/api/admin/fleet-media/import',{
+       method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+       body:JSON.stringify({zipBase64:encoded,confirmReplace:true})
+     });
+     const result=await response.json();
+     if(!response.ok)throw new Error(result.error||'Photo installation failed');
+     setImportFile(null);setConfirmImport(false);
+     await load();
+     setSuccess('Installed '+result.installed+' photos and activated '+result.applied.join(', ')+'. Refresh the customer website to see them.');
+   }catch(e){setError(e instanceof Error?e.message:'Photo installation failed.');}
+   finally{setImportBusy(false);}
+ };
  const change=(index:number,patch:Partial<CatalogVehicle>)=>{
   setVehicles(current=>current.map((v,i)=>i===index?{...v,...patch}:v));
   setSuccess('');setDirty(true);
@@ -131,6 +166,31 @@ export function FleetManager({token}:Props) {
       <span><strong>Website featured order</strong> · Position 01 displays first in the Fleet and cinematic vehicle reel. Hidden models keep their position but do not appear publicly.</span>
       {dirty&&<span className="fleet-unsaved">Unsaved changes</span>}
    </div>}
+   <section className="fleet-photo-pack-manager" aria-label="Fleet photography import">
+     <div className="fleet-pack-heading">
+       <Images size={22}/>
+       <div><strong>Approved photo pack</strong>
+         <p>Import the seven photos you shared, directly from Admin. No terminal or separate ZIP extraction required.</p>
+       </div>
+     </div>
+     {mediaStatus&&<p className="fleet-pack-status" role="status">
+       {mediaStatus.ready?'All seven media files are on this server.':'Only '+mediaStatus.installed+' of '+mediaStatus.total+' images installed. Older photos may still be shown if your saved fleet uses custom image links.'}
+     </p>}
+     <label>Choose `mateshwari_fleet_photography_safe_pack.zip`
+       <input type="file" accept=".zip,application/zip" onChange={e=>{
+         setImportFile(e.target.files?.[0]||null);setConfirmImport(false);e.target.value='';
+       }}/>
+     </label>
+     <label className="fleet-pack-confirm">
+       <input type="checkbox" checked={confirmImport} onChange={e=>setConfirmImport(e.target.checked)}/>
+       <span>Replace only the Thar, XUV700 and Tempo Traveller photographs and alternate angles with the reviewed pack. Keep all other vehicles, order, rates and visibility unchanged.</span>
+     </label>
+     <button type="button" disabled={!importFile||!confirmImport||importBusy||dirty} onClick={()=>void importFleetPhotos()}>
+       <UploadCloud size={17}/> {importBusy?'Importing verified photos…':'Install and apply photo pack'}
+     </button>
+     {dirty&&<small>Save the current fleet sequence and other unsaved edits before importing photos.</small>}
+     <small>Only the exact reviewed archive is accepted. Usage rights and remaining vehicle photos must be approved separately before public release.</small>
+   </section>
    <div className="fleet-admin-grid">{vehicles.map((v,index)=><article className="fleet-editor" key={v.id||index}>
       <div className="fleet-editor-visual">{v.image?<img src={v.image} alt={v.name} loading="lazy"/>:<div><ImagePlus size={26}/> Add HTTPS photo URL below</div>}
        <span>{v.enabled?'Visible on website':'Hidden from website'}</span></div>
