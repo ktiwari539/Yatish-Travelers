@@ -135,8 +135,20 @@ async function smoke(){
  ensure((await page.locator('.fleet-road-stage').getAttribute('data-model'))==='Toyota Innova','Innova has a separate cinematic chapter');
  ensure((await page.locator('.fleet-drive-story-chapter strong').innerText())==='Every detail, arranged.','Innova copy matches current journey chapter');
  ensure(await page.locator('.fleet-innova-visual-note').count()===1,'Innova has its own executive visual');
+ ensure(await page.locator('.fleet-editorial-angles button').count()===3,
+   'Innova offers three distinct model-reference angles');
+ ensure(await page.getByRole('button',{name:'View photo angle 3'}).getAttribute('aria-pressed')==='true',
+   'Innova third scroll chapter presents third model-reference photo');
  await page.locator('.fleet-road-stage').screenshot({path:'artifacts/visual-evidence/innova-desktop.png'});
  ensure(await page.locator('.fleet-scorpio-film').count()===0,'Innova never shows the Scorpio movie');
+ await page.getByRole('button',{name:'View photo angle 2'}).click();
+ await page.evaluate(()=>{
+   const story=document.querySelector('.fleet-road-story');
+   window.scrollTo(0,window.scrollY+story.getBoundingClientRect().top);
+ });
+ await page.waitForFunction(()=>document.querySelector('.fleet-road-stage')?.getAttribute('data-drive-step')==='0');
+ ensure(await page.getByRole('button',{name:'View photo angle 2'}).getAttribute('aria-pressed')==='true',
+   'Innova visitor-chosen angle overrides subsequent story scrolling');
 
  await page.locator('.fleet-editorial-request').click();
  await page.locator('.quote-modal').waitFor({state:'visible'});
@@ -253,6 +265,7 @@ async function smoke(){
    tag:'Premium Comfort',capacity:6,image:tinyPng,rateMin:20,rateMax:30,enabled:true,gallery:[tinyPng]};
  const nextVehicle={...adminVehicle,id:'preview-ertiga',name:'Maruti Ertiga',category:'MPV',gallery:[]};
  let editedImageUrl='',savedCatalogName='',savedGallery='',savedVehicleOrder=[];
+ let serverVehicles=[adminVehicle,nextVehicle];
  let packRequest=null;
  let imageUploads=0;
  await page.route('**/api/admin/**',async route=>{
@@ -269,8 +282,9 @@ async function smoke(){
        savedCatalogName=body.vehicles?.[0]?.name||'';
        savedVehicleOrder=(body.vehicles||[]).map(v=>v.name);
        savedGallery=body.vehicles?.[0]?.gallery?.[0]||'';
-       response={vehicles:body.vehicles};
-     }else response={vehicles:[adminVehicle,nextVehicle]};
+       serverVehicles=body.vehicles;
+       response={vehicles:serverVehicles};
+     }else response={vehicles:serverVehicles};
    }else if(url.pathname==='/api/admin/images'){
      imageUploads++;
      editedImageUrl='/api/uploads/11111111-2222-4333-8444-55555555555'+imageUploads+'.webp';
@@ -329,6 +343,13 @@ async function smoke(){
    'Admin save posts the exact vehicle ordering to backend');
  ensure(await page.locator('.fleet-order-number').first().innerText().then(x=>x.includes('#01')),
    'First priority is visibly labeled #01');
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.getByRole('button',{name:'Cars & pricing'}).click();
+ await page.waitForFunction(()=>document.querySelector('.fleet-editor-fields input')?.value==='Maruti Ertiga');
+ ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
+   'Admin order survives browser reload');
+ ensure((await page.locator('.fleet-order-number').first().innerText()).includes('#01',
+   'Reloaded first vehicle retains priority #01');
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: 10 distinct vehicles, Innova cinematic chapter, Scorpio MP4, quote navigation, mobile CTAs and admin privacy-review gate');
 }
