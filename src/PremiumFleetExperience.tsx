@@ -102,8 +102,12 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   const photoOwner=useMemo(()=>{
     const owners=new Map<string,string>();
     for(const vehicle of vehicles){
-      const url=vehicle.image?.trim();
-      if(url&&!owners.has(url))owners.set(url,vehicle.name);
+      // Check alternate angles as well as primary photographs. Sharing an
+      // image between two different models must not silently mislabel a car.
+      for(const photo of [vehicle.image,...(vehicle.gallery||[])]){
+        const url=photo?.trim();
+        if(url&&!owners.has(url))owners.set(url,vehicle.name);
+      }
     }
     return owners;
   },[vehicles]);
