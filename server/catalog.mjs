@@ -68,7 +68,7 @@ export function isKnownPlateBearingSource(name,source){
   'Mahindra XUV700':'a_black_mahindra_xuv700_suv_in_',
   'Tempo Traveller':'force_traveller_luxury'
  }[name];
- return Boolean(marker&&normalized.replace(/(?:%20|\\s)+/g,'_').includes(marker));
+ return Boolean(marker&&normalized.replaceAll(' ','_').replaceAll('%20','_').includes(marker));
 }
 export function applyReviewedFleetMedia(records,rootDir=resolve('public')){
  const localFile=(path)=>resolve(rootDir,path.slice(1));
