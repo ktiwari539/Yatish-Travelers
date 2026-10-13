@@ -109,11 +109,15 @@ async function smoke(){
    'Fleet uses continuous GPU transform animation, not scrollBy timer jumps');
  const seam=await track.evaluate(el=>{
    const groups=el.querySelectorAll('.fleet-reel-group');
-   return {first:groups[0].getBoundingClientRect().width,
-     second:groups[1].getBoundingClientRect().width,
-     track:el.scrollWidth};
+   const first=groups[0].getBoundingClientRect(),second=groups[1].getBoundingClientRect();
+   return {first:first.width,second:second.width,
+     track:el.getBoundingClientRect().width,
+     offset:second.left-first.left,scrollWidth:el.scrollWidth};
  });
- ensure(Math.abs(seam.first-seam.second)<1&&Math.abs(seam.track-2*seam.first)<2,
+ if(!(Math.abs(seam.first-seam.second)<1&&Math.abs(seam.track-2*seam.first)<2&&
+   Math.abs(seam.offset-seam.first)<2))console.error('Continuous reel seam geometry:',JSON.stringify(seam));
+ ensure(Math.abs(seam.first-seam.second)<1&&Math.abs(seam.track-2*seam.first)<2&&
+   Math.abs(seam.offset-seam.first)<2,
    'Two equal-width photo groups provide a seamless 50% loop boundary');
  ensure(await page.getByRole('button',{name:'Pause fleet reel'}).isVisible(),
    'Optional pause control is available');
