@@ -50,6 +50,22 @@ The installer does not replace customized image files or touch CRM customer data
 
 **Test steps:** After starting the full local CRM, visit `/admin`, move Toyota Innova or Scorpio-N to position #01, click Save Changes, reload `/admin`, and confirm the saved order. Then hard-refresh the homepage and confirm Fleet defaults to the same order and the final cinematic reel appears directly above the footer. Open a quote for an explicitly selected vehicle to verify no mismatch. Finally confirm all seven local photos have loaded and no plate characters are readable.
 
+### New: Activate reviewed photos directly from Admin (no terminal installer)
+
+Previous behavior left the site showing old photos because the seven binary assets were **not in GitHub**, `npm run fleet:install` had not been run, or an older local CRM catalog still contained different image URLs. Admin now has a verified, explicit **Import reviewed photo pack** control so the operator does not need to edit image URLs manually.
+
+1. Download `mateshwari_fleet_photography_safe_pack.zip` from this conversation. Keep its filename unchanged.
+2. Pull `feature/mateshwari-cinematic-crm` and run the full CRM server: `CRM_ADMIN_TOKEN="YOUR_PRIVATE_TOKEN" npm run dev:full`. Merely running `npm run dev` **does not** load the saved catalog or order.
+3. Open `http://localhost:5173/admin`, log in, and click **Cars & pricing**. Save or reload any pending edits first.
+4. Under **Approved photo pack**, select the ZIP file, explicitly tick the checkbox confirming replacement of **only** Thar, XUV700 and Traveller photos, and click **Install and apply photo pack**.
+5. Wait for the success message confirming seven uploaded images and the three affected models. This single action writes the validated photo files and saves their model-specific URLs to the existing local catalog, **including old catalogs with customized source URLs**. It does not change other vehicles, display order, fares, visibility, enquiry data or quotation history.
+6. Hard-refresh the public website. Check the showcase, thumbnail rail, full fleet cards and photo angles. Thar should use the red front/rear references, XUV700 the blue driving/studio angles, and Traveller the sanitized white minibus.
+7. In Admin, use **First / Up / Down** beside each car to change the customer-facing display sequence; click **Save Changes**. Refresh the public site. The main fleet gallery, full list and fare-vehicle dropdown use the saved server ordering. The hero illustration is still an Ertiga-inspired editorial concept, **not** an exact depiction of whichever model comes first.
+
+The importer refuses modified or unrelated ZIP files by SHA-256 and checks each contained photo. It never sends emails or WhatsApp messages. Custom photos for the three named models are replaced **only after explicit admin confirmation**. Backup any custom model images before opting in.
+
+**Privacy caveat:** Only uploaded source photos from the reviewed seven-photo pack have been sanitized as described. All other pre-existing primary and alternate-angle photos still need a full-resolution license and number-plate review before public release. When a safe local image is missing, the affected model shows a named placeholder rather than the original known plate-bearing photo.
+
 ### User-provided premium fleet photos — Thar / XUV700 / Traveller
 
 The new **seven-photo local media pack** is supplied as a separate downloadable ZIP in our conversation: `mateshwari_fleet_photography_safe_pack.zip`. It includes a dynamic XUV700 driving image and studio front angle, red Thar front/rear renders, grey Thar driving and plate-sanitized front views, and the plate-sanitized Force Traveller photograph. The remaining seven model identities are unchanged.
