@@ -222,7 +222,7 @@ async function smoke(){
  await page.addInitScript(()=>sessionStorage.setItem('mt-crm-token','smoke-test-local-only'));
  await page.goto('http://127.0.0.1:'+port+'/admin',{waitUntil:'domcontentloaded'});
  await page.getByRole('button',{name:'Cars & pricing'}).click();
- await page.getByRole('button',{name:'Review current photo / hide plates'}).click();
+ await page.getByRole('button',{name:'Review current photo / hide plates'}).first().click();
  const editor=page.getByRole('dialog',{name:'Vehicle photo privacy editor'});
  await editor.waitFor({state:'visible'});
  const saveSanitized=editor.getByRole('button',{name:'Save sanitized photo'});
