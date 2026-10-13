@@ -20,7 +20,7 @@ export function FleetManager({token}:Props) {
  const [uploadingModel,setUploadingModel]=useState<number|null>(null);
  const [editingPhoto,setEditingPhoto]=useState<{index:number;file:File;angleIndex?:number}|null>(null);
  const [reviewingPhoto,setReviewingPhoto]=useState<number|null>(null);
- const [mediaStatus,setMediaStatus]=useState<{ready:boolean;installed:number;total:number;missing:string[]}|null>(null);
+ const [mediaStatus,setMediaStatus]=useState<{ready:boolean;installed:number;total:number;missing:string[];invalid:string[];catalogApplied:boolean;persistedCatalogApplied:boolean|null;modelLinks:{name:string;present:boolean;matches:boolean;persistedMatches:boolean|null}[]}|null>(null);
  const [importFile,setImportFile]=useState<File|null>(null);
  const [confirmImport,setConfirmImport]=useState(false);
  const [importBusy,setImportBusy]=useState(false);
@@ -173,9 +173,16 @@ export function FleetManager({token}:Props) {
          <p>Import the seven photos you shared, directly from Admin. No terminal or separate ZIP extraction required.</p>
        </div>
      </div>
-     {mediaStatus&&<p className="fleet-pack-status" role="status">
-       {mediaStatus.ready?'All seven media files are on this server.':'Only '+mediaStatus.installed+' of '+mediaStatus.total+' images installed. Older photos may still be shown if your saved fleet uses custom image links.'}
-     </p>}
+     {mediaStatus&&<div className="fleet-pack-status" role="status">
+       <p>{mediaStatus.ready
+         ?'All seven reviewed image files passed their SHA-256 integrity checks.'
+         :'Only '+mediaStatus.installed+' of '+mediaStatus.total+' reviewed images are verified on this computer.'}</p>
+       {!!mediaStatus.missing.length&&<p>Missing files: {mediaStatus.missing.join(', ')}</p>}
+       {!!mediaStatus.invalid?.length&&<p>Incorrect or unreadable files: {mediaStatus.invalid.join(', ')}. Reinstall the original reviewed ZIP.</p>}
+       {mediaStatus.ready&&!mediaStatus.catalogApplied&&<p>The images are installed, but not all three public vehicle entries use this pack. Import and confirm replacement below.</p>}
+       {mediaStatus.persistedCatalogApplied===false&&<p>Your saved CRM catalog still points at different photos for one or more of these models. Use the confirmed import below to replace only those three photo sets without changing order or pricing.</p>}
+       {mediaStatus.ready&&mediaStatus.catalogApplied&&mediaStatus.persistedCatalogApplied!==false&&<p>Thar, XUV700 and Traveller photo links match the reviewed pack. Refresh the customer site and inspect all gallery angles.</p>}
+     </div>}
      <label>Choose `mateshwari_fleet_photography_safe_pack.zip`
        <input type="file" accept=".zip,application/zip" onChange={e=>{
          setImportFile(e.target.files?.[0]||null);setConfirmImport(false);e.target.value='';
