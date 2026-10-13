@@ -119,6 +119,9 @@
  gap:0;
  width:max-content;
  min-width:100%;
+ padding:0!important;
+ margin:0;
+ border:0;
  animation:mtFleetReelScroll var(--fleet-reel-duration,54s) linear infinite;
  will-change:transform;
 }
