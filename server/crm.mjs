@@ -192,7 +192,7 @@ const server = http.createServer(async (req,res)=>{
       }
             if(url.pathname==='/api/admin/engagement' && req.method==='GET') return reply(res,200,engagement());
       if(url.pathname==='/api/admin/fleet-media/status'&&req.method==='GET'){
-        const images=Object.keys(MEDIA_FILES).map(path=>({path:'/'+path.replace(/^public\\//,''),installed:existsSync(resolve(path))}));
+        const images=Object.keys(MEDIA_FILES).map(path=>({path:'/'+path.slice('public'.length),installed:existsSync(resolve(path))}));
         const missing=images.filter(image=>!image.installed).map(image=>image.path);
         return reply(res,200,{ready:missing.length===0,installed:images.length-missing.length,
           total:images.length,missing,
