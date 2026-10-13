@@ -27,6 +27,7 @@ function ModelImage({vehicle,src,alt,duplicate=false}:ModelImageProps){
 }
 export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Props){
   const [angle,setAngle]=useState(0);
+  const [manualAngleChosen,setManualAngleChosen]=useState(false);
   const scorpioVideo=useRef<HTMLVideoElement|null>(null);
   const [videoReady,setVideoReady]=useState(false);
   const [videoFailed,setVideoFailed]=useState(false);
@@ -116,8 +117,16 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   const modelPhotos=active
     ?[active.image,...(active.gallery||[])].filter((url,index,list)=>Boolean(url)&&list.indexOf(url)===index)
     :[];
-  const chosenUrl=modelPhotos[angle]||active?.image||'';
-  useEffect(()=>setAngle(0),[activeName]);
+  // Innova's three genuine model-reference photos follow the three story
+  // chapters. Once a visitor chooses an angle, that choice takes precedence;
+  // navigation and quotations never change the selected vehicle implicitly.
+  // Reduced-motion visitors keep a static first photo until they choose one.
+  const isInnova=active?.name==='Toyota Innova';
+  const visibleAngle=isInnova&&!manualAngleChosen&&!reducedMotion
+    ?Math.min(driveStep,Math.max(0,modelPhotos.length-1))
+    :Math.min(angle,Math.max(0,modelPhotos.length-1));
+  const chosenUrl=modelPhotos[visibleAngle]||active?.image||'';
+  useEffect(()=>{setAngle(0);setManualAngleChosen(false);},[activeName]);
   const choose=(index:number)=>{
     if(!vehicles.length)return;
     const next=(index+vehicles.length)%vehicles.length;
@@ -144,7 +153,6 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     setVideoEnded(false);
     void video.play().catch(()=>{});
   };
-  const isInnova=active.name==='Toyota Innova';
   const chapters=isInnova?[
     {number:'01',label:'THE EXECUTIVE ARRIVAL',heading:'Arrive with intention.',detail:'The Innova model comes into view. A considered choice for airport and executive travel.'},
     {number:'02',label:'SPACE & COMFORT',heading:'Room for the journey.',detail:active.seats+' seating configuration · '+active.category+' · '+active.tag+'. Exact assigned vehicle is confirmed first.'},
@@ -167,7 +175,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
           <span>REAL VEHICLE PHOTOGRAPHY</span><span>SCROLL TO REVEAL <span className="fleet-road-story-line"/></span>
         </div>
     <div className="fleet-editorial-stage fleet-road-stage" data-drive-step={driveStep} data-model={active.name}>
-      <div className="fleet-editorial-picture" key={active.name+'-'+angle}>
+      <div className="fleet-editorial-picture" key={active.name+'-'+visibleAngle}>
         <ModelImage vehicle={active} src={chosenUrl}
           alt={active.name+' model-specific vehicle reference photograph'} duplicate={!uniqueActive}/>
         {showScorpioFilm&&<video key="scorpio-clean-v1" ref={scorpioVideo}
@@ -201,9 +209,9 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
         </div>
         {modelPhotos.length>1&&uniqueActive&&
           <div className="fleet-editorial-angles" role="group" aria-label="Choose model reference angle">
-            {modelPhotos.map((url,index)=><button type="button" key={url} className={angle===index?'selected':''}
-              aria-label={'View photo angle '+(index+1)} aria-pressed={angle===index}
-              onClick={()=>setAngle(index)}>{String(index+1).padStart(2,'0')}</button>)}
+            {modelPhotos.map((url,index)=><button type="button" key={url} className={visibleAngle===index?'selected':''}
+              aria-label={'View photo angle '+(index+1)} aria-pressed={visibleAngle===index}
+              onClick={()=>{setAngle(index);setManualAngleChosen(true);}}>{String(index+1).padStart(2,'0')}</button>)}
           </div>}
       </div>
       <div className="fleet-editorial-description">
