@@ -65,11 +65,16 @@ export function applyReviewedFleetMedia(records,rootDir=resolve('public')){
    const original=defaultCatalog.find(entry=>entry.name===vehicle.name);
    if(!original || vehicle.image!==original.image)return vehicle;
    const paths=[candidate.image,...candidate.gallery];
-   if(!paths.every(file=>existsSync(localFile(file))))return vehicle;
+   const ready=paths.every(file=>existsSync(localFile(file)));
    const priorGallery=vehicle.gallery||[];
    const defaultGallery=original.gallery||[];
    const unmodifiedGallery=JSON.stringify(priorGallery)===JSON.stringify(defaultGallery);
-   return {...vehicle,image:candidate.image,...(unmodifiedGallery?{gallery:candidate.gallery}:{})};
+   // Never re-expose the old source with a readable number plate when the
+   // reviewed pack is missing. The client shows a named model placeholder.
+   return {...vehicle,
+     image:candidate.image,
+     ...(unmodifiedGallery?{gallery:ready?candidate.gallery:[]}:{})
+   };
  });
 }
 export function readCatalog(){
