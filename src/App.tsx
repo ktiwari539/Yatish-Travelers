@@ -309,7 +309,7 @@ export function App() {
       setLiveFleet(next);
       // These three original reference URLs have exposed registration plates.
       // Show an explicit preview warning rather than quietly reverting to them.
-      const previewPaths=next.map(car=>car.image).filter((path:string)=>path.startsWith('/media/mt-thar-')||path.startsWith('/media/mt-xuv700-')||path.startsWith('/media/mt-traveller-'));
+      const previewPaths=next.map((car:FleetVehicle)=>car.image).filter((path:string)=>path.startsWith('/media/mt-thar-')||path.startsWith('/media/mt-xuv700-')||path.startsWith('/media/mt-traveller-'));
       if(previewPaths.length){
         void Promise.all(previewPaths.map((path:string)=>
           fetch(path,{method:'HEAD'}).then(r=>r.ok&&(r.headers.get('content-type')||'').includes('image/webp')).catch(()=>false)
@@ -489,7 +489,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
       <section className="section reveal-3d" id="fleet">
-        {import.meta.env.DEV&&missingFleetMedia&&<div className="fleet-photo-media-warning" role="status">
+        {(typeof window!=='undefined'&&['localhost','127.0.0.1'].includes(window.location.hostname))&&missingFleetMedia&&<div className="fleet-photo-media-warning" role="status">
           <ShieldCheck size={19}/>
           <span><strong>Local photo pack not installed.</strong> The Thar, XUV700 and Traveller use safe model placeholders rather than old registration-plate photos. Download the seven-photo ZIP from our conversation to <code>~/Downloads/</code>, run <code>npm run fleet:install</code> and restart <code>npm run dev:full</code>.</span>
         </div>}
