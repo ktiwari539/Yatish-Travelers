@@ -66,6 +66,10 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'detached'});
  // Scroll narrative uses actual model reference images, not generic 3D or concept art.
  ensure(await page.locator('.fleet-road-story').count()===1,'Scroll storytelling stage is present');
+ ensure(await page.locator('#motion-fleet').evaluate(el=>el.nextElementSibling?.id==='contact'),
+   'The rolling cinematic fleet reel is the final section immediately before the footer');
+ ensure((await page.locator('.sort-control select').inputValue())==='featured',
+   'Operator-managed priority is the default customer vehicle sequence');
  ensure((await page.locator('.fleet-editorial-picture img').first().getAttribute('alt')||'').includes('Maruti Ertiga'),
   'Ertiga scroll stage must show a model-specific photograph');
  await page.evaluate(()=>{
@@ -191,7 +195,8 @@ async function smoke(){
  const tinyPng='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==';
  const adminVehicle={id:'preview-car',name:'Toyota Innova',category:'Premium MPV',seats:'6+1',
    tag:'Premium Comfort',capacity:6,image:tinyPng,rateMin:20,rateMax:30,enabled:true,gallery:[tinyPng]};
- let editedImageUrl='',savedCatalogName='',savedGallery='';
+ const nextVehicle={...adminVehicle,id:'preview-ertiga',name:'Maruti Ertiga',category:'MPV',gallery:[]};
+ let editedImageUrl='',savedCatalogName='',savedGallery='',savedVehicleOrder=[];
  let imageUploads=0;
  await page.route('**/api/admin/**',async route=>{
    const url=new URL(route.request().url());
@@ -200,9 +205,10 @@ async function smoke(){
      if(route.request().method()==='PUT'){
        const body=route.request().postDataJSON();
        savedCatalogName=body.vehicles?.[0]?.name||'';
+       savedVehicleOrder=(body.vehicles||[]).map(v=>v.name);
        savedGallery=body.vehicles?.[0]?.gallery?.[0]||'';
        response={vehicles:body.vehicles};
-     }else response={vehicles:[adminVehicle]};
+     }else response={vehicles:[adminVehicle,nextVehicle]};
    }else if(url.pathname==='/api/admin/images'){
      imageUploads++;
      editedImageUrl='/api/uploads/11111111-2222-4333-8444-55555555555'+imageUploads+'.webp';
@@ -236,6 +242,14 @@ async function smoke(){
  await page.locator('.fleet-admin-head .fleet-save').click();
  ensure(savedCatalogName==='Toyota Innova','Fleet catalog save retains identity after privacy review');
  ensure(savedGallery.startsWith('/api/uploads/'),'Alternate gallery angle saved as sanitized local image');
+ await page.getByRole('button',{name:'Move Maruti Ertiga to first'}).click();
+ ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
+   'Admin move-to-first visibly changes the first fleet card');
+ await page.locator('.fleet-admin-head .fleet-save').click();
+ ensure(savedVehicleOrder[0]==='Maruti Ertiga'&&savedVehicleOrder[1]==='Toyota Innova',
+   'Admin save posts the exact vehicle ordering to backend');
+ ensure(await page.locator('.fleet-order-number').first().innerText().then(x=>x.includes('#01')),
+   'First priority is visibly labeled #01');
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: 10 distinct vehicles, Innova cinematic chapter, Scorpio MP4, quote navigation, mobile CTAs and admin privacy-review gate');
 }
