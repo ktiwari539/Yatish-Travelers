@@ -197,11 +197,17 @@ async function smoke(){
    tag:'Premium Comfort',capacity:6,image:tinyPng,rateMin:20,rateMax:30,enabled:true,gallery:[tinyPng]};
  const nextVehicle={...adminVehicle,id:'preview-ertiga',name:'Maruti Ertiga',category:'MPV',gallery:[]};
  let editedImageUrl='',savedCatalogName='',savedGallery='',savedVehicleOrder=[];
+ let packRequest=null;
  let imageUploads=0;
  await page.route('**/api/admin/**',async route=>{
    const url=new URL(route.request().url());
    let response={};
-   if(url.pathname==='/api/admin/catalog'){
+   if(url.pathname==='/api/admin/fleet-media/status'){
+     response={ready:false,installed:0,total:7,missing:['/media/mt-thar-red-front.webp']};
+   }else if(url.pathname==='/api/admin/fleet-media/import'){
+     packRequest=route.request().postDataJSON();
+     response={ok:true,installed:7,applied:['Mahindra Thar','Mahindra XUV700','Tempo Traveller']};
+   }else if(url.pathname==='/api/admin/catalog'){
      if(route.request().method()==='PUT'){
        const body=route.request().postDataJSON();
        savedCatalogName=body.vehicles?.[0]?.name||'';
@@ -222,6 +228,23 @@ async function smoke(){
  await page.addInitScript(()=>sessionStorage.setItem('mt-crm-token','smoke-test-local-only'));
  await page.goto('http://127.0.0.1:'+port+'/admin',{waitUntil:'domcontentloaded'});
  await page.getByRole('button',{name:'Cars & pricing'}).click();
+ // Frontend cannot silently claim the user's ZIP is installed. Staff must
+ // actively upload and confirm it before the server receives photo bytes.
+ const install=page.getByRole('button',{name:'Install and apply photo pack'});
+ ensure(await install.isDisabled(),'Verified ZIP activation is disabled until file and consent');
+ await page.locator('.fleet-photo-pack-manager input[type=file]').setInputFiles({
+   name:'mateshwari_fleet_photography_safe_pack.zip',mimeType:'application/zip',
+   buffer:Buffer.alloc(120,65)
+ });
+ ensure(await install.isDisabled(),'Upload button still requires explicit overwrite confirmation');
+ await page.locator('.fleet-pack-confirm input[type=checkbox]').check();
+ ensure(await install.isEnabled(),'File and explicit consent enable Admin import');
+ await install.click();
+ await page.waitForFunction(()=>document.querySelector('.fleet-admin-success')?.textContent?.includes('Installed 7 photos'));
+ ensure(packRequest?.confirmReplace===true,'Admin submitted explicit model photo replacement consent');
+ ensure(typeof packRequest?.zipBase64==='string'&&packRequest.zipBase64.length>100,
+   'Admin sent the selected zip bytes rather than a filename');
+
  await page.getByRole('button',{name:'Review current photo / hide plates'}).first().click();
  const editor=page.getByRole('dialog',{name:'Vehicle photo privacy editor'});
  await editor.waitFor({state:'visible'});
