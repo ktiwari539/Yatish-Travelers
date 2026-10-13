@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
 import { PremiumFleetExperience } from './PremiumFleetExperience';
@@ -275,6 +275,7 @@ function StoriesPage() {
 
 export function App() {
   const [vehicle, setVehicle] = useState(fleet[1].name);
+  const userSelectedVehicle=useRef(false);
   const [km, setKm] = useState(250);
   const [days, setDays] = useState(1);
   const [nightStay, setNightStay] = useState(false);
@@ -319,7 +320,7 @@ export function App() {
       }else setMissingFleetMedia(false);
       // On initial load, show the operator's #1 published vehicle. Selecting a
       // different vehicle later must never be reset by background refresh.
-      if(next.length) setVehicle(current=>current===fleet[1].name?next[0].name:current);
+      if(next.length&&!userSelectedVehicle.current)setVehicle(next[0].name);
     }).catch(()=>{if(active){setCatalogOffline(true);setMissingFleetMedia(true);}});
 
     return ()=>{active=false;};
@@ -329,7 +330,7 @@ export function App() {
   const heroVehicle = selected;
   const selectFeatured = (name:string)=>{
     const next=liveFleet.findIndex(item=>item.name===name);
-    if(next>=0)setVehicle(name);
+    if(next>=0){userSelectedVehicle.current=true;setVehicle(name);}
   };
 
   useEffect(() => {
@@ -573,7 +574,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
         <div className="calculator">
           <label>Vehicle
-            <select value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
+            <select value={vehicle} onChange={(e) => {userSelectedVehicle.current=true;setVehicle(e.target.value);}}>
               {liveFleet.map((car) => <option key={car.name}>{car.name}</option>)}
             </select>
           </label>
@@ -631,7 +632,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           events:['Tempo Traveller','Maruti Ertiga','Toyota Innova']
         };
         const match=(suggestions[kind]||[]).find(name=>liveFleet.some(car=>car.name===name));
-        if(match)setVehicle(match);
+        if(match){userSelectedVehicle.current=true;setVehicle(match);}
         openQuote('quote','journey-studio');
       }}/>
       
