@@ -165,3 +165,25 @@
 }
 .fleet-card .fleet-showroom-card-cta:hover{background:#23714a}
 .fleet-card .fleet-showroom-card-cta:focus-visible{outline:3px solid #eac38a;outline-offset:3px}
+
+/* QA refinements: launcher fallback and always-reachable desktop quotation. */
+.fleet-studio-launch-fallback{
+ position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:17px;text-align:center;color:#f5e4c8;
+ padding:35px;min-height:300px;
+}
+.fleet-studio-launch-fallback svg{color:#ebc99b;filter:drop-shadow(0 8px 20px rgba(0,0,0,.24))}
+.fleet-studio-launch-fallback strong{font-size:20px;font-weight:900;letter-spacing:.18em}
+.fleet-studio-launch-fallback small{font-size:11px;color:#bbd0bd}
+@media(min-width:761px){
+ .ride-studio-panel{padding:clamp(21px,2vw,36px)}
+ .ride-studio-panel-heading h2{font-size:clamp(35px,3vw,58px);margin:12px 0 8px}
+ .ride-studio-panel-meta{margin-top:13px}
+ .ride-studio-switch{margin:16px 0 11px}
+ .ride-studio-detail-button{padding:15px 18px}
+ .ride-studio-preview-copy{padding:17px 0 7px}
+ .ride-studio-preview-copy p{margin:10px 0;line-height:1.55;font-size:12px}
+ .ride-studio-panel-bottom{padding-top:13px}
+ .ride-studio-panel-bottom p{margin:0 0 9px;font-size:9px}
+ .ride-studio-quote{padding:15px 17px}
+}
