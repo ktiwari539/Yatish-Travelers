@@ -43,6 +43,10 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   },[activeName]);
   const road=useRef<HTMLDivElement|null>(null);
   const railRef=useRef<HTMLDivElement|null>(null);
+  const railTouchTimer=useRef<number|null>(null);
+  const [railVisible,setRailVisible]=useState(false);
+  const [railPaused,setRailPaused]=useState(false);
+  const [userPaused,setUserPaused]=useState(false);
   const [driveStep,setDriveStep]=useState(0);
   const [reducedMotion,setReducedMotion]=useState(false);
   const [compactView,setCompactView]=useState(false);
@@ -148,10 +152,32 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
       rail.scrollTo({left,behavior:'smooth'});
     }
   };
-  const browseRail=(direction:-1|1)=>{
+  // The thumbnail collection is a passive reel, not a carousel that needs
+  // visitors to click arrows. It does not change the selected or quoted car.
+  // Pause whenever visitors hover, focus or touch the reel.
+  useEffect(()=>{
     const rail=railRef.current;
     if(!rail)return;
-    rail.scrollBy({left:direction*Math.max(240,rail.clientWidth*.65),behavior:'smooth'});
+    const observer=new IntersectionObserver(([entry])=>setRailVisible(Boolean(entry?.isIntersecting)),{threshold:.2});
+    observer.observe(rail);
+    return()=>observer.disconnect();
+  },[vehicles.length]);
+  useEffect(()=>{
+    if(reducedMotion||!railVisible||railPaused||userPaused||vehicles.length<2)return;
+    const timer=window.setInterval(()=>{
+      const rail=railRef.current;
+      if(!rail||rail.scrollWidth<=rail.clientWidth+8)return;
+      const first=rail.querySelector<HTMLElement>('.fleet-editorial-tile');
+      const nextStep=(first?.offsetWidth||220)+15;
+      const max=rail.scrollWidth-rail.clientWidth;
+      rail.scrollTo({left:rail.scrollLeft>=max-nextStep*.5?0:Math.min(max,rail.scrollLeft+nextStep),behavior:'smooth'});
+    },2300);
+    return()=>window.clearInterval(timer);
+  },[vehicles.length,reducedMotion,railVisible,railPaused,userPaused]);
+  useEffect(()=>()=>{if(railTouchTimer.current!==null)window.clearTimeout(railTouchTimer.current);},[]);
+  const onRailTouchEnd=()=>{
+    if(railTouchTimer.current!==null)window.clearTimeout(railTouchTimer.current);
+    railTouchTimer.current=window.setTimeout(()=>setRailPaused(false),5500);
   };
   if(!active)return null;
   const uniqueActive=hasUniquePhoto(active,chosenUrl);
@@ -253,13 +279,20 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
     </div>
     <div className="fleet-editorial-strip-title">
       <span>EXPLORE THE FLEET — INDIVIDUAL VEHICLE REFERENCES</span>
-      <div className="fleet-rail-browse" role="group" aria-label="Browse fleet photographs">
-        <span>SCROLL THE COLLECTION</span>
-        <button type="button" aria-label="Scroll fleet left" onClick={()=>browseRail(-1)}><ChevronLeft size={18}/></button>
-        <button type="button" aria-label="Scroll fleet right" onClick={()=>browseRail(1)}><ChevronRight size={18}/></button>
+      <div className="fleet-rail-browse" role="group" aria-label="Fleet reel playback">
+        <span>{reducedMotion?'SWIPE TO EXPLORE':userPaused?'REEL PAUSED':'ROLLING COLLECTION · PAUSES ON HOVER'}</span>
+        {!reducedMotion&&<button type="button" aria-label={userPaused?'Resume fleet reel':'Pause fleet reel'}
+          aria-pressed={userPaused} onClick={()=>setUserPaused(current=>!current)}>
+          {userPaused?'▶':'Ⅱ'}
+        </button>}
       </div>
     </div>
-    <div className="fleet-editorial-rail" ref={railRef} role="group" aria-label="Select a vehicle by its own photograph">
+    <div className="fleet-editorial-rail" ref={railRef} role="group" aria-label="Automatically rolling fleet collection; focus or hover to pause"
+      onMouseEnter={()=>setRailPaused(true)} onMouseLeave={()=>setRailPaused(false)}
+      onFocusCapture={()=>setRailPaused(true)}
+      onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setRailPaused(false);}}
+      onTouchStart={()=>{if(railTouchTimer.current!==null)window.clearTimeout(railTouchTimer.current);setRailPaused(true);}}
+      onTouchEnd={onRailTouchEnd} onTouchCancel={onRailTouchEnd}>
       {vehicles.map((vehicle,index)=><button type="button" key={vehicle.name}
         className={'fleet-editorial-tile '+(index===activeIndex?'selected':'')}
         aria-pressed={index===activeIndex} onClick={()=>choose(index)}>
