@@ -348,7 +348,7 @@ async function smoke(){
  await page.waitForFunction(()=>document.querySelector('.fleet-editor-fields input')?.value==='Maruti Ertiga');
  ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
    'Admin order survives browser reload');
- ensure((await page.locator('.fleet-order-number').first().innerText()).includes('#01',
+ ensure((await page.locator('.fleet-order-number').first().innerText()).includes('#01'),
    'Reloaded first vehicle retains priority #01');
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: 10 distinct vehicles, Innova cinematic chapter, Scorpio MP4, quote navigation, mobile CTAs and admin privacy-review gate');
