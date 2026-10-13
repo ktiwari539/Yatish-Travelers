@@ -66,9 +66,13 @@ async function smoke(){
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
  // New car-studio acceptance: only visitor clicks open the immersive viewport.
+ mkdirSync('artifacts/visual-evidence',{recursive:true});
+ await page.locator('.fleet-studio-launch').screenshot({
+   path:'artifacts/visual-evidence/ride-studio-launcher-desktop.png',animations:'disabled'});
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
+ await studio.screenshot({path:'artifacts/visual-evidence/ride-studio-desktop.png',animations:'disabled'});
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
    'The studio starts with the currently selected model');
  ensure(await studio.locator('.ride-studio-car-image').count()===1,
@@ -272,6 +276,14 @@ async function smoke(){
  ensure(mobileEmail&&mobileBooking&&mobileEmail.y+mobileEmail.height+6<mobileBooking.y,
    'Mobile email CTA must not overlap the Ertiga booking panel');
  await page.screenshot({path:'artifacts/visual-evidence/mobile-quote-cta.png'});
+ // Mobile studio must fit a small screen without clipped controls.
+ await page.getByRole('button',{name:'Enter the Car Studio'}).click();
+ await studio.waitFor({state:'visible'});
+ ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
+   'Mobile full-screen studio has a visible exit control');
+ await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
+ await studio.getByRole('button',{name:'Close car studio'}).click();
+ await studio.waitFor({state:'detached'});
  await page.locator('.mobile-booking-bar button').click();
  await page.locator('.quote-modal').waitFor({state:'visible'});
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
