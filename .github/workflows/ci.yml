@@ -23,6 +23,12 @@ jobs:
       - name: CRM API tests
         run: npm run test:api
 
+      - name: Check local media installers and server launcher
+        run: |
+          node --check scripts/dev.mjs
+          node --check scripts/install-complete-media.mjs
+          node --check scripts/install-fleet-media.mjs
+          node --check scripts/install-scorpio-media.mjs
       - name: Type check and production build
         run: npm run build
 
