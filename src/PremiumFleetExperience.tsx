@@ -43,6 +43,14 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   const railRef=useRef<HTMLDivElement|null>(null);
   const [driveStep,setDriveStep]=useState(0);
   const [reducedMotion,setReducedMotion]=useState(false);
+  const [compactView,setCompactView]=useState(false);
+  useEffect(()=>{
+    const query=window.matchMedia('(max-width: 760px)');
+    const update=()=>setCompactView(query.matches);
+    update();
+    query.addEventListener('change',update);
+    return ()=>query.removeEventListener('change',update);
+  },[]);
   useEffect(()=>{
     const query=window.matchMedia('(prefers-reduced-motion: reduce)');
     const update=()=>setReducedMotion(query.matches);
@@ -122,7 +130,7 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
   // navigation and quotations never change the selected vehicle implicitly.
   // Reduced-motion visitors keep a static first photo until they choose one.
   const isInnova=active?.name==='Toyota Innova';
-  const visibleAngle=isInnova&&!manualAngleChosen&&!reducedMotion
+  const visibleAngle=isInnova&&!manualAngleChosen&&!reducedMotion&&!compactView
     ?Math.min(driveStep,Math.max(0,modelPhotos.length-1))
     :Math.min(angle,Math.max(0,modelPhotos.length-1));
   const chosenUrl=modelPhotos[visibleAngle]||active?.image||'';
