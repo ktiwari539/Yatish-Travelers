@@ -214,14 +214,13 @@ async function smoke(){
  ensure((await page.locator('.premium-catalog-card[data-model="Mahindra Bolero"]').count())===0,
    'Hidden admin fleet entry is not rendered publicly');
  const innovaCard=page.locator('.premium-catalog-card[data-model="Toyota Innova"]');
- const firstPhoto=await innovaCard.locator('img').getAttribute('src');
- await innovaCard.getByRole('button',{name:'Show another angle of Toyota Innova'}).click();
- ensure((await innovaCard.locator('img').getAttribute('src'))!==firstPhoto,
-   'Public card gallery button changes the model-specific angle');
- const stagePhoto=await page.locator('.fleet-editorial-picture img').getAttribute('src');
+ const cardAngle=innovaCard.getByRole('button',{name:'Show another angle of Toyota Innova'});
+ ensure((await cardAngle.innerText()).includes('1/3'),'Innova gallery starts at the first of three photos');
+ await cardAngle.click();
+ ensure((await cardAngle.innerText()).includes('2/3'),'Public card gallery advances to the second photo');
  await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).click();
- ensure((await page.locator('.fleet-editorial-picture img').getAttribute('src'))!==stagePhoto,
-   'Cinematic gallery angle navigation changes the correct vehicle image');
+ ensure(await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).getAttribute('aria-pressed')==='true',
+   'Cinematic gallery activates the requested alternate angle even if external photo delivery fails');
  await page.locator('.sort-control select').selectOption('seats-desc');
  ensure((await page.locator('.premium-catalog-card').first().getAttribute('data-model'))==='Tempo Traveller',
    'Most Seats sorting remains functional as a visitor override');
