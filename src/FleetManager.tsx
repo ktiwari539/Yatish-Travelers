@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw, ArrowUp, ArrowDown, ChevronsUp, GripVertical } from 'lucide-react';
+import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw, ArrowUp, ArrowDown, ChevronsUp, ListOrdered } from 'lucide-react';
 import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
 
 export type CatalogVehicle = {
@@ -127,7 +127,7 @@ export function FleetManager({token}:Props) {
    {success&&<div role="status" className="fleet-admin-success"><CheckCircle2 size={17}/>{success}</div>}
    {!loaded&&<p>Loading fleet...</p>}
    {loaded&&<div className="fleet-order-help" role="status">
-      <GripVertical size={18}/>
+      <ListOrdered size={18}/>
       <span><strong>Website featured order</strong> · Position 01 displays first in the Fleet and cinematic vehicle reel. Hidden models keep their position but do not appear publicly.</span>
       {dirty&&<span className="fleet-unsaved">Unsaved changes</span>}
    </div>}
