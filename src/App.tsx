@@ -6,6 +6,7 @@ import { WhyMateshwari } from './WhyMateshwari';
 
 import { AdminDashboard } from './AdminDashboard';
 import { TravelEditorial } from './TravelEditorial';
+import { JourneyAdventurePage } from './JourneyAdventurePage';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import { LuxuryInterlude } from './LuxuryInterlude';
@@ -432,7 +433,9 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [quoteOpen]);
 
-  const isStoriesPage = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/stories';
+  const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''}/>;
+  const isStoriesPage = path === '/stories';
   if (isStoriesPage) return <StoriesPage />;
   if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <AdminDashboard />;
 
