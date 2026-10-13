@@ -5,7 +5,27 @@
 import { readCatalog } from '../server/catalog.mjs';
 import { inspectReviewedFleetMedia, SUPPORTED_MODELS } from '../server/fleet-photo-import.mjs';
 
-const base='http://127.0.0.1:5173';
+// Vite advertises localhost; on macOS that may resolve to ::1 rather than 127.0.0.1.
+// Probe both loopback forms, rather than reporting a functioning server as offline.
+const siteCandidates=[process.env.MT_SITE_URL,'http://localhost:5173','http://127.0.0.1:5173']
+  .filter(Boolean).map(url=>url.replace(/\/$/,''));
+let base='';
+const findLocalSite=async()=>{
+ const failures=[];
+ for(const candidate of new Set(siteCandidates)){
+   try{
+     const response=await fetch(candidate+'/api/health',{signal:AbortSignal.timeout(2500)});
+     if(!response.ok){failures.push(candidate+' HTTP '+response.status);continue;}
+     const contentType=response.headers.get('content-type')||'';
+     if(!contentType.includes('application/json')){failures.push(candidate+' did not return CRM JSON');continue;}
+     const status=await response.json();
+     if(!status?.ok){failures.push(candidate+' CRM health not ready');continue;}
+     return candidate;
+   }catch(error){failures.push(candidate+': '+(error instanceof Error?error.message:String(error)));}
+ }
+ throw new Error('No healthy Vite + CRM endpoint. '+failures.join('; ')+
+   '. Check http://localhost:5173/api/health and http://127.0.0.1:8787/api/health; keep npm run dev:full running.');
+};
 const problems=[];
 const fail=(message)=>{problems.push(message);console.error('FAIL '+message);};
 const pass=(message)=>console.log('PASS '+message);
@@ -18,7 +38,10 @@ if(local.ready)pass('All seven approved image files match expected SHA-256 value
 for(const link of local.modelLinks){
  const state=link.persistedMatches===null?'no saved catalog':link.persistedMatches?'saved catalog matches':'saved catalog differs';
  console.log(link.name+': effective URL '+(link.matches?'matches':'differs')+'; '+state);
- if(!link.matches)fail(link.name+' is not using the full reviewed photo set in the effective catalog');
+ if(!link.matches){
+   if(!local.ready)console.warn('PENDING '+link.name+' photo set cannot be verified until the reviewed ZIP is installed');
+   else fail(link.name+' is not using the full reviewed photo set in the effective catalog');
+ }
  if(link.persistedMatches===false)fail(link.name+' stored photo URLs differ (use Admin approved photo pack import with confirmation)');
 }
 const getJson=async(path)=>{
@@ -29,6 +52,8 @@ const getJson=async(path)=>{
  return response.json();
 };
 try{
+ base=await findLocalSite();
+ pass('Website and CRM reachable through '+base);
  const health=await getJson('/api/health');
  if(!health.ok)fail('Local CRM health check returned not ready');
  else pass('Vite proxy connects to the running CRM API');
@@ -53,13 +78,13 @@ try{
    else pass(name+' public main and alternate photo URLs match the reviewed set');
  }
  for(const img of [...local.missing,...local.invalid])console.log('NOT SERVABLE '+img);
- for(const img of Object.keys(SUPPORTED_MODELS).flatMap(name=>[SUPPORTED_MODELS[name].image,...SUPPORTED_MODELS[name].gallery])){
+ for(const img of Object.values(SUPPORTED_MODELS).flatMap(model=>[model.image,...model.gallery]).filter(img=>!local.missing.includes(img)&&!local.invalid.includes(img))){
    const response=await fetch(base+img,{method:'HEAD',signal:AbortSignal.timeout(5000)});
    const mime=response.headers.get('content-type')||'';
    if(!response.ok||!mime.includes('image/webp'))fail(img+' is not served as WebP (HTTP '+response.status+', content type '+mime+')');
    else pass(img+' served successfully');
  }
-}catch(e){fail('Could not verify running local website: '+(e instanceof Error?e.message:e)+'. Start CRM_ADMIN_TOKEN=... npm run dev:full in a separate terminal.');}
+ }catch(e){fail('Could not verify running local website: '+(e instanceof Error?e.message:e));}
 console.log('\n'+(problems.length?'BLOCKED: '+problems.length+' checks need attention.':'PASS: installed reviewed photos, public catalog order and served URLs agree.'));
 console.log('This cannot certify plates on other models, image rights, Safari appearance, or live CRM actions.');
 if(problems.length)process.exitCode=1;
