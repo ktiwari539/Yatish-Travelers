@@ -190,9 +190,18 @@ async function smoke(){
  await page.waitForTimeout(120);
  const narrowEmail=await page.locator('.cinematic-landing-email').boundingBox();
  const narrowBooking=await page.locator('.cinema-director-bottom').boundingBox();
+ // Preserve the image even when a CSS or font timing regression fails, so
+ // the actual overlap can be diagnosed instead of dismissed as flaky.
+ await page.screenshot({path:'artifacts/visual-evidence/mobile-375px.png'});
+ if(!(narrowEmail&&narrowBooking&&narrowEmail.y+narrowEmail.height+4<narrowBooking.y)){
+   console.error('375px hero layout:',JSON.stringify({
+     email:narrowEmail,booking:narrowBooking,
+     gap:narrowEmail&&narrowBooking?narrowBooking.y-narrowEmail.y-narrowEmail.height:null,
+     url:page.url()
+   }));
+ }
  ensure(narrowEmail&&narrowBooking&&narrowEmail.y+narrowEmail.height+4<narrowBooking.y,
    '375px hero must not overlap the booking panel');
- await page.screenshot({path:'artifacts/visual-evidence/mobile-375px.png'});
  // Verify the actual PUBLIC catalog feed controls first card, selected fare, gallery
  // and visibility, rather than checking only a mocked Admin PUT request.
  await page.setViewportSize({width:1440,height:900});
