@@ -109,9 +109,9 @@ async function smoke(){
  ensure(cards.every(card=>Boolean(card.source)||card.placeholder.includes(card.name)),'Every card has its own model photo or named placeholder');
  const sources=cards.map(card=>card.source).filter(Boolean);
  ensure(new Set(sources).size===sources.length,'A photo URL is never recycled across different vehicle names');
- ensure(cards.find(card=>card.name==='Tempo Traveller')?.source?.includes('Traveller')||
+ ensure(cards.find(card=>card.name==='Tempo Traveller')?.source?.includes('mt-traveller-safe.webp')||
   cards.find(card=>card.name==='Tempo Traveller')?.placeholder?.includes('Tempo Traveller'),
-  'Tempo Traveller shows its own reference or own placeholder, never a forest or a second MPV');
+  'Tempo Traveller must use the reviewed photo path or its named safe placeholder, not an old plate-bearing source');
  // A new model must update the quote state just as existing models do.
  await page.locator('.fleet-editorial-tile').filter({hasText:'Mahindra Scorpio-N'}).click();
  ensure((await page.locator('.fleet-editorial-model h3').innerText())==='Mahindra Scorpio-N','New Scorpio model selection');
