@@ -23,6 +23,36 @@ export const SUPPORTED_MODELS={
  'Tempo Traveller':{image:'/media/mt-traveller-safe.webp',gallery:[]}
 };
 const hash=(bytes)=>createHash('sha256').update(bytes).digest('hex');
+/**
+ * Read-only integrity and catalog-link diagnostic for the local reviewed pack.
+ * An existing filename is not proof that the photo has the approved bytes, and
+ * installed bytes are not proof that a saved CRM entry references those photos.
+ */
+export function inspectReviewedFleetMedia({root=resolve('.'),vehicles=readCatalog().vehicles}={}){
+ const images=Object.entries(MEDIA_FILES).map(([path,expected])=>{
+   const file=join(root,path);
+   const publicPath='/'+path.replace(/^public\//,'');
+   if(!existsSync(file))return {path:publicPath,status:'missing'};
+   try{
+     return {path:publicPath,status:hash(readFileSync(file))===expected?'verified':'invalid'};
+   }catch{return {path:publicPath,status:'unreadable'};}
+ });
+ const modelLinks=Object.entries(SUPPORTED_MODELS).map(([name,expected])=>{
+   const actual=vehicles.find(v=>v.name===name);
+   return {name,present:Boolean(actual),matches:Boolean(actual&&actual.image===expected.image&&
+     JSON.stringify(actual.gallery||[])===JSON.stringify(expected.gallery))};
+ });
+ return {
+   ready:images.every(x=>x.status==='verified'),
+   installed:images.filter(x=>x.status==='verified').length,
+   total:images.length,
+   missing:images.filter(x=>x.status==='missing').map(x=>x.path),
+   invalid:images.filter(x=>x.status==='invalid'||x.status==='unreadable').map(x=>x.path),
+   catalogApplied:modelLinks.every(x=>x.matches),
+   modelLinks
+ };
+}
+
 const allow=[...Object.keys(MEDIA_FILES),'MEDIA_MANIFEST.json','README_INSTALL.txt'];
 
 export function importReviewedFleetZip(base64,{root=resolve('.'),replaceExisting=false}={}){
