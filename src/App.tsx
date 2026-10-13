@@ -286,6 +286,7 @@ export function App() {
   const [passengers, setPassengers] = useState(4);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [studioVehicle,setStudioVehicle]=useState<string|null>(null);
+  const [studioLaunchPhotoFailed,setStudioLaunchPhotoFailed]=useState(false);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
@@ -524,7 +525,12 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             <small className="fleet-studio-launch-note">Interactive model-reference preview · Exact car, colour and variants confirmed before booking</small>
           </div>
           <div className="fleet-studio-launch-visual">
-            <img src="/media/mt-xuv700-driving.webp" alt="Reviewed XUV700 model-reference vehicle for the interactive car studio" loading="lazy"/>
+            {!studioLaunchPhotoFailed?
+              <img src="/media/mt-xuv700-driving.webp" alt="Reviewed XUV700 model-reference vehicle for the interactive car studio" loading="lazy"
+                onError={()=>setStudioLaunchPhotoFailed(true)}/>:
+              <div className="fleet-studio-launch-fallback" role="img" aria-label="Vehicle photograph pending local media installation">
+                <CarFront size={102} strokeWidth={1.1}/><strong>THE CAR STUDIO</strong><small>Full-screen model selection awaits you</small>
+              </div>}
             <span>SELECT / EXPLORE / REQUEST</span>
           </div>
         </div>
