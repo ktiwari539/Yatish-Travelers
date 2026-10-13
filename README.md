@@ -66,6 +66,23 @@ The importer refuses modified or unrelated ZIP files by SHA-256 and checks each 
 
 **Privacy caveat:** Only uploaded source photos from the reviewed seven-photo pack have been sanitized as described. All other pre-existing primary and alternate-angle photos still need a full-resolution license and number-plate review before public release. When a safe local image is missing, the affected model shows a named placeholder rather than the original known plate-bearing photo.
 
+### Read-only local acceptance check (new)
+
+After `npm run dev:full` is running in one terminal, open a **second** terminal:
+
+```bash
+cd ~/Projects/Yatish-Travelers
+npm run verify:fleet
+```
+
+This checks **all seven files by SHA-256**, whether the three reviewed model photo sets match the saved CRM catalog (including alternate angles), whether Vite serves every WebP, and whether `/api/catalog` reflects the server's saved Featured sequence while excluding hidden cars. It makes **no changes** and needs no Admin token. It exits nonzero with explicit `FAIL` lines if any check fails.
+
+If the installed files pass but the **saved catalog differs**, use Admin → Cars & pricing → Approved photo pack → choose the original `mateshwari_fleet_photography_safe_pack.zip` → confirm replacement → Install and apply photo pack. Merely running the standalone installer does not replace every previously customized saved URL.
+
+Then open `http://localhost:5173`, inspect Fleet and each alternate gallery angle, and validate pricing and quotations against the selected model. In Admin, move a vehicle to First, save, reload Admin, and re-run the command to verify the persisted public order. Restore the operator's intended order afterward.
+
+This command does **not** verify unreviewed plates on the other seven vehicles, licensing, Safari rendering or the original Scorpio film. Those remain manual release gates.
+
 ### User-provided premium fleet photos — Thar / XUV700 / Traveller
 
 The new **seven-photo local media pack** is supplied as a separate downloadable ZIP in our conversation: `mateshwari_fleet_photography_safe_pack.zip`. It includes a dynamic XUV700 driving image and studio front angle, red Thar front/rear renders, grey Thar driving and plate-sanitized front views, and the plate-sanitized Force Traveller photograph. The remaining seven model identities are unchanged.
@@ -79,7 +96,7 @@ CRM_ADMIN_TOKEN="YOUR_PRIVATE_TOKEN" npm run dev:full
 
 Save the ZIP in `~/Downloads/`, or run `npm run fleet:install -- /absolute/path/to/mateshwari_fleet_photography_safe_pack.zip`. The installer checks the exact permitted file names and SHA-256 hashes, and refuses to overwrite customized copies. It does not touch the earlier Ertiga concept or Scorpio video packs.
 
-**Important:** With the seven images physically present under `public/media/`, the local backend automatically replaces only the **unchanged default** Thar, XUV700 and Tempo Traveller reference URLs. Existing staff-uploaded images, prices, visibility and custom alternate galleries are preserved. A full CRM restart is required because the API reads the local filesystem. Without the pack, the website still uses its original fallback model references—there is no misleading substitution with other car models.
+**Important:** With the seven images physically present under `public/media/`, the local backend automatically replaces only the **unchanged default** Thar, XUV700 and Tempo Traveller reference URLs. Existing staff-uploaded images, prices, visibility and custom alternate galleries are preserved. A full CRM restart is required because the API reads the local filesystem. Without the pack, known plate-bearing Thar/XUV700/Traveller legacy photos are replaced by named model-specific placeholders, not other vehicles or potentially readable originals.
 
 **Number-plate review:** The user-supplied XUV700 driving photo already contains a blanked rear plate. The uploaded studio XUV700 and red Thar model renders show **model branding**, not readable registration numbers. The grey Thar front and the Traveller front/side registration markings were permanently pixelated in the exported WebP bytes. Check these at normal and zoomed display size. Other external model photos and any staff-added angles still require their own privacy review. No CSS cover-up is used to claim compliance.
 
