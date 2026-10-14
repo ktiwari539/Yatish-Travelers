@@ -530,7 +530,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             <button type="button" onClick={()=>setStudioVehicle(!userSelectedVehicle.current&&studioShowcaseName?studioShowcaseName:selected.name)}>
               <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
             </button>
-            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> STUDIO READY <b>•</b> THREE LIGHTING MOODS <b>•</b> MODEL EXPLORER</small>
+            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> REAL MODEL PHOTOS <b>•</b> INTERACTIVE ANGLES <b>•</b> QUOTE READY</small>
           </div>
           <div className="fleet-studio-launch-visual">
             <div className="fleet-launch-portal" aria-hidden="true"><i/><i/><i/></div>
@@ -540,7 +540,21 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
               <div className="fleet-studio-launch-fallback" role="img" aria-label="Vehicle photograph pending local media installation">
                 <CarFront size={102} strokeWidth={1.1}/><strong>THE GARAGE AWAITS</strong><small>Start your full-screen vehicle experience</small>
               </div>}
-            <span className="fleet-launch-chapter">GARAGE SESSION / PRESS START <ArrowRight size={17}/></span>
+            <div className="fleet-launch-preview-models" role="group" aria-label="Open a photographed vehicle in the studio">
+              {[
+                {name:'Mahindra XUV700',src:'/media/mt-xuv700-studio.webp'},
+                {name:'Mahindra Thar',src:'/media/mt-thar-red-front.webp'},
+                {name:'Tempo Traveller',src:'/media/mt-traveller-safe.webp'}
+              ].filter(item=>liveFleet.some(v=>v.name===item.name))
+                .map(item=><button key={item.name} type="button"
+                  onClick={()=>setStudioVehicle(item.name)}
+                  aria-label={'Explore '+item.name+' real photos'}>
+                    <img src={item.src} alt="" loading="lazy"
+                      onError={event=>{event.currentTarget.style.visibility='hidden';}}/>
+                    <span>{item.name}</span>
+                  </button>)}
+            </div>
+            <span className="fleet-launch-chapter">THREE REAL MODELS · PHOTOS FIRST <ArrowRight size={17}/></span>
           </div>
         </div>
 
