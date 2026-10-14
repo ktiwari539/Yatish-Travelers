@@ -1,13 +1,11 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { createReadStream, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const localStudioReview={
  name:'local-studio-review-photo-only',
- configureServer(server:{
-  middlewares:{use:(path:string,fn:(req:import('node:http').IncomingMessage,res:import('node:http').ServerResponse)=>void)=>void}
- }){
+ configureServer(server:ViteDevServer){
   const allowed=new Set(['mt-studio-ertiga-review.jpg','mt-studio-tuv-review.jpg','mt-studio-carens-review.jpg']);
   server.middlewares.use('/studio-review/',(req,res)=>{
    const name=decodeURIComponent((req.url||'').split('?')[0].replace(/^[/]+/,''));
