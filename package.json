@@ -15,7 +15,8 @@
     "scorpio:install": "node scripts/install-scorpio-media.mjs",
     "fleet:install": "node scripts/install-fleet-media.mjs",
     "media:install": "node scripts/install-complete-media.mjs",
-    "verify:fleet": "node scripts/verify-local-fleet.mjs"
+    "verify:fleet": "node scripts/verify-local-fleet.mjs",
+    "studio:install": "node scripts/install-studio-review.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.545.0",
