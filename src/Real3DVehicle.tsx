@@ -88,7 +88,35 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
  roofGeom.rotateY(Math.PI/2);
  add(roofGeom,paint,[-(dims.width-.26)/2,0,0]);
 
- // Windows drawn on both side faces with a real windshield zone.
+ // Windscreens are actual sloped glazing panels in 3D, not an opaque
+ // extrusion viewed from the front/rear. Neither has a number plate.
+ const pane=(corners:[number,number,number][],material:THREE.Material)=>{
+   const g=new THREE.BufferGeometry();
+   const vertices=new Float32Array(corners.flat());
+   g.setAttribute('position',new THREE.BufferAttribute(vertices,3));
+   g.setIndex([0,1,2,0,2,3]);g.computeVertexNormals();
+   const mesh=new THREE.Mesh(g,material);mesh.castShadow=false;vehicle.add(mesh);
+ };
+ const winHalf=(dims.width-.26)*.43;
+ const frontLower=-front+.055,frontUpper=-(front-.38)-.035;
+ pane([
+   [-winHalf,dims.base+.16,frontLower],[winHalf,dims.base+.16,frontLower],
+   [winHalf*.93,upper-.18,frontUpper],[-winHalf*.93,upper-.18,frontUpper]
+ ],glass);
+ const rearLower=-back-.04,rearUpper=-(back+.28)+.02;
+ pane([
+   [winHalf,dims.base+.17,rearLower],[-winHalf,dims.base+.17,rearLower],
+   [-winHalf*.93,upper-.19,rearUpper],[winHalf*.93,upper-.19,rearUpper]
+ ],glass);
+ const rearWindowGlow=new THREE.Mesh(new THREE.BoxGeometry(dims.width*.70,.017,.025),chrome);
+ rearWindowGlow.position.set(0,dims.base+.17,rearLower+.012);vehicle.add(rearWindowGlow);
+ const roofTop=box([dims.width-.30,.045,Math.abs(front-back)-.6],paint,
+   [0,upper+.028,-(front+back)/2]);
+ roofTop.castShadow=true;
+ const roofGlass=new THREE.Mesh(new THREE.BoxGeometry(dims.width*.62,.013,.68),glass);
+ roofGlass.position.set(0,upper+.056,-(front+back)/2);
+ vehicle.add(roofGlass);
+  // Windows drawn on both side faces with a real windshield zone.
  const win=new THREE.Shape();
  win.moveTo(back+.17,dims.base+.125);
  win.lineTo(back+.36,upper-.11);
@@ -124,6 +152,14 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
   if(kind==='suv'||kind==='van')box([.09,.03,dims.length*.54],chrome,[side*(half-.18),upper+.04,.01]);
  }
 
+ // Front bumper, curved accent and rear tailgate; the details are
+ // intentionally generic to avoid misrepresenting any manufacturer's trim.
+ box([dims.width*.78,.12,.16],dark,[0,.35,-L-.025]);
+ box([dims.width*.70,.10,.12],dark,[0,.32,L+.015]);
+ box([dims.width*.63,.018,.035],chrome,[0,dims.base+.015,-L-.082]);
+ box([dims.width*.54,.018,.025],chrome,[0,dims.base-.02,L+.087]);
+ const running=new THREE.Mesh(new THREE.BoxGeometry(dims.width*.30,.018,.7),dark);
+ running.position.set(0,upper+.066,front*.3);vehicle.add(running);
  // Grilles, front lights, rear clusters.
  box([dims.width*.55,.21,.052],dark,[0,.58,-L-.035]);
  for(let i=-2;i<=2;i++){
@@ -198,7 +234,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
       const scene=new THREE.Scene();
       scene.fog=new THREE.Fog(0x121f35,12,28);
       const camera=new THREE.PerspectiveCamera(34,1,.1,100);
-      camera.position.set(7.1,3.65,7.8);camera.lookAt(0,.82,0);
+      camera.position.set(7.1,3.65,-7.8);camera.lookAt(0,.82,0);
       const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
       renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
       renderer.setSize(element.clientWidth,element.clientHeight,false);
@@ -293,7 +329,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
           if(current.viewPreset!==lastPreset){
             const dist=camera.position.distanceTo(controls.target);
             const off:Record<string,[number,number,number]>={
-              hero:[.67,.31,.68],front:[.04,.26,1],side:[1,.27,.03],rear:[.04,.26,-1]
+              hero:[.67,.31,-.68],front:[.04,.26,-1],side:[1,.27,.03],rear:[.04,.26,1]
             };
             const pos=off[current.viewPreset]||off.hero;
             camera.position.set(pos[0]*dist,controls.target.y+pos[1]*dist,pos[2]*dist);
