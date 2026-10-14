@@ -65,73 +65,81 @@ async function smoke(){
  await page.locator('.quote-modal').waitFor({state:'visible'});
  await page.locator('.quote-close').click();
  await page.locator('.quote-modal').waitFor({state:'detached'});
- // The curated photo-led selection must respond to user input, preserve
- // verified photo identity, and never pretend to rotate unrelated vehicle shapes.
+ // New car-studio acceptance: only visitor clicks open the immersive viewport.
  mkdirSync('artifacts/visual-evidence',{recursive:true});
- const featured=page.locator('.fleet-studio-launch.fleet-atelier');
- await featured.screenshot({path:'artifacts/visual-evidence/ride-studio-launcher-desktop.png',animations:'disabled'});
- ensure((await featured.locator('h3').innerText()).includes('feels right'),
-  'Main selection uses restrained editorial copy, not game-style garage promotion');
- ensure(await featured.getByRole('button',{name:'Next featured vehicle'}).isVisible(),
-  'Featured photo selector offers accessible car navigation');
- ensure((await featured.locator('.fleet-atelier-selection-body strong').innerText())==='Mahindra XUV700',
-  'The first spotlight vehicle is the model with a reviewed local studio photo');
- await featured.getByRole('button',{name:'Next featured vehicle'}).click();
- ensure((await featured.locator('.fleet-atelier-selection-body strong').innerText())==='Mahindra Thar',
-  'Featured photo, fare and car details change to the actual next model');
- ensure((await featured.locator('.fleet-atelier-photo img').getAttribute('src'))==='/media/mt-thar-red-front.webp',
-  'Thar uses its reviewed model-specific photo, never another SUV');
- await featured.getByRole('button',{name:'Tempo Traveller'}).click();
- ensure((await featured.locator('.fleet-atelier-photo img').getAttribute('src'))==='/media/mt-traveller-safe.webp',
-  'Traveller uses its exact approved local photograph');
- await featured.getByRole('button',{name:'Mahindra XUV700'}).click();
- ensure(await featured.getByRole('button',{name:'View Mahindra XUV700 photos'}).isVisible(),
-  'Featured CTA stays synchronized with the actual selected photo');
+ await page.locator('.fleet-studio-launch').screenshot({
+   path:'artifacts/visual-evidence/ride-studio-launcher-desktop.png',animations:'disabled'});
+ ensure((await page.locator('.fleet-studio-launch h3').innerText()).includes('In the spotlight'),
+  'Main entry invites visitors into the premium spotlight experience');
  ensure(await page.locator('.fleet-grid.fleet-compare-list').count()===1,
-  'All fleet models remain in a separate clean comparison layout');
+  'Public fleet cards are reorganized into a compact comparison rather than a second photo gallery');
  await page.locator('.fleet-grid.fleet-compare-list').screenshot({
    path:'artifacts/visual-evidence/fleet-quick-comparison-desktop.png',animations:'disabled'});
+ ensure(await page.locator('.premium-catalog-card .premium-catalog-visual img').count()>=5,
+  'Photo-rich Choose your ride shows real model images instead of text-only cards');
+ const richCard=page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
+ ensure((await richCard.locator('.premium-catalog-visual img').getAttribute('src')||'').includes('Indonesia%20International%20Motor%20Show%202018'),
+  'Ertiga grid shows licensed high-resolution motor-show model photo');
+ ensure((await page.locator('.premium-catalog-card[data-model="Mahindra TUV"] .premium-catalog-visual img').getAttribute('src')||'').includes('Mahindra%20TUV%20300%20Chennai%202016'),
+  'TUV grid shows correct model and masked front-three-quarter photo source');
+ ensure((await page.locator('.premium-catalog-card[data-model="Kia Carens"] .premium-catalog-visual img').getAttribute('src')||'').includes('2022%20Kia%20Carens'),
+  'Carens card shows licensed motor-show photo instead of weak showroom/street image');
+ ensure(await richCard.locator('.fleet-card-photo-credit a').count()===1,
+  'Editorial photographs retain photographer, licence and provenance in the card');
+ ensure(await richCard.locator('.catalog-angle-button svg').getAttribute('class').then(c=>!String(c).includes('rotate')),
+  'Photo-angle controls do not falsely imply 3D rotation');
+ const cardLayout=await richCard.evaluate(el=>{
+  const photo=el.querySelector('.premium-catalog-visual')?.getBoundingClientRect();
+  const card=el.getBoundingClientRect();
+  return {ratio:photo?photo.width/card.width:0,height:card.height};
+ });
+ ensure(cardLayout.ratio>.35&&cardLayout.height>=235,
+  'The restored gallery gives real model photography generous space');
+
  ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===2,
-  'Desktop displays two columns of readable specifications');
- ensure(await page.locator('.premium-catalog-card img').count()===0,
-  'Unreviewed roadside snapshots do not dominate the compact comparison');
- ensure(await page.locator('.catalog-angle-button').count()===0,
-  'A static photograph is never mislabeled with a rotation icon');
- await featured.getByRole('button',{name:'View Mahindra XUV700 photos'}).click();
+  'Desktop shows two-column condensed specifications');
+ await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
- ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Mahindra XUV700',
-  'Spotlight opens the exact featured model');
- ensure(await studio.locator('.vehicle-webgl').count()===0,
-  'The studio never renders a generic blocky 3D imitation');
- ensure(await studio.getByRole('button',{name:'Use titanium studio lighting'}).count()===0,
-  'Decorative lighting presets have been removed');
- ensure((await studio.locator('.ride-studio-image-action').evaluate(el=>getComputedStyle(el).animationName)).includes('mtAtelierPhoto'),
-  'Real vehicle photographs have a restrained reveal rather than simulated 3D');
- await studio.screenshot({path:'artifacts/visual-evidence/spotlight-xuv700-gallery.png',animations:'disabled'});
- await studio.getByRole('button',{name:'Close car studio'}).click();
- await studio.waitFor({state:'detached'});
- await page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]')
-  .getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).click();
- await studio.waitFor({state:'visible'});
- ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
-  'Text-first comparison opens the correct vehicle');
- ensure(await studio.locator('.vehicle-webgl').count()===0,
-  'Full-screen reference keeps actual photography instead of invented 3D');
- ensure(await studio.locator('.ride-studio-car-image').count()===1,
-  'Reference viewer renders one model-specific photo');
- ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
-  'Photo provenance is available when an editorial image is used');
- await page.waitForTimeout(650);
+ ensure(await studio.locator('.ride-studio-reveal').count()===1,
+  'Garage introduction has an automatic full-screen vehicle initialization sequence');
+ ensure(await studio.locator('.ride-studio-backdrop').count()===0,
+  'Studio modal stays a single overlay rather than duplicating a second dialog');
+ ensure(await page.locator('.garage-luxe-v19.garage-light-ion').count()===1,
+  'Original high-contrast midnight blue studio palette is active');
+ await studio.getByRole('button',{name:'Use titanium studio lighting'}).click();
+ ensure(await studio.getByRole('button',{name:'Use titanium studio lighting'}).getAttribute('aria-pressed')==='true',
+  'Studio visitors can select neutral titanium lighting without changing any vehicle photo');
+ ensure(await page.locator('.garage-luxe-v19.garage-light-titanium').count()===1,
+  'Lighting theme is reflected in the current full-screen studio');
+ await studio.getByRole('button',{name:'Use ember studio lighting'}).click();
+ ensure(await page.locator('.garage-luxe-v19.garage-light-ember').count()===1,
+  'Amber lighting option updates the garage atmosphere');
+ await studio.getByRole('button',{name:'Use ion studio lighting'}).click();
+ ensure(await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).count()===0,'No generic 3D button');
+ ensure(await studio.locator('.vehicle-webgl').count()===0,'No generic 3D canvas');
+ ensure(await studio.locator('.ride-studio-vehicle-frame').evaluate(el=>getComputedStyle(el).animationName==='rideGarageVehicleEntry'),
+  'Actual reference photographs retain a cinematic entry transition');
+ ensure(await studio.locator('.ride-studio-grid').evaluate(el=>getComputedStyle(el).animationName==='rideGarageFloor'),
+  'Showroom includes animated floor perspective and lighting');
+ await page.waitForTimeout(1700);
  await studio.screenshot({path:'artifacts/visual-evidence/ride-studio-desktop.png',animations:'disabled'});
+ ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
+   'The studio starts with the currently selected model');
+ ensure(await studio.locator('.ride-studio-car-image').count()===1,
+   'Full-screen showroom uses the car model reference photo');
+ ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')).includes('Indonesia%20International%20Motor%20Show%202018'),
+   'Ertiga studio selects the high-resolution licensed motor-show reference rather than low-resolution roadside source');
+ ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
+   'Creative Commons author/source are linked in the vehicle detail panel');
  ensure((await page.evaluate(()=>document.body.style.overflow))==='hidden',
    'Fullscreen studio locks background scrolling');
  await studio.getByRole('button',{name:'Next vehicle'}).click();
  ensure(await studio.locator('.ride-studio-stage.is-switching').count()===1,
   'Next begins a visible outgoing vehicle animation before changing the model');
  await page.waitForFunction(()=>document.querySelector('.ride-studio-panel-heading h2')?.textContent?.trim()==='Toyota Innova');
- ensure(await studio.locator('.ride-studio-reveal').count()===0,
-  'Model switching uses subtle photo transitions without theatrical game initialization');
+ ensure(await studio.locator('.ride-studio-reveal').count()===1,
+  'Switching vehicles launches a new garage reveal');
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Toyota Innova',
    'Console-style model selection changes the showcased car');
  await studio.getByRole('button',{name:'Next photo angle'}).click();
@@ -351,7 +359,7 @@ async function smoke(){
    'Mobile email CTA must not overlap the Ertiga booking panel');
  await page.screenshot({path:'artifacts/visual-evidence/mobile-quote-cta.png'});
  // Mobile studio must fit a small screen without clipped controls.
- await page.getByRole('button',{name:'View Mahindra XUV700 photos'}).click();
+ await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  await studio.waitFor({state:'visible'});
  ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
    'Mobile full-screen studio has a visible exit control');
@@ -412,12 +420,16 @@ async function smoke(){
  ensure((await page.locator('.premium-catalog-card[data-model="Mahindra Bolero"]').count())===0,
    'Hidden admin fleet entry is not rendered publicly');
  const innovaCard=page.locator('.premium-catalog-card[data-model="Toyota Innova"]');
- ensure((await innovaCard.innerText()).includes('Toyota Innova'),
-  'Text-first comparison shows the correct named model');
- ensure(await innovaCard.locator('.catalog-angle-button').count()===0,
-  'No misleading spin or angle control appears on factual vehicle cards');
- ensure((await innovaCard.innerText()).includes('₹'),
-  'Comparison retains indicative pricing without altering staff data');
+ const cardAngle=innovaCard.getByRole('button',{name:'Show another angle of Toyota Innova'});
+ ensure((await cardAngle.innerText()).includes('1/3'),'Innova gallery starts at the first of three photos');
+ await cardAngle.click();
+ ensure((await cardAngle.innerText()).includes('2/3'),'Public card gallery advances to the second photo');
+ ensure((await innovaCard.locator('.premium-catalog-fallback').innerText()).includes('Registration plate review pending'),
+   'Innova rear reference is withheld until plate-safe replacement');
+ await cardAngle.click();
+ ensure((await cardAngle.innerText()).includes('3/3'),'Public gallery can reach third photo slot');
+ ensure((await innovaCard.locator('.premium-catalog-fallback').innerText()).includes('Registration plate review pending'),
+   'Innova front reference with visible registration is withheld');
  await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).click();
  ensure(await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).getAttribute('aria-pressed')==='true',
    'Cinematic gallery activates the requested alternate angle even if external photo delivery fails');
