@@ -32,10 +32,16 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
  useEffect(()=>setFailed(false),[src]);
  useEffect(()=>setAngle(0),[car.name]);
  return <article className="fleet-card premium-catalog-card photo-rich-fleet-card" data-model={car.name}
+   data-reviewed-candidate={editorial?.src||''}
     style={{animationDelay:`${index*70}ms`}}>
   <div className="fleet-visual premium-catalog-visual">
    {!failed&&!reviewPending?<img src={src} alt={car.name+' — authentic model photograph '+(shown+1)}
-    loading="lazy" decoding="async" onError={()=>setFailed(true)}/>:
+    loading="lazy" decoding="async" onError={()=>{
+       // If a high-resolution local-review image is offline, fall back to the
+       // existing photograph of the SAME vehicle. Never substitute another model.
+       if(editorialSelected&&photos.length>1)setAngle(i=>Math.min(i+1,photos.length-1));
+       else setFailed(true);
+    }}/>:
     <div className="premium-catalog-fallback" role="img"
       aria-label={reviewPending?'Registration plate review pending for '+car.name:'Photo unavailable for '+car.name}>
       {car.name}<small>{reviewPending?'Registration plate review pending':'Photograph temporarily unavailable'}</small>
