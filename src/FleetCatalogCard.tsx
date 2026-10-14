@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Images, Maximize2 } from 'lucide-react';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 import { needsInnovaPlateReview } from './mediaSafety';
-import { studioEditorialFor } from './studioPhotography';
+import { buildFleetGallery } from './fleetGallery';
 
 /** A genuine photograph of this exact model is always required.
  * The three independent editorial images are available for LOCAL acceptance
@@ -13,26 +13,18 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
 }){
  const [angle,setAngle]=useState(0);
  const [failed,setFailed]=useState(false);
- const editorial=studioEditorialFor(car.name);
- const photos=useMemo(()=>{
-   const localPreferred:Record<string,string>={
-     'Mahindra XUV700':'/media/mt-xuv700-studio.webp',
-     'Mahindra Thar':'/media/mt-thar-red-front.webp',
-     'Tempo Traveller':'/media/mt-traveller-safe.webp'
-   };
-   const verified=localPreferred[car.name];
-   const approvedGallery=[car.image,...(car.gallery||[])];
-   return [...(editorial?[editorial.src]:[]),...(verified&&approvedGallery.includes(verified)?[verified]:[]),...approvedGallery]
-     .filter((src,n,arr)=>Boolean(src)&&arr.indexOf(src)===n).slice(0,7);
- },[car.name,car.image,car.gallery,editorial?.src]);
+ const gallery=useMemo(()=>buildFleetGallery(car),[car.name,car.image,car.gallery]);
+ const photos=gallery.map(item=>item.src);
+ const editorial=gallery.find(p=>p.reviewPending);
  const shown=Math.min(angle,Math.max(photos.length-1,0));
  const src=photos[shown]??car.image;
  const reviewPending=needsInnovaPlateReview(car.name,src);
- const editorialSelected=Boolean(editorial&&src===editorial.src);
+ const selectedPhoto=gallery[shown];
+ const editorialSelected=Boolean(selectedPhoto?.reviewPending);
  useEffect(()=>setFailed(false),[src]);
  useEffect(()=>setAngle(0),[car.name]);
  return <article className="fleet-card premium-catalog-card photo-rich-fleet-card" data-model={car.name}
-   data-reviewed-candidate={editorial?.src||''}
+   data-reviewed-candidate={editorial?.src||''} data-gallery-count={photos.length}
     style={{animationDelay:`${index*70}ms`}}>
   <div className="fleet-visual premium-catalog-visual">
    {!failed&&!reviewPending?<img src={src} alt={car.name+' — authentic model photograph '+(shown+1)}
@@ -59,19 +51,29 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
       onClick={()=>setAngle(i=>(i+1)%photos.length)}>
        <Images size={15}/> {shown+1}/{photos.length}
      </button>}
-   {editorialSelected&&<span className="fleet-photo-editorial-note" title={editorial?.model}>
+   {editorialSelected&&<span className="fleet-photo-editorial-note" title={selectedPhoto?.label}>
      Model reference · local review
     </span>}
   </div>
   <div className="fleet-meta">
    <span>{car.tag}</span><h3>{car.name}</h3>
    <div className="rate"><strong>₹{car.rateMin??15}–₹{car.rateMax??25}</strong><small>/ km indicative range</small></div>
+   <div className="fleet-photo-preview-strip" role="group" aria-label={'Photo views of '+car.name}>
+     {gallery.slice(0,3).map((item,i)=><button
+       key={item.src} type="button" className={shown===i?'active':''}
+       aria-pressed={shown===i} aria-label={'View '+car.name+' photo '+(i+1)+': '+item.label}
+       onClick={()=>setAngle(i)}>
+       <img src={item.src} loading="lazy" alt="" onError={e=>{e.currentTarget.style.visibility='hidden';}}/>
+       <span>{String(i+1).padStart(2,'0')}</span>
+     </button>)}
+     {photos.length===1&&<small className="fleet-single-photo-label">More real angles awaiting approval</small>}
+   </div>
    <div className="fleet-bottom"><span>{car.seats} seats · {car.category}</span>
     <button type="button" onClick={onEstimate}>Estimate fare <ArrowRight size={15}/></button></div>
-   {editorialSelected&&editorial&&<small className="fleet-card-photo-credit">
-     <a href={editorial.page} target="_blank" rel="noopener noreferrer">
-       {editorial.credit}
-     </a> · {editorial.license} · Privacy review pending
+   {selectedPhoto?.credit&&<small className="fleet-card-photo-credit">
+     <a href={selectedPhoto.page} target="_blank" rel="noopener noreferrer">
+       {selectedPhoto.credit}
+     </a> · {selectedPhoto.license} · {selectedPhoto.reviewPending?'Editorial review pending':'Model reference'}
    </small>}
   </div>
  </article>;
