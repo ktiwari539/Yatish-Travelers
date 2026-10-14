@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
 import { needsInnovaPlateReview } from './mediaSafety';
 import { Real3DVehicle, type PaintTone } from './Real3DVehicle';
+import { conceptModelFor } from './garageConceptAssets';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
 type ShowroomVehicle=FleetReelVehicle & {capacity?:number;modelUrl?:string};
@@ -174,12 +175,13 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      {show3D?
        <div className="ride-studio-interactive-3d" role="group" aria-label={'Rotate the '+active.category+' concept car'}>
          <Real3DVehicle key={active.name} category={active.category} modelUrl={active.modelUrl}
+           conceptUrl={conceptModelFor(active.name)}
            paint={conceptPaint} mood={lightPreset==='ember'?'golden-hour':'daylight'} progress={.50}
            zoom={zoom} autoRotate={rotationPlaying&&cinematicOn} doorsOpen={doorsOpen}
            viewPreset={viewPreset} reducedMotion={reducedMotion}
            onUnavailable={()=>setShow3D(false)}/>
          <div className="ride-studio-3d-disclaimer">
-           {active.modelUrl?'APPROVED MODEL IF LOADED · CONCEPT FALLBACK':'INTERACTIVE 3D CONCEPT · NOT AN EXACT '+active.name.toUpperCase()+' REPLICA'}
+           {active.modelUrl?'APPROVED MODEL IF LOADED · CONCEPT FALLBACK':'UNBRANDED CC0 3D CONCEPT · NOT AN EXACT '+active.name.toUpperCase()+' REPLICA'}
          </div>
        </div>:
        <button type="button" className="ride-studio-image-action"
