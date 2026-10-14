@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 type VehicleKind='sedan'|'mpv'|'suv'|'van';
 export type PaintTone='champagne'|'pearl'|'obsidian'|'forest';
@@ -12,6 +13,11 @@ type Props={
  progress:number;
  modelUrl?:string;
  onUnavailable?:()=>void;
+ autoRotate?:boolean;
+ doorsOpen?:boolean;
+ zoom?:number;
+ reducedMotion?:boolean;
+ viewPreset?:'hero'|'front'|'side'|'rear';
 };
 
 const paintValues:Record<PaintTone,number>={
@@ -26,7 +32,7 @@ const classOf=(category:string):VehicleKind=>{
    x.includes('suv')?'suv':
    x.includes('mpv')?'mpv':'sedan';
 };
-type VehicleParts={vehicle:THREE.Group;wheels:THREE.Group[];paint:THREE.MeshPhysicalMaterial};
+type VehicleParts={vehicle:THREE.Group;wheels:THREE.Group[];paint:THREE.MeshPhysicalMaterial;doors:THREE.Group[]};
 function createVehicle(kind:VehicleKind,color:number):VehicleParts {
  const vehicle=new THREE.Group();
  const dims={
@@ -127,6 +133,18 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
   box([.35,.12,.045],warm,[side*(half-.27),dims.base-.12,-L-.072]);
   box([.22,.17,.049],red,[side*(half-.27),dims.base-.1,L+.065]);
  }
+ const doors:THREE.Group[]=[];
+ // Simple articulated concept door panels; unbranded and not actual trim.
+ if(kind!=='van') for(const side of [-1,1]){
+   const hinge=new THREE.Group();
+   hinge.position.set(side*(half+.062),dims.base-.12,-.58);
+   const panel=new THREE.Mesh(new THREE.BoxGeometry(.049,.54,.91),paint);
+   panel.position.set(side*.025,-.085,.455);
+   panel.castShadow=true;panel.receiveShadow=true;hinge.add(panel);
+   const outline=new THREE.Mesh(new THREE.BoxGeometry(.065,.015,.82),chrome);
+   outline.position.set(side*.065,.14,.46);hinge.add(outline);
+   vehicle.add(hinge);doors.push(hinge);
+ }
  const wheels:THREE.Group[]=[];
  const radius=kind==='suv'||kind==='van'?.47:.42;
  for(const side of [-1,1])for(const z of [-dims.wheelbase/2,dims.wheelbase/2]){
@@ -148,10 +166,10 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
    arch.position.set(side*(half-.02),radius+.06,z);vehicle.add(arch);
  }
  vehicle.position.y=.06;
- return {vehicle,wheels,paint};
+ return {vehicle,wheels,paint,doors};
 }
 
-export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailable}:Props){
+export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailable,autoRotate=true,doorsOpen=false,zoom=1,reducedMotion=false,viewPreset='hero'}:Props){
  const host=useRef<HTMLDivElement|null>(null);
  const engine=useRef<{
   renderer:THREE.WebGLRenderer;scene:THREE.Scene;camera:THREE.PerspectiveCamera;
@@ -159,32 +177,26 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
   point:THREE.PointLight;wheels:THREE.Group[];paintMaterial:THREE.MeshPhysicalMaterial;
   dispose:()=>void
  }|null>(null);
- const refState=useRef({progress,mood});
+ const refState=useRef({progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset});
  const [status,setStatus]=useState<'loading'|'ready'|'fallback'>('loading');
- useEffect(()=>{refState.current={progress,mood};},[progress,mood]);
+ useEffect(()=>{refState.current={progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset};},[progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset]);
 
  useEffect(()=>{
   const element=host.current;if(!element)return;
   let cancelled=false,frame=0;
-  let spin=.45,targetSpin=.45;
-  let dragging=false,lastX=0,visible=false;
+  let visible=false;
+  let hasApprovedModel=false;
+  let controls:OrbitControls|undefined;
+  let lastPreset='hero';
+  let doorAmount=0;
+  const clock=new THREE.Clock();
+  let defaultDistance=11.3;
   let resize:ResizeObserver|undefined,observer:IntersectionObserver|undefined;
-  const onDown=(event:PointerEvent)=>{
-    if(event.pointerType==='touch')return;
-    dragging=true;lastX=event.clientX;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-  };
-  const onMove=(event:PointerEvent)=>{
-    if(!dragging)return;
-    targetSpin+=(event.clientX-lastX)*.009;
-    lastX=event.clientX;
-  };
-  const onUp=()=>{dragging=false;};
   const initialize=()=>{
     if(cancelled||engine.current)return;
     try{
       const scene=new THREE.Scene();
-      scene.fog=new THREE.Fog(0x163329,12,28);
+      scene.fog=new THREE.Fog(0x121f35,12,28);
       const camera=new THREE.PerspectiveCamera(34,1,.1,100);
       camera.position.set(7.1,3.65,7.8);camera.lookAt(0,.82,0);
       const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
@@ -196,29 +208,43 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
       renderer.shadowMap.enabled=true;
       renderer.shadowMap.type=THREE.PCFSoftShadowMap;
       renderer.domElement.style.cssText='width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y';
-      renderer.domElement.setAttribute('aria-label','Interactive 3D vehicle model, drag to rotate');
+      renderer.domElement.setAttribute('aria-label','Interactive concept 3D vehicle, drag to orbit and scroll to zoom');
       element.appendChild(renderer.domElement);
+      controls=new OrbitControls(camera,renderer.domElement);
+      controls.target.set(0,.83,0);
+      controls.enableDamping=true;
+      controls.dampingFactor=.075;
+      controls.enablePan=false;
+      controls.enableZoom=true;
+      controls.minDistance=5.2;
+      controls.maxDistance=18;
+      controls.minPolarAngle=.55;
+      controls.maxPolarAngle=1.6;
+      controls.rotateSpeed=.65;
+      controls.autoRotateSpeed=1.65;
+      controls.update();
+      defaultDistance=camera.position.distanceTo(controls.target);
 
-      scene.add(new THREE.AmbientLight(0xe9fff1,1.7));
+      scene.add(new THREE.AmbientLight(0xe3ebff,1.7));
       const key=new THREE.DirectionalLight(0xffeed1,3.6);
       key.position.set(4,8,5);key.castShadow=true;
       key.shadow.mapSize.set(1024,1024);
       key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;
       scene.add(key);
-      const fill=new THREE.DirectionalLight(0xb1e4d0,3.5);
+      const fill=new THREE.DirectionalLight(0x94cdff,3.5);
       fill.position.set(-5,3,-4);scene.add(fill);
       const point=new THREE.PointLight(0xffc78b,65,16);
       point.position.set(-3,4,2);scene.add(point);
 
       const platform=new THREE.Group();
       const disc=new THREE.Mesh(new THREE.CylinderGeometry(3.43,3.43,.18,90),
-        new THREE.MeshPhysicalMaterial({color:0x1e3f32,metalness:.65,roughness:.29,clearcoat:.65}));
+        new THREE.MeshPhysicalMaterial({color:0x203450,metalness:.65,roughness:.29,clearcoat:.65}));
       disc.position.y=-.15;disc.receiveShadow=true;platform.add(disc);
       const ring=new THREE.Mesh(new THREE.TorusGeometry(3.36,.027,8,100),
-        new THREE.MeshStandardMaterial({color:0xddc39a,metalness:.82,roughness:.3}));
+        new THREE.MeshStandardMaterial({color:0x94cefc,metalness:.82,roughness:.3}));
       ring.rotation.x=Math.PI/2;ring.position.y=-.03;platform.add(ring);
       const ring2=new THREE.Mesh(new THREE.TorusGeometry(2.68,.013,8,100),
-        new THREE.MeshStandardMaterial({color:0x5f866a,metalness:.8,roughness:.45}));
+        new THREE.MeshStandardMaterial({color:0x4b82be,metalness:.8,roughness:.45}));
       ring2.rotation.x=Math.PI/2;ring2.position.y=-.035;platform.add(ring2);
       scene.add(platform);
 
@@ -250,6 +276,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
             });
             root.remove(built.vehicle);
             root.add(custom);
+            hasApprovedModel=true;
           },undefined,error=>{
             console.warn('Could not load uploaded GLB, keeping 3D concept vehicle.',error);
           });
@@ -259,22 +286,37 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
       const tick=()=>{
         if(cancelled||!visible)return;
         frame=window.requestAnimationFrame(tick);
-        const p=refState.current.progress;
-        const position=(p-.5);
-        if(!dragging)targetSpin+=.00145;
-        spin+=(targetSpin-spin)*.08;
-        root.rotation.y=spin+p*1.2;
-        root.position.y=Math.sin(performance.now()*.0013)*.018;
-        root.position.z=position*.30;
-        const cameraAngle=.25+p*.85;
-        camera.position.x+=(7.1*Math.cos(cameraAngle)-camera.position.x)*.025;
-        camera.position.z+=(7.8*Math.sin(cameraAngle+1.05)-camera.position.z)*.025;
-        camera.position.y+=(3.6+Math.sin(p*Math.PI)*.65-camera.position.y)*.03;
-        camera.lookAt(0,.83,0);
-        point.intensity=refState.current.mood==='golden-hour'?100:54;
-        point.color.set(refState.current.mood==='golden-hour'?0xffae6f:0xffebc6);
-        platform.rotation.y+=.0009;
-        renderer.toneMappingExposure=refState.current.mood==='golden-hour'?1.45:1.82;
+        const delta=Math.min(clock.getDelta(),.05);
+        const current=refState.current;
+        if(controls){
+          controls.autoRotate=current.autoRotate&&!current.reducedMotion;
+          if(current.viewPreset!==lastPreset){
+            const dist=camera.position.distanceTo(controls.target);
+            const off:Record<string,[number,number,number]>={
+              hero:[.67,.31,.68],front:[.04,.26,1],side:[1,.27,.03],rear:[.04,.26,-1]
+            };
+            const pos=off[current.viewPreset]||off.hero;
+            camera.position.set(pos[0]*dist,controls.target.y+pos[1]*dist,pos[2]*dist);
+            lastPreset=current.viewPreset;
+          }
+          const wanted=Math.max(5.2,Math.min(18,defaultDistance/current.zoom));
+          const distance=camera.position.distanceTo(controls.target);
+          if(Math.abs(distance-wanted)>.035&&!controls.autoRotate){
+            const dir=camera.position.clone().sub(controls.target).normalize();
+            camera.position.copy(controls.target).addScaledVector(dir,distance+(wanted-distance)*.09);
+          }
+          controls.update(delta);
+        }
+        const wantedDoor=current.doorsOpen&&!hasApprovedModel?1:0;
+        doorAmount+=(wantedDoor-doorAmount)*Math.min(1,delta*4);
+        built.doors.forEach((door,i)=>{door.rotation.y=(i===0?-.98:.98)*doorAmount;});
+        if(!current.reducedMotion){
+          root.position.y=Math.sin(performance.now()*.0013)*.014;
+          platform.rotation.y+=delta*.022;
+        }
+        point.intensity=current.mood==='golden-hour'?81:61;
+        point.color.set(current.mood==='golden-hour'?0xffae6f:0xd3e8ff);
+        renderer.toneMappingExposure=current.mood==='golden-hour'?1.48:1.68;
         renderer.render(scene,camera);
       };
       const observerStart=()=>{visible=true;if(!frame)tick();};
@@ -289,16 +331,9 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
         camera.aspect=w/h;camera.updateProjectionMatrix();
       });
       resize.observe(element);
-      renderer.domElement.addEventListener('pointerdown',onDown);
-      renderer.domElement.addEventListener('pointermove',onMove);
-      renderer.domElement.addEventListener('pointerup',onUp);
-      renderer.domElement.addEventListener('pointercancel',onUp);
       const cleanup=()=>{
         observer?.disconnect();resize?.disconnect();
-        renderer.domElement.removeEventListener('pointerdown',onDown);
-        renderer.domElement.removeEventListener('pointermove',onMove);
-        renderer.domElement.removeEventListener('pointerup',onUp);
-        renderer.domElement.removeEventListener('pointercancel',onUp);
+        controls?.dispose();
         window.cancelAnimationFrame(frame);
         scene.traverse(obj=>{
           if(obj instanceof THREE.Mesh){
@@ -335,7 +370,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
    const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
  },[paint,status]);
 
- return <div className="vehicle-webgl" ref={host} role="img" aria-label={'Real-time 3D '+category+' silhouette'}>
+ return <div className="vehicle-webgl" ref={host} aria-label={'Interactive concept 3D '+category+' silhouette'}>
    {status==='loading'&&<div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING 3D STUDIO</small></div>}
    {status==='fallback'&&<div className="vehicle-3d-fallback">3D preview is unavailable in this browser. Use the vehicle gallery below.</div>}
  </div>;
