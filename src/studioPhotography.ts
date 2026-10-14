@@ -21,7 +21,7 @@ const candidates:Record<string,StudioEditorialPhoto>={
   src:local?'/studio-review/mt-studio-tuv-front-review.jpg':commons('Mahindra TUV 300 Chennai 2016 (2).JPG'),
   credit:'SnapMeUp (publisher-masked front photo) · Wikimedia Commons',license:'CC BY-SA 4.0',
   page:'https://commons.wikimedia.org/wiki/File:Mahindra_TUV_300_Chennai_2016_(2).JPG',
-  model:'2016 Mahindra TUV300 — front-three-quarter image with publisher's plate mask',privacyApproved:false
+  model:'2016 Mahindra TUV300 — front-three-quarter image with publisher plate mask',privacyApproved:false
  },
  'Kia Carens':{
   src:local?'/studio-review/mt-studio-carens-review.jpg':commons('2022 Kia Carens 1.4 Premiere (Indonesia) front view.jpg'),
