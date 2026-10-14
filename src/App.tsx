@@ -514,7 +514,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <p>Pick a model in the cinematic garage, then compare the practical details below. The vehicle you choose stays linked to your quotation.</p>
         </div>
 
-        <div className="fleet-studio-launch fleet-studio-launch-v18" aria-label="Enter interactive cinematic vehicle garage">
+        <div className="fleet-studio-launch fleet-studio-launch-v18 garage-luxe-entry-v19" aria-label="Enter interactive cinematic vehicle garage">
           <div className="fleet-launch-scanlines" aria-hidden="true"/>
           <div className="fleet-launch-rays" aria-hidden="true"><i/><i/><i/></div>
           <div className="fleet-studio-launch-copy">
