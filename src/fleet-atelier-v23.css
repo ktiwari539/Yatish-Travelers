@@ -310,3 +310,27 @@
  .fleet-atelier-viewer .ride-studio-image-action{animation:none!important}
  .fleet-atelier-pagination button:hover,.fleet-atelier-main-cta:hover{transform:none}
 }
+/* Visual QA refinements: keep comparisons compact and maintain readable,
+   warm-neutral gallery navigation even when a source photo is unavailable. */
+#fleet .fleet-compare-list .fleet-card.fleet-atelier-row{min-height:151px!important}
+#fleet .fleet-atelier-row-content{padding:15px 19px;gap:6px}
+.fleet-atelier-row-mark{padding:15px 8px}
+.fleet-atelier-viewer .ride-studio-model-rail{background:#203f33!important;border-top-color:#5b7969!important}
+.fleet-atelier-viewer .ride-studio-model-rail button{
+ background:#f3f1e8!important;color:#254c3d!important;
+ border:1px solid #c5d4c8!important;border-radius:10px!important;
+}
+.fleet-atelier-viewer .ride-studio-model-rail button.active{
+ background:#d5e7d8!important;color:#163d2d!important;
+ border-color:#90b79b!important;box-shadow:inset 0 0 0 1px #afcfb5!important;
+}
+.fleet-atelier-viewer .ride-studio-model-rail button.active small{color:#9b7451!important}
+.fleet-atelier-viewer .ride-studio-photo-pending{color:#2c513e!important;gap:10px}
+.fleet-atelier-viewer .ride-studio-photo-pending strong{color:#305442!important}
+.fleet-atelier-viewer .ride-studio-photo-pending span{color:#657d6d!important}
+.fleet-atelier-viewer .ride-studio-photo-pending svg{color:#ac8b5f!important}
+.fleet-atelier-viewer .ride-studio-cinematic-toggle{display:none!important}
+@media(max-width:760px){
+ #fleet .fleet-compare-list .fleet-card.fleet-atelier-row{min-height:144px!important}
+ #fleet .fleet-atelier-row-content{padding:14px 12px}
+}
