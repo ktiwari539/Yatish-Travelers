@@ -196,6 +196,11 @@ async function smoke(){
    'TUV studio prefers newly selected high-resolution licensed cropped model-reference photo');
  ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
    'TUV photo provenance and license appear beside the preview');
+ await page.waitForTimeout(1350);
+ await page.waitForFunction(()=>{
+   const img=document.querySelector('.ride-studio-car-image');
+   return img instanceof HTMLImageElement&&img.complete&&img.naturalWidth>600;
+ },null,{timeout:8000});
  await studio.screenshot({path:'artifacts/visual-evidence/tuv-curated-studio.png',animations:'disabled'});
  await page.keyboard.press('Escape');
  await studio.waitFor({state:'detached'});
