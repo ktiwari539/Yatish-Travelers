@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ALLOWED_CC0_GARAGE_MODELS } from './garageConceptAssets';
 
 type VehicleKind='sedan'|'mpv'|'suv'|'van';
 export type PaintTone='champagne'|'pearl'|'obsidian'|'forest';
@@ -12,6 +13,7 @@ type Props={
  mood:StudioMood;
  progress:number;
  modelUrl?:string;
+ conceptUrl?:string;
  onUnavailable?:()=>void;
  autoRotate?:boolean;
  doorsOpen?:boolean;
@@ -205,7 +207,7 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
  return {vehicle,wheels,paint,doors};
 }
 
-export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailable,autoRotate=true,doorsOpen=false,zoom=1,reducedMotion=false,viewPreset='hero'}:Props){
+export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,onUnavailable,autoRotate=true,doorsOpen=false,zoom=1,reducedMotion=false,viewPreset='hero'}:Props){
  const host=useRef<HTMLDivElement|null>(null);
  const engine=useRef<{
   renderer:THREE.WebGLRenderer;scene:THREE.Scene;camera:THREE.PerspectiveCamera;
@@ -292,10 +294,13 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
       root.add(built.vehicle);
       // Approved local GLB assets replace the conceptual 3D silhouette.
       // Uploaded assets are self-contained and validated by the local CRM backend.
-      if(modelUrl && /^\/api\/models\/[0-9a-f-]{36}\.glb$/.test(modelUrl)){
+      const approvedLocal=Boolean(modelUrl && /^\/api\/models\/[0-9a-f-]{36}\.glb$/.test(modelUrl));
+      const approvedGeneric=Boolean(!approvedLocal&&conceptUrl&&ALLOWED_CC0_GARAGE_MODELS.has(conceptUrl));
+      const targetModel=approvedLocal?modelUrl:approvedGeneric?conceptUrl:undefined;
+      if(targetModel){
         import('three/examples/jsm/loaders/GLTFLoader.js').then(({GLTFLoader})=>{
           if(cancelled)return;
-          new GLTFLoader().load(modelUrl,gltf=>{
+          new GLTFLoader().load(targetModel,gltf=>{
             if(cancelled)return;
             const custom=gltf.scene;
             const box=new THREE.Box3().setFromObject(custom);
@@ -414,7 +419,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,onUnavailab
   };
  // Scene rebuilt only when silhouette category changes, not on every scroll frame.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[category,modelUrl]);
+ },[category,modelUrl,conceptUrl]);
 
  useEffect(()=>{
    const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
