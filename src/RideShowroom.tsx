@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
 import { needsInnovaPlateReview } from './mediaSafety';
+import { Real3DVehicle, type PaintTone } from './Real3DVehicle';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
 type ShowroomVehicle=FleetReelVehicle & {capacity?:number;modelUrl?:string};
@@ -47,6 +48,12 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [revealId,setRevealId]=useState(0);
  const [cinematicOn,setCinematicOn]=useState(true);
  const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
+ const [show3D,setShow3D]=useState(true);
+ const [rotationPlaying,setRotationPlaying]=useState(true);
+ const [doorsOpen,setDoorsOpen]=useState(false);
+ const [viewPreset,setViewPreset]=useState<'hero'|'front'|'side'|'rear'>('hero');
+ const [zoom,setZoom]=useState(1);
+ const [conceptPaint,setConceptPaint]=useState<PaintTone>('pearl');
  const [reducedMotion,setReducedMotion]=useState(false);
  const [pointerDown,setPointerDown]=useState<number|null>(null);
  const [dragging,setDragging]=useState(false);
@@ -62,6 +69,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const setCar=(index:number)=>{
   setVehicleIndex((index+vehicles.length)%vehicles.length);
   setAngle(0);setDetails(false);setPointerDown(null);setDragging(false);setRevealId(count=>count+1);
+  setDoorsOpen(false);setZoom(1);setViewPreset('hero');
  };
  const nextAngle=(delta:number)=>{
   if(photos.length<2)return;
@@ -148,6 +156,10 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> GARAGE BAY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
      <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> STUDIO LIGHTING <i/> SYSTEM READY</div>
      <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
+     <div className="ride-studio-mode-switch" role="group" aria-label="Choose studio viewing mode">
+       <button type="button" className={show3D?'selected':''} aria-pressed={show3D} onClick={()=>setShow3D(true)}>ROTATE 3D CONCEPT</button>
+       <button type="button" className={!show3D?'selected':''} aria-pressed={!show3D} onClick={()=>setShow3D(false)}>ACTUAL MODEL PHOTOS</button>
+     </div>
      <div className="ride-studio-illumination" role="group" aria-label="Change studio environment lighting">
        {(['ion','titanium','ember'] as const).map(preset=><button
          key={preset} type="button" aria-label={'Use '+preset+' studio lighting'}
@@ -156,27 +168,40 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
          onClick={()=>setLightPreset(preset)}><span className={'light-dot '+preset}/>{preset==='ion'?'ION BLUE':preset==='titanium'?'TITANIUM':'AMBER'}</button>)}
      </div>
      <div className="ride-studio-garage-ticks" aria-hidden="true"><b>01</b><i/><i/><i/><i/><i/><b>100</b></div>
-     <button type="button" className="ride-studio-image-action"
-       aria-label={'Explore specifications of '+active.name}
-       onPointerDown={event=>{if(event.pointerType!=='mouse' || event.button===0){setPointerDown(event.clientX);setDragging(false);}}}
-       onPointerUp={event=>onPointerRelease(event.clientX)}
-       onPointerCancel={()=>setPointerDown(null)}
-       onClick={()=>{if(dragging){setDragging(false);return;}setDetails(true);}}>
-       <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')}>
-         <div className="ride-studio-frame-glow" aria-hidden="true"/>
-         {image&&!needsInnovaPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
-         <RideStudioPhoto car={active} src={image} angle={shownAngle}/>
-         <div className="ride-studio-frame-sweep" aria-hidden="true"/>
-       </div>
-       <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> EXPLORE VEHICLE DETAILS</span>
-     </button>
+     {show3D?
+       <div className="ride-studio-interactive-3d" role="group" aria-label={'Rotate the '+active.category+' concept car'}>
+         <Real3DVehicle key={active.name} category={active.category} modelUrl={active.modelUrl}
+           paint={conceptPaint} mood={lightPreset==='ember'?'golden-hour':'daylight'} progress={.50}
+           zoom={zoom} autoRotate={rotationPlaying&&cinematicOn} doorsOpen={doorsOpen}
+           viewPreset={viewPreset} reducedMotion={reducedMotion}
+           onUnavailable={()=>setShow3D(false)}/>
+         <div className="ride-studio-3d-disclaimer">
+           {active.modelUrl?'APPROVED MODEL IF LOADED · CONCEPT FALLBACK':'INTERACTIVE 3D CONCEPT · NOT AN EXACT '+active.name.toUpperCase()+' REPLICA'}
+         </div>
+       </div>:
+       <button type="button" className="ride-studio-image-action"
+         aria-label={'Explore specifications of '+active.name}
+         onPointerDown={event=>{if(event.pointerType!=='mouse'||event.button===0){setPointerDown(event.clientX);setDragging(false);}}}
+         onPointerUp={event=>onPointerRelease(event.clientX)}
+         onPointerCancel={()=>setPointerDown(null)}
+         onClick={()=>{if(dragging){setDragging(false);return;}setDetails(true);}}>
+         <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')}>
+           <div className="ride-studio-frame-glow" aria-hidden="true"/>
+           {image&&!needsInnovaPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
+           <RideStudioPhoto car={active} src={image} angle={shownAngle}/>
+           <div className="ride-studio-frame-sweep" aria-hidden="true"/>
+         </div>
+         <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> EXPLORE VEHICLE DETAILS</span>
+       </button>
+     }
      <div className="ride-studio-stage-footer">
-      <div><strong><Gauge size={15}/> {photos.length>1?'CAMERA BAY / PHOTO ANGLES':'MODEL VIEW'}</strong><span>{photos.length>1?'Swipe or use the arrows to switch available photo angles':'360° turning requires approved 3D models or rotation photographs'}</span></div>
-      <div className="ride-studio-angle-nav" role="group" aria-label="Photo-angle controls">
+      <div><strong><Gauge size={15}/> {show3D?'INTERACTIVE ORBIT / CONCEPT PREVIEW':photos.length>1?'CAMERA BAY / ACTUAL PHOTOS':'MODEL PHOTO'}</strong>
+        <span>{show3D?'Drag to rotate, pinch or scroll to zoom. Concept shape, not an exact model.':photos.length>1?'Swipe or use the arrows for verified model-specific photo angles':'A full photographic 360° requires additional approved photos.'}</span></div>
+      {!show3D&&<div className="ride-studio-angle-nav" role="group" aria-label="Photo-angle controls">
        <button type="button" aria-label="Previous photo angle" disabled={photos.length<2} onClick={()=>nextAngle(-1)}><ChevronLeft size={23}/></button>
        <span>{String(shownAngle+1).padStart(2,'0')} / {String(Math.max(photos.length,1)).padStart(2,'0')}</span>
        <button type="button" aria-label="Next photo angle" disabled={photos.length<2} onClick={()=>nextAngle(1)}><ChevronRight size={23}/></button>
-      </div>
+      </div>}
      </div>
      {!reducedMotion&&<span className="ride-studio-ambient-label" aria-hidden="true">PREMIUM ROAD EXPERIENCES</span>}
     </div>
@@ -188,7 +213,30 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <div className="ride-studio-energy" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/></div>
       </div>
       <div className="ride-studio-panel-meta"><span>{active.seats} seating</span><span>₹{active.rateMin??15}–₹{active.rateMax??25} / km indicative</span></div>
-      <p className="ride-studio-media-truth">{isReferenceApproved?'Reviewed model photo. Lighting preset changes only the studio, not the vehicle colour.':'Editorial reference photo. A higher-quality, rights-cleared image is required for a release-ready showcase.'}</p>
+      <p className="ride-studio-media-truth">{show3D?'Rotatable class-based 3D concept. Exact shapes, colours and door mechanisms are not claims about your booked vehicle.':isReferenceApproved?'Reviewed model photo. Lighting does not change the actual car paint.':'Editorial reference photo. Better licensed, plate-safe imagery remains required.'}</p>
+      {show3D&&<div className="ride-studio-drive-controls" aria-label="Interactive vehicle controls">
+        <div className="ride-studio-drive-buttons">
+          <button type="button" aria-pressed={rotationPlaying} aria-label={rotationPlaying?'Pause 3D rotation':'Resume 3D rotation'} onClick={()=>setRotationPlaying(value=>!value)}>{rotationPlaying?'Ⅱ PAUSE TURN':'▶ RESUME TURN'}</button>
+          <button type="button" aria-pressed={doorsOpen} aria-label={doorsOpen?'Close concept doors':'Open concept doors'} onClick={()=>setDoorsOpen(value=>!value)}>{doorsOpen?'CLOSE DOORS':'OPEN DOORS'}</button>
+        </div>
+        <div className="ride-studio-camera-presets" role="group" aria-label="3D camera presets">
+          {(['hero','front','side','rear'] as const).map(view=><button type="button" key={view}
+            aria-label={'Show '+view+' 3D camera angle'} aria-pressed={viewPreset===view}
+            className={viewPreset===view?'active':''} onClick={()=>{setRotationPlaying(false);setViewPreset(view);}}>{view.toUpperCase()}</button>)}
+        </div>
+        <div className="ride-studio-zoom-controls" role="group" aria-label="3D camera zoom">
+          <button type="button" aria-label="Zoom 3D out" onClick={()=>{setRotationPlaying(false);setZoom(value=>Math.max(.8,Math.round((value-.2)*10)/10));}}>−</button>
+          <span>{Math.round(zoom*100)}% ZOOM</span>
+          <button type="button" aria-label="Zoom 3D in" onClick={()=>{setRotationPlaying(false);setZoom(value=>Math.min(2,Math.round((value+.2)*10)/10));}}>+</button>
+        </div>
+        <div className="ride-studio-paint-presets" role="group" aria-label="Concept car paint samples, not stock variants">
+          {(['pearl','obsidian','champagne','forest'] as const).map(color=><button key={color}
+            type="button" aria-label={'Preview concept in '+color+' paint'}
+            aria-pressed={conceptPaint===color} className={'paint-swatch '+color+(conceptPaint===color?' selected':'')}
+            onClick={()=>setConceptPaint(color)} title={'Concept only: '+color}/>)}
+          <small>Concept palette · not real available colours</small>
+        </div>
+      </div>}
       <div className="ride-studio-switch">
        <button type="button" aria-label="Previous vehicle" onClick={()=>setCar(vehicleIndex-1)}><ArrowLeft size={18}/> Previous</button>
        <button type="button" aria-label="Next vehicle" onClick={()=>setCar(vehicleIndex+1)}>Next <ArrowRight size={18}/></button>
@@ -198,8 +246,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        {details?'Hide vehicle details':'Explore this vehicle'} <ArrowRight size={18}/>
       </button>
       {details?productDetails:<div className="ride-studio-preview-copy">
-       <strong>STEP INTO THE DRIVER'S VIEW</strong>
-       <p>Explore the available real model-reference angles, then open the vehicle details. Actual trims, colours and fleet availability are confirmed by our team.</p>
+       <strong>{show3D?'A GARAGE YOU CAN ACTUALLY ROTATE':'THE ACTUAL VEHICLE REFERENCE'}</strong>
+       <p>{show3D?'Rotate a genuine 3D concept in the garage, zoom and open its illustrative doors. Switch to actual photos to verify how the selected vehicle really looks.':'Browse this named vehicle’s actual available photo angles, then inspect the booking specifications. Missing rights-cleared images remain blocked.'}</p>
        <div><MousePointer2 size={16}/> Select another model below or use the arrow keys.</div>
        <button type="button" className="ride-studio-cinematic-toggle" aria-pressed={!cinematicOn}
          onClick={()=>setCinematicOn(value=>!value)}>
