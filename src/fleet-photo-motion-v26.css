@@ -193,3 +193,16 @@
  #fleet .fleet-launch-preview-models button img{height:43px}
  #fleet .fleet-launch-preview-models button span{font-size:8px}
 }
+
+/* Intro: car approaches the viewer, then hands off to the existing site.
+   It runs once per session in FleetHeroVisual; no new blocking loader. */
+@keyframes mtArrivalApproach{
+ 0%{opacity:0;transform:perspective(1100px) translate3d(16%,17%,0) scale(.58);filter:blur(9px)}
+ 23%{opacity:.96;filter:blur(2px)}
+ 58%{transform:perspective(1100px) translate3d(1%,1%,0) scale(.98);filter:blur(0)}
+ 80%{transform:perspective(1100px) translate3d(-1%,0,0) scale(1.025)}
+ 100%{opacity:1;transform:perspective(1100px) translate3d(0,0,0) scale(1.01);filter:blur(0)}
+}
+@media(min-width:761px) and (prefers-reduced-motion:no-preference){
+ .cinema-arrival-vehicle{animation:mtArrivalApproach 2.2s cubic-bezier(.16,.64,.18,1) both!important}
+}
