@@ -10,7 +10,7 @@ const localStudioReview={
  }){
   const allowed=new Set(['mt-studio-ertiga-review.jpg','mt-studio-tuv-review.jpg','mt-studio-carens-review.jpg']);
   server.middlewares.use('/studio-review/',(req,res)=>{
-   const name=decodeURIComponent((req.url||'').split('?')[0].replace(/^\\/+/,''));
+   const name=decodeURIComponent((req.url||'').split('?')[0].replace(/^[/]+/,''));
    const file=resolve('.data/studio-review',name);
    if(process.env.VITE_STUDIO_REVIEW_READY!=='1'||!allowed.has(name)||!existsSync(file)){
     res.statusCode=404;res.end('Review photo not installed');return;
