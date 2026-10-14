@@ -518,18 +518,18 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <div className="fleet-launch-scanlines" aria-hidden="true"/>
           <div className="fleet-launch-rays" aria-hidden="true"><i/><i/><i/></div>
           <div className="fleet-studio-launch-copy">
-            <span><Sparkles size={17}/> THE MATESHWARI GARAGE · INTERACTIVE EXPERIENCE</span>
-            <h3>The garage <em>is open.</em></h3>
-            <p>Your next ride deserves an entrance. Enter the full-screen garage, watch each vehicle roll into the spotlight, switch camera angles and unlock its specifications.</p>
+            <span><Sparkles size={17}/> MATESHWARI MOTOR STUDIO / EXPERIENCE 02</span>
+            <h3>Your ride. <em>In the spotlight.</em></h3>
+            <p>An immersive showroom with dramatic lighting, real model-reference photography and a closer look at the details. Choose the vehicle that suits your journey.</p>
             <button type="button" onClick={()=>setStudioVehicle(selected.name)}>
               <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
             </button>
-            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> ENGINE READY <b>•</b> FULL-SCREEN REVEAL <b>•</b> 10 MODEL REFERENCES</small>
+            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> STUDIO READY <b>•</b> THREE LIGHTING MOODS <b>•</b> MODEL EXPLORER</small>
           </div>
           <div className="fleet-studio-launch-visual">
             <div className="fleet-launch-portal" aria-hidden="true"><i/><i/><i/></div>
             {!studioLaunchPhotoFailed?
-              <img src="/media/mt-xuv700-driving.webp" alt="Reviewed XUV700 reference vehicle promoting the interactive studio" loading="lazy"
+              <img src="/media/mt-xuv700-studio.webp" alt="Reviewed XUV700 studio model-reference vehicle promoting the interactive showroom" loading="lazy"
                 onError={()=>setStudioLaunchPhotoFailed(true)}/>:
               <div className="fleet-studio-launch-fallback" role="img" aria-label="Vehicle photograph pending local media installation">
                 <CarFront size={102} strokeWidth={1.1}/><strong>THE GARAGE AWAITS</strong><small>Start your full-screen vehicle experience</small>
