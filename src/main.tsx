@@ -52,3 +52,5 @@ import './garage-motion-v21.css';
 import './fleet-photo-rich-v24.css';
 
 import './fleet-photo-motion-v26.css';
+
+import './arrival-intro-v27.css';
