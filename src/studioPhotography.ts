@@ -22,4 +22,9 @@ const candidates:Record<string,StudioEditorialPhoto>={
   model:'2016 Mahindra TUV300 model reference',privacyApproved:false
  }
 };
-export function studioEditorialFor(name:string){return candidates[name];}
+export function studioEditorialFor(name:string){
+ // Unreviewed editorial candidates are visible only in local acceptance.
+ // Image-rights and registration-plate approval are still release gates.
+ if(typeof window==='undefined'||!['localhost','127.0.0.1','[::1]'].includes(window.location.hostname))return undefined;
+ return candidates[name];
+}
