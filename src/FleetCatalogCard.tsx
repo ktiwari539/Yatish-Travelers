@@ -1,30 +1,33 @@
-import { ArrowRight, ArrowUpRight, CarFront, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, Maximize2, RotateCw } from 'lucide-react';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
+import { needsInnovaPlateReview } from './mediaSafety';
 
-/** Clean, text-first comparison: low-quality editorial street photos should
- * not compete with the reviewed vehicle spotlight. All models stay available,
- * with real photographs one click away when they pass their privacy gate. */
-export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
- car:FleetReelVehicle;index:number;onEstimate:()=>void;onExplore?:()=>void
-}){
- return <article className="fleet-card premium-catalog-card fleet-atelier-row" data-model={car.name}>
-  <div className="fleet-atelier-row-mark" aria-hidden="true">
-    <span>{String(index+1).padStart(2,'0')}</span><CarFront size={28} strokeWidth={1.4}/>
+export function FleetCatalogCard({car,index,onEstimate,onExplore}:{car:FleetReelVehicle;index:number;onEstimate:()=>void;onExplore?:()=>void}){
+ const [angle,setAngle]=useState(0);
+ const [failed,setFailed]=useState(false);
+ const photos=[car.image,...(car.gallery||[])].filter(Boolean).slice(0,6);
+ const src=photos[angle]??car.image;
+ const reviewPending=needsInnovaPlateReview(car.name,src);
+ useEffect(()=>setFailed(false),[src]);
+ return <article className="fleet-card premium-catalog-card" data-model={car.name} style={{animationDelay:`${index*70}ms`}}>
+  <div className="fleet-visual premium-catalog-visual">
+   {!failed&&!reviewPending?<img src={src} alt={car.name+' photo angle '+(angle+1)} loading="lazy" decoding="async" onError={()=>setFailed(true)}/>:
+    <div className="premium-catalog-fallback" role="img" aria-label={reviewPending?'Registration plate review pending for '+car.name:'Photo unavailable for '+car.name}>{car.name}<small>{reviewPending?'Registration plate review pending':'Image unavailable'}</small></div>}
+   <div className="fleet-shade"/>
+   {onExplore&&<button type="button" className="fleet-showroom-card-cta" onClick={onExplore} aria-label={'Open full-screen car studio for '+car.name}><Maximize2 size={15}/> View in studio</button>}
+   <div className="fleet-number">{String(index+1).padStart(2,'0')}</div>
+   <span className="fleet-type">{car.category}</span>
+   {photos.length>1&&<button type="button" className="catalog-angle-button"
+      aria-label={'Show another angle of '+car.name} onClick={()=>setAngle(i=>(i+1)%photos.length)}>
+      <RotateCw size={15}/> {angle+1}/{photos.length}
+     </button>}
   </div>
-  <div className="fleet-atelier-row-content">
-    <div className="fleet-atelier-row-head"><span>{car.category}</span><strong>{car.tag}</strong></div>
-    <h3>{car.name}</h3>
-    <div className="fleet-atelier-row-data">
-      <span><Users size={14}/> {car.seats} seats</span>
-      <span><b>₹{car.rateMin??15}–₹{car.rateMax??25}</b> / km indicative</span>
-    </div>
-    <div className="fleet-atelier-row-actions">
-      {onExplore&&<button type="button" onClick={onExplore}
-        aria-label={'Open full-screen car studio for '+car.name}>
-        View photos <ArrowUpRight size={16}/>
-      </button>}
-      <button type="button" onClick={onEstimate}>Estimate fare <ArrowRight size={15}/></button>
-    </div>
+  <div className="fleet-meta">
+   <span>{car.tag}</span><h3>{car.name}</h3>
+   <div className="rate"><strong>₹{car.rateMin??15}–₹{car.rateMax??25}</strong><small>/ km indicative range</small></div>
+   <div className="fleet-bottom"><span>{car.seats} seats · {car.category}</span>
+    <button type="button" onClick={onEstimate}>Estimate fare <ArrowRight size={15}/></button></div>
   </div>
  </article>;
 }
