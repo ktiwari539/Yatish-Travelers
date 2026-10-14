@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 const localStudioReview={
  name:'local-studio-review-photo-only',
  configureServer(server:ViteDevServer){
-  const allowed=new Set(['mt-studio-ertiga-review.jpg','mt-studio-tuv-review.jpg','mt-studio-carens-review.jpg']);
+  const allowed=new Set(['mt-studio-ertiga-review.jpg','mt-studio-tuv-front-review.jpg','mt-studio-carens-review.jpg']);
   server.middlewares.use('/studio-review/',(req,res)=>{
    const name=decodeURIComponent((req.url||'').split('?')[0].replace(/^[/]+/,''));
    const file=resolve('.data/studio-review',name);
