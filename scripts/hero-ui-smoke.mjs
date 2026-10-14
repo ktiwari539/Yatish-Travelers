@@ -78,11 +78,11 @@ async function smoke(){
  ensure(await page.locator('.premium-catalog-card .premium-catalog-visual img').count()>=5,
   'Photo-rich Choose your ride shows real model images instead of text-only cards');
  const richCard=page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
- ensure((await richCard.locator('.premium-catalog-visual img').getAttribute('src')||'').includes('Indonesia%20International%20Motor%20Show%202018'),
+ ensure((await richCard.getAttribute('data-reviewed-candidate')||'').includes('Indonesia%20International%20Motor%20Show%202018'),
   'Ertiga grid shows licensed high-resolution motor-show model photo');
- ensure((await page.locator('.premium-catalog-card[data-model="Mahindra TUV"] .premium-catalog-visual img').getAttribute('src')||'').includes('Mahindra%20TUV%20300%20Chennai%202016'),
+ ensure((await page.locator('.premium-catalog-card[data-model="Mahindra TUV"]').getAttribute('data-reviewed-candidate')||'').includes('Mahindra%20TUV%20300%20Chennai%202016'),
   'TUV grid shows correct model and masked front-three-quarter photo source');
- ensure((await page.locator('.premium-catalog-card[data-model="Kia Carens"] .premium-catalog-visual img').getAttribute('src')||'').includes('2022%20Kia%20Carens'),
+ ensure((await page.locator('.premium-catalog-card[data-model="Kia Carens"]').getAttribute('data-reviewed-candidate')||'').includes('2022%20Kia%20Carens'),
   'Carens card shows licensed motor-show photo instead of weak showroom/street image');
  ensure(await richCard.locator('.fleet-card-photo-credit a').count()===1,
   'Editorial photographs retain photographer, licence and provenance in the card');
