@@ -27,7 +27,7 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
    data-reviewed-candidate={editorial?.src||''} data-gallery-count={photos.length}
     style={{animationDelay:`${index*70}ms`}}>
   <div className="fleet-visual premium-catalog-visual">
-   {!failed&&!reviewPending?<img src={src} alt={car.name+' — authentic model photograph '+(shown+1)}
+   {!failed&&!reviewPending?<img key={src} src={src} alt={car.name+' — authentic model photograph '+(shown+1)}
     loading="lazy" decoding="async" onError={()=>{
        // If a high-resolution local-review image is offline, fall back to the
        // existing photograph of the SAME vehicle. Never substitute another model.
