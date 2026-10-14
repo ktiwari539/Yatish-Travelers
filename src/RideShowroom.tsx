@@ -47,10 +47,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [vehicleIndex,setVehicleIndex]=useState(()=>Math.max(0,vehicles.findIndex(v=>v.name===initialName)));
  const [angle,setAngle]=useState(0);
  const [details,setDetails]=useState(false);
- const [revealId,setRevealId]=useState(0);
  const [switching,setSwitching]=useState(false);
  const switchTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
- const [cinematicOn,setCinematicOn]=useState(true);
  const [reducedMotion,setReducedMotion]=useState(false);
  const [pointerDown,setPointerDown]=useState<number|null>(null);
  const [dragging,setDragging]=useState(false);
@@ -75,7 +73,6 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   switchTimer.current=setTimeout(()=>{
     setVehicleIndex(destination);
     setAngle(0);setDetails(false);setPointerDown(null);setDragging(false);
-    setRevealId(count=>count+1);
     setSwitching(false);
     switchTimer.current=null;
   },310);
@@ -83,7 +80,6 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const nextAngle=(delta:number)=>{
   if(photos.length<2)return;
   setAngle(current=>(current+delta+photos.length)%photos.length);
-  setRevealId(count=>count+1);
  };
  useEffect(()=>{
   previousFocus.current=document.activeElement;
@@ -142,14 +138,14 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   <div ref={dialogRef} className="ride-studio-dialog" role="dialog" aria-modal="true"
     aria-label="Mateshwari full-screen vehicle studio">
    <div className="ride-studio-topbar">
-    <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>VEHICLE GALLERY</span></strong><small>INTERACTIVE FLEET PREVIEW</small></div>
+    <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>VEHICLE GALLERY</span></strong><small>AUTHENTIC VEHICLE REFERENCES</small></div>
     <span className="ride-studio-step">SELECT THE REAL VEHICLE <i/> EXPLORE PHOTO ANGLES <i/> INSPECT DETAILS</span>
     <button ref={closeRef} className="ride-studio-close" type="button" onClick={onClose} aria-label="Close car studio">
      <X size={20}/> <span>Exit studio</span>
     </button>
    </div>
    <div className="ride-studio-body">
-    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')+(switching?' is-switching':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality}>
+    <div className={'ride-studio-stage ride-studio-stage-v18'+(switching?' is-switching':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality}>
      <div className="ride-studio-atmosphere" aria-hidden="true"/>
      <div className="ride-studio-softbox softbox-left" aria-hidden="true"/>
      <div className="ride-studio-softbox softbox-right" aria-hidden="true"/>
@@ -158,13 +154,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <div className="ride-studio-horizon"/><div className="ride-studio-floor"/><div className="ride-studio-grid"/>
        <div className="ride-studio-runway"/><div className="ride-studio-orbit"><i/><i/><i/></div>
      </div>
-     <div className="ride-studio-reveal" key={'reveal-'+revealId} aria-hidden="true">
-       <span className="ride-studio-reveal-gate"/>
-       <strong>VEHICLE INITIALIZED</strong><small>{active.name} / {String(vehicleIndex+1).padStart(2,'0')}</small>
-       <i/><i/><i/>
-     </div>
      <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> MODEL GALLERY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
-     <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
+     <div className="ride-studio-car-title" aria-hidden="true"><small>THE GALLERY / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
      <div className="ride-studio-garage-ticks" aria-hidden="true"><b>01</b><i/><i/><i/><i/><i/><b>100</b></div>
      <button type="button" className="ride-studio-image-action"
          aria-label={'Explore specifications of '+active.name}
@@ -215,10 +206,6 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <strong>THE ACTUAL VEHICLE REFERENCE</strong>
        <p>Browse available photographs of this exact model, then inspect the booking specifications. No unrelated cars or simulated 360° rotation.</p>
        <div><MousePointer2 size={16}/> Select another model below or use the arrow keys.</div>
-       <button type="button" className="ride-studio-cinematic-toggle" aria-pressed={!cinematicOn}
-         onClick={()=>setCinematicOn(value=>!value)}>
-         <Zap size={14}/> {cinematicOn?'Disable garage effects':'Enable garage effects'}
-       </button>
       </div>}
       <div className="ride-studio-panel-bottom">
        <p><ShieldCheck size={16}/> Editorial/local preview. Model photographs are not proof of vehicle ownership. Check image licences and plates before publication.</p>
