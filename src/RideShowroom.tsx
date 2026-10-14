@@ -12,7 +12,17 @@ type Props={
  onQuote:(name:string)=>void;
 };
 function uniquePhotos(car:ShowroomVehicle){
- return [car.image,...(car.gallery||[])].filter((url,index,all)=>Boolean(url)&&all.indexOf(url)===index);
+ const listed=[car.image,...(car.gallery||[])].filter((url,index,all)=>Boolean(url)&&all.indexOf(url)===index);
+ // Choose the most showroom-ready angle when the APPROVED local media is
+ // already part of the catalog. This is display-only: no CRM write or price
+ // change and never substitutes photographs from a different model.
+ const preferred:Record<string,string>={
+  'Mahindra XUV700':'/media/mt-xuv700-studio.webp',
+  'Mahindra Thar':'/media/mt-thar-red-front.webp'
+ };
+ const hero=preferred[car.name];
+ if(!hero||!listed.includes(hero))return listed;
+ return [hero,...listed.filter(url=>url!==hero)];
 }
 const knownSafePreview=(src:string)=>/^\/media\/mt-(?:thar-(?:red-front|red-rear|grey-road|grey-front-safe)|xuv700-(?:driving|studio)|traveller-safe)\.webp$/.test(src);
 function RideStudioPhoto({car,src,angle}:{car:ShowroomVehicle;src:string;angle:number}){
@@ -36,6 +46,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [details,setDetails]=useState(false);
  const [revealId,setRevealId]=useState(0);
  const [cinematicOn,setCinematicOn]=useState(true);
+ const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
  const [reducedMotion,setReducedMotion]=useState(false);
  const [pointerDown,setPointerDown]=useState<number|null>(null);
  const [dragging,setDragging]=useState(false);
@@ -47,6 +58,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const shownAngle=Math.min(angle,Math.max(photos.length-1,0));
  const image=photos[shownAngle]||'';
  const isReferenceApproved=knownSafePreview(image);
+ const studioAssetQuality=isReferenceApproved?'reviewed-local':'editorial-reference';
  const setCar=(index:number)=>{
   setVehicleIndex((index+vehicles.length)%vehicles.length);
   setAngle(0);setDetails(false);setPointerDown(null);setDragging(false);setRevealId(count=>count+1);
@@ -108,18 +120,21 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   <div><span>Colour / variant</span><strong>Confirm before booking</strong></div>
   <div><span>Assigned vehicle</span><strong>Confirmed on enquiry</strong></div>
  </div>;
- return createPortal(<div className="ride-studio-backdrop">
+ return createPortal(<div className={'ride-studio-backdrop garage-luxe-v19 garage-light-'+lightPreset}>
   <div ref={dialogRef} className="ride-studio-dialog" role="dialog" aria-modal="true"
     aria-label="Mateshwari full-screen vehicle studio">
    <div className="ride-studio-topbar">
     <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>MOTOR STUDIO</span></strong><small>INTERACTIVE FLEET PREVIEW</small></div>
-    <span className="ride-studio-step">SELECT A MODEL <i/> EXPLORE PHOTO ANGLES <i/> GET DETAILS</span>
+    <span className="ride-studio-step">SELECT VEHICLE <i/> LIGHT THE STAGE <i/> INSPECT DETAILS</span>
     <button ref={closeRef} className="ride-studio-close" type="button" onClick={onClose} aria-label="Close car studio">
      <X size={20}/> <span>Exit studio</span>
     </button>
    </div>
    <div className="ride-studio-body">
-    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')} data-vehicle={active.name}>
+    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality}>
+     <div className="ride-studio-atmosphere" aria-hidden="true"/>
+     <div className="ride-studio-softbox softbox-left" aria-hidden="true"/>
+     <div className="ride-studio-softbox softbox-right" aria-hidden="true"/>
      <div className="ride-studio-garage" aria-hidden="true">
        <div className="ride-studio-light light-left"/><div className="ride-studio-light light-right"/>
        <div className="ride-studio-horizon"/><div className="ride-studio-floor"/><div className="ride-studio-grid"/>
@@ -130,8 +145,16 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <strong>VEHICLE INITIALIZED</strong><small>{active.name} / {String(vehicleIndex+1).padStart(2,'0')}</small>
        <i/><i/><i/>
      </div>
-     <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> GARAGE BAY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED REFERENCE':'MODEL REFERENCE · REVIEW PENDING'}</span></div>
-     <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> GARAGE PREVIEW <i/> SYSTEM READY</div>
+     <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> GARAGE BAY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
+     <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> STUDIO LIGHTING <i/> SYSTEM READY</div>
+     <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
+     <div className="ride-studio-illumination" role="group" aria-label="Change studio environment lighting">
+       {(['ion','titanium','ember'] as const).map(preset=><button
+         key={preset} type="button" aria-label={'Use '+preset+' studio lighting'}
+         aria-pressed={lightPreset===preset}
+         className={lightPreset===preset?'selected':''}
+         onClick={()=>setLightPreset(preset)}><span className={'light-dot '+preset}/>{preset==='ion'?'ION BLUE':preset==='titanium'?'TITANIUM':'AMBER'}</button>)}
+     </div>
      <div className="ride-studio-garage-ticks" aria-hidden="true"><b>01</b><i/><i/><i/><i/><i/><b>100</b></div>
      <button type="button" className="ride-studio-image-action"
        aria-label={'Explore specifications of '+active.name}
@@ -139,12 +162,13 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        onPointerUp={event=>onPointerRelease(event.clientX)}
        onPointerCancel={()=>setPointerDown(null)}
        onClick={()=>{if(dragging){setDragging(false);return;}setDetails(true);}}>
-       <div key={active.name+'-'+shownAngle} className="ride-studio-vehicle-frame">
+       <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')}>
          <div className="ride-studio-frame-glow" aria-hidden="true"/>
+         {image&&!needsInnovaPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
          <RideStudioPhoto car={active} src={image} angle={shownAngle}/>
          <div className="ride-studio-frame-sweep" aria-hidden="true"/>
        </div>
-       <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> TAP TO INSPECT THE MACHINE</span>
+       <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> EXPLORE VEHICLE DETAILS</span>
      </button>
      <div className="ride-studio-stage-footer">
       <div><strong><Gauge size={15}/> {photos.length>1?'CAMERA BAY / PHOTO ANGLES':'MODEL VIEW'}</strong><span>{photos.length>1?'Swipe or use the arrows to switch available photo angles':'360° turning requires approved 3D models or rotation photographs'}</span></div>
@@ -158,12 +182,13 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
     </div>
     <aside className="ride-studio-panel">
       <div className="ride-studio-panel-heading">
-       <span className="ride-studio-eyebrow">GARAGE SELECT / {String(vehicleIndex+1).padStart(2,'0')}</span>
+       <span className="ride-studio-eyebrow">SELECTED MODEL / {String(vehicleIndex+1).padStart(2,'0')}</span>
        <h2>{active.name}</h2>
        <p>{active.tag} · {active.category}</p>
        <div className="ride-studio-energy" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/></div>
       </div>
       <div className="ride-studio-panel-meta"><span>{active.seats} seating</span><span>₹{active.rateMin??15}–₹{active.rateMax??25} / km indicative</span></div>
+      <p className="ride-studio-media-truth">{isReferenceApproved?'Reviewed model photo. Lighting preset changes only the studio, not the vehicle colour.':'Editorial reference photo. A higher-quality, rights-cleared image is required for a release-ready showcase.'}</p>
       <div className="ride-studio-switch">
        <button type="button" aria-label="Previous vehicle" onClick={()=>setCar(vehicleIndex-1)}><ArrowLeft size={18}/> Previous</button>
        <button type="button" aria-label="Next vehicle" onClick={()=>setCar(vehicleIndex+1)}>Next <ArrowRight size={18}/></button>
