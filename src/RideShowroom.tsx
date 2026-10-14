@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge } from 'lucide-react';
 import { needsInnovaPlateReview } from './mediaSafety';
 import { studioEditorialFor } from './studioPhotography';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
@@ -51,7 +51,6 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [switching,setSwitching]=useState(false);
  const switchTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [cinematicOn,setCinematicOn]=useState(true);
- const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
  const [reducedMotion,setReducedMotion]=useState(false);
  const [pointerDown,setPointerDown]=useState<number|null>(null);
  const [dragging,setDragging]=useState(false);
@@ -139,11 +138,11 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   <div><span>Colour / variant</span><strong>Confirm before booking</strong></div>
   <div><span>Assigned vehicle</span><strong>Confirmed on enquiry</strong></div>
  </div>;
- return createPortal(<div className={'ride-studio-backdrop garage-luxe-v19 garage-light-'+lightPreset}>
+ return createPortal(<div className="ride-studio-backdrop garage-luxe-v19 garage-light-titanium fleet-atelier-viewer">
   <div ref={dialogRef} className="ride-studio-dialog" role="dialog" aria-modal="true"
     aria-label="Mateshwari full-screen vehicle studio">
    <div className="ride-studio-topbar">
-    <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>MOTOR STUDIO</span></strong><small>INTERACTIVE FLEET PREVIEW</small></div>
+    <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>VEHICLE GALLERY</span></strong><small>INTERACTIVE FLEET PREVIEW</small></div>
     <span className="ride-studio-step">SELECT THE REAL VEHICLE <i/> EXPLORE PHOTO ANGLES <i/> INSPECT DETAILS</span>
     <button ref={closeRef} className="ride-studio-close" type="button" onClick={onClose} aria-label="Close car studio">
      <X size={20}/> <span>Exit studio</span>
@@ -164,16 +163,9 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <strong>VEHICLE INITIALIZED</strong><small>{active.name} / {String(vehicleIndex+1).padStart(2,'0')}</small>
        <i/><i/><i/>
      </div>
-     <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> GARAGE BAY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
+     <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> MODEL GALLERY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
      <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> REAL CAR PHOTOGRAPHY <i/> MODEL-SPECIFIC VIEW</div>
      <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
-     <div className="ride-studio-illumination" role="group" aria-label="Change studio environment lighting">
-       {(['ion','titanium','ember'] as const).map(preset=><button
-         key={preset} type="button" aria-label={'Use '+preset+' studio lighting'}
-         aria-pressed={lightPreset===preset}
-         className={lightPreset===preset?'selected':''}
-         onClick={()=>setLightPreset(preset)}><span className={'light-dot '+preset}/>{preset==='ion'?'ION BLUE':preset==='titanium'?'TITANIUM':'AMBER'}</button>)}
-     </div>
      <div className="ride-studio-garage-ticks" aria-hidden="true"><b>01</b><i/><i/><i/><i/><i/><b>100</b></div>
      <button type="button" className="ride-studio-image-action"
          aria-label={'Explore specifications of '+active.name}
