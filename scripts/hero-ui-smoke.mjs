@@ -103,7 +103,10 @@ async function smoke(){
  await studio.locator('.vehicle-webgl canvas').waitFor({state:'visible',timeout:8000});
  await page.waitForFunction(()=>Boolean(document.querySelector('.vehicle-webgl')?.getAttribute('data-camera-azimuth')),{timeout:8000});
  const angleStart=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
- await page.waitForTimeout(850);
+ await page.waitForFunction(start=>{
+   const current=document.querySelector('.vehicle-webgl')?.getAttribute('data-camera-azimuth');
+   return current!==null&&current!==undefined&&Math.abs(Number(current)-start)>.01;
+ },angleStart,{timeout:7000});
  const angleNext=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
  const telemetry=await studio.locator('.vehicle-webgl').evaluate(el=>({status:el.getAttribute('data-preview-source'),frame:el.getAttribute('data-frame'),auto:el.getAttribute('data-auto-rotate'),motion:el.getAttribute('data-reduce-motion'),rect:{width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}}));
  console.log('3D rotation diagnostics:',JSON.stringify({angleStart,angleNext,telemetry}));
