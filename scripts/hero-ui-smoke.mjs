@@ -95,12 +95,26 @@ async function smoke(){
  });
  ensure(cardLayout.ratio>.35&&cardLayout.height>=235,
   'The restored gallery gives real model photography generous space');
+ ensure(await page.locator('.fleet-launch-preview-models button').count()===3,
+  'Photo-rich studio entrance features three actual, separately named vehicle previews');
+ const dzireCard=page.locator('.premium-catalog-card[data-model="Maruti Dzire"]');
+ ensure(await dzireCard.locator('.fleet-photo-preview-strip button').count()>=3,
+  'Dzire has at least three distinct documented model-reference angles for local review');
+ const originalDzire=await dzireCard.locator('.premium-catalog-visual img').getAttribute('src');
+ await dzireCard.getByRole('button',{name:/View Maruti Dzire photo 2/}).click();
+ const nextDzire=await dzireCard.locator('.premium-catalog-visual img').getAttribute('src');
+ ensure(Boolean(originalDzire&&nextDzire&&originalDzire!==nextDzire),
+  'A photo thumbnail actually changes the vehicle picture');
+ ensure(await page.locator('.premium-catalog-card[data-model="Mahindra Thar"] .fleet-photo-preview-strip button').count()>=1,
+  'Approved Thar model retains its own photo gallery without unrelated substitutes');
 
  ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===2,
   'Desktop shows two-column condensed specifications');
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
+ ensure(await studio.locator('.ride-studio-photo-strip button').count()>=1,
+  'Full-screen vehicle viewer exposes actual photo thumbnails');
  ensure(await studio.locator('.ride-studio-reveal').count()===1,
   'Garage introduction has an automatic full-screen vehicle initialization sequence');
  ensure(await studio.locator('.ride-studio-backdrop').count()===0,
