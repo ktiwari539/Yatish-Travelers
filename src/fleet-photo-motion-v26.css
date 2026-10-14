@@ -156,3 +156,40 @@
  #fleet .photo-rich-fleet-card .premium-catalog-visual>img{animation:none!important}
  .garage-luxe-v19 .ride-studio-photo-strip button{transition:none!important}
 }
+
+/* Three photographed entry points keep the cinematic invitation useful. */
+#fleet .fleet-launch-preview-models{
+ position:absolute;z-index:13;
+ left:5%;right:5%;bottom:75px;
+ display:flex;gap:9px;justify-content:center;
+ pointer-events:auto;
+}
+#fleet .fleet-launch-preview-models button{
+ display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
+ width:30%;max-width:132px;
+ padding:4px;border:1px solid rgba(236,245,238,.48);
+ border-radius:11px;background:rgba(13,47,39,.83);color:#fffdf2;
+ cursor:pointer;min-width:0;
+ box-shadow:0 8px 30px rgba(6,22,18,.2);
+ backdrop-filter:blur(8px);transition:transform .2s,border-color .2s;
+}
+#fleet .fleet-launch-preview-models button:hover{
+ transform:translateY(-4px);border-color:#f4d6a6;
+}
+#fleet .fleet-launch-preview-models button:focus-visible{
+ outline:3px solid #f5daa0;outline-offset:3px;
+}
+#fleet .fleet-launch-preview-models button img{
+ width:100%;height:55px;display:block;object-fit:cover;
+ background:#d7e2da;border-radius:7px;
+}
+#fleet .fleet-launch-preview-models button span{
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ display:block;font-size:9px;font-weight:800;text-align:center;
+ padding:7px 2px 3px;letter-spacing:.02em;
+}
+@media(max-width:760px){
+ #fleet .fleet-launch-preview-models{bottom:61px;gap:5px}
+ #fleet .fleet-launch-preview-models button img{height:43px}
+ #fleet .fleet-launch-preview-models button span{font-size:8px}
+}
