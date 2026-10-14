@@ -95,39 +95,8 @@ async function smoke(){
  ensure(await page.locator('.garage-luxe-v19.garage-light-ember').count()===1,
   'Amber lighting option updates the garage atmosphere');
  await studio.getByRole('button',{name:'Use ion studio lighting'}).click();
- ensure(await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).getAttribute('aria-pressed')==='true',
-  'Truthful named-vehicle reference photos remain the default until a verified model-specific GLB exists');
- await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).click();
- ensure(await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).getAttribute('aria-pressed')==='true',
-  'Visitors may explicitly enter the fully interactive 3D concept garage');
- await studio.locator('.vehicle-webgl canvas').waitFor({state:'visible',timeout:8000});
- await page.waitForFunction(()=>Boolean(document.querySelector('.vehicle-webgl')?.getAttribute('data-camera-azimuth')),{timeout:8000});
- const angleStart=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
- await page.waitForFunction(start=>{
-   const current=document.querySelector('.vehicle-webgl')?.getAttribute('data-camera-azimuth');
-   return current!==null&&current!==undefined&&Math.abs(Number(current)-start)>.01;
- },angleStart,{timeout:7000});
- const angleNext=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
- const telemetry=await studio.locator('.vehicle-webgl').evaluate(el=>({status:el.getAttribute('data-preview-source'),frame:el.getAttribute('data-frame'),auto:el.getAttribute('data-auto-rotate'),motion:el.getAttribute('data-reduce-motion'),rect:{width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}}));
- console.log('3D rotation diagnostics:',JSON.stringify({angleStart,angleNext,telemetry}));
- ensure(Number.isFinite(angleStart)&&Number.isFinite(angleNext)&&Math.abs(angleNext-angleStart)>.01,
-  'Actual 3D camera orbits continuously; toggle is not a cosmetic no-op');
- ensure(await studio.getByRole('button',{name:'Pause 3D rotation'}).isVisible(),
-  'Game-style garage exposes automatic orbit rotation');
- await studio.getByRole('button',{name:'Pause 3D rotation'}).click();
- ensure(await studio.getByRole('button',{name:'Resume 3D rotation'}).isVisible(),
-  'Automatic orbit can be paused');
- await studio.getByRole('button',{name:'Open concept doors'}).click();
- ensure(await studio.getByRole('button',{name:'Close concept doors'}).isVisible(),
-  'Concept car doors have a working open/close control');
- await studio.getByRole('button',{name:'Show front 3D camera angle'}).click();
- ensure(await studio.getByRole('button',{name:'Show front 3D camera angle'}).getAttribute('aria-pressed')==='true',
-  'View presets switch camera angle on the 3D car');
- await studio.getByRole('button',{name:'Zoom 3D in'}).click();
- ensure((await studio.locator('.ride-studio-zoom-controls span').innerText()).includes('120%'),
-  'Zoom controls change the concept camera');
- await studio.screenshot({path:'artifacts/visual-evidence/ride-studio-3d-desktop.png',animations:'disabled'});
- await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).click();
+ ensure(await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).count()===0,'No generic 3D button');
+ ensure(await studio.locator('.vehicle-webgl').count()===0,'No generic 3D canvas');
  ensure(await studio.locator('.ride-studio-vehicle-frame').evaluate(el=>getComputedStyle(el).animationName==='rideGarageVehicleEntry'),
   'Actual reference photographs retain a cinematic entry transition');
  ensure(await studio.locator('.ride-studio-grid').evaluate(el=>getComputedStyle(el).animationName==='rideGarageFloor'),
@@ -180,13 +149,8 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Mahindra Thar',
    'Individual fleet cards open the studio on their own model');
- // The richer CC0 class-concept is optional and remote; neither test CI nor
- // a customer should be blocked if the third-party host is unreachable.
- await page.waitForTimeout(2500);
- const cc0Preview=await studio.locator('.vehicle-webgl').count()?
-   await studio.locator('.vehicle-webgl').getAttribute('data-preview-source'):'photo-fallback';
- console.log('Generic 3D asset status (Thar concept; not exact model):',cc0Preview);
- await studio.screenshot({path:'artifacts/visual-evidence/thar-3d-optional.png',animations:'disabled'});
+ ensure(await studio.locator('.vehicle-webgl').count()===0,'Thar is the actual car photograph');
+ await studio.screenshot({path:'artifacts/visual-evidence/thar-authentic-photo.png',animations:'disabled'});
  await page.keyboard.press('Escape');
  await studio.waitFor({state:'detached'});
  await page.locator('.premium-catalog-card[data-model="Mahindra TUV"]')
@@ -378,11 +342,7 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
    'Mobile full-screen studio has a visible exit control');
- ensure(await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).isVisible(),
-   'Mobile users can switch from rotatable concept to real model photography');
- await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).click();
- await page.screenshot({path:'artifacts/visual-evidence/ride-studio-3d-mobile.png',animations:'disabled'});
- await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).click();
+ ensure(await studio.locator('.vehicle-webgl').count()===0,'Mobile studio never shows fake cars');
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
  const mobileFrame=await studio.locator('.ride-studio-vehicle-frame').boundingBox();
  const mobileCameraControls=await studio.locator('.ride-studio-stage-footer').boundingBox();
