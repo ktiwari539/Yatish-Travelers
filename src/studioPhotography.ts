@@ -8,7 +8,7 @@
 export type StudioEditorialPhoto={
  src:string;credit:string;page:string;license:string;model:string;privacyApproved:false;
 };
-const local=import.meta.env.VITE_STUDIO_REVIEW_READY==='1';
+const local=(import.meta as ImportMeta & {env?:Record<string,string>}).env?.VITE_STUDIO_REVIEW_READY==='1';
 const commons=(filename:string)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(filename)+'?width=1600';
 const candidates:Record<string,StudioEditorialPhoto>={
  'Maruti Ertiga':{
