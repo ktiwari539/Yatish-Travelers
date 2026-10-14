@@ -105,6 +105,8 @@ async function smoke(){
  const angleStart=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
  await page.waitForTimeout(850);
  const angleNext=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
+ const telemetry=await studio.locator('.vehicle-webgl').evaluate(el=>({status:el.getAttribute('data-preview-source'),frame:el.getAttribute('data-frame'),auto:el.getAttribute('data-auto-rotate'),motion:el.getAttribute('data-reduce-motion'),rect:{width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}}));
+ console.log('3D rotation diagnostics:',JSON.stringify({angleStart,angleNext,telemetry}));
  ensure(Number.isFinite(angleStart)&&Number.isFinite(angleNext)&&Math.abs(angleNext-angleStart)>.01,
   'Actual 3D camera orbits continuously; toggle is not a cosmetic no-op');
  ensure(await studio.getByRole('button',{name:'Pause 3D rotation'}).isVisible(),
