@@ -130,8 +130,8 @@ async function smoke(){
  ensure(await studio.locator('.ride-studio-stage.is-switching').count()===1,
   'Next begins a visible outgoing vehicle animation before changing the model');
  await page.waitForFunction(()=>document.querySelector('.ride-studio-panel-heading h2')?.textContent?.trim()==='Toyota Innova');
- ensure(await studio.locator('.ride-studio-reveal').count()===1,
-  'Switching vehicles launches a new garage reveal');
+ ensure(await studio.locator('.ride-studio-reveal').count()===0,
+  'Model switching uses subtle photo transitions without theatrical game initialization');
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Toyota Innova',
    'Console-style model selection changes the showcased car');
  await studio.getByRole('button',{name:'Next photo angle'}).click();
