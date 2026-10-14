@@ -20,6 +20,7 @@ type Props={
  zoom?:number;
  reducedMotion?:boolean;
  viewPreset?:'hero'|'front'|'side'|'rear';
+ continuousPreview?:boolean;
 };
 
 const paintValues:Record<PaintTone,number>={
@@ -207,7 +208,7 @@ function createVehicle(kind:VehicleKind,color:number):VehicleParts {
  return {vehicle,wheels,paint,doors};
 }
 
-export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,onUnavailable,autoRotate=true,doorsOpen=false,zoom=1,reducedMotion=false,viewPreset='hero'}:Props){
+export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,onUnavailable,autoRotate=true,doorsOpen=false,zoom=1,reducedMotion=false,viewPreset='hero',continuousPreview=false}:Props){
  const host=useRef<HTMLDivElement|null>(null);
  const engine=useRef<{
   renderer:THREE.WebGLRenderer;scene:THREE.Scene;camera:THREE.PerspectiveCamera;
@@ -223,6 +224,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
  useEffect(()=>{
   const element=host.current;if(!element)return;
   let cancelled=false,frame=0;
+  let backupTimer=0,lastFrameAt=0;
   let visible=false;
   let hasApprovedModel=false;
   let controls:OrbitControls|undefined;
@@ -350,7 +352,8 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
 
       const tick=()=>{
         if(cancelled||!visible)return;
-        frame=window.requestAnimationFrame(tick);
+        frame=0;
+        lastFrameAt=performance.now();
         const delta=Math.min(clock.getDelta(),.05);
         const current=refState.current;
         if(controls){
@@ -401,13 +404,27 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
         point.color.set(current.mood==='golden-hour'?0xffae6f:0xd3e8ff);
         renderer.toneMappingExposure=current.mood==='golden-hour'?1.48:1.68;
         renderer.render(scene,camera);
+        frame=window.requestAnimationFrame(tick);
       };
       const observerStart=()=>{visible=true;if(!frame)tick();};
       const observerStop=()=>{visible=false;window.cancelAnimationFrame(frame);frame=0;};
-      observer=new IntersectionObserver(entries=>{
-        if(entries[0]?.isIntersecting && !document.hidden)observerStart();else observerStop();
-      },{threshold:.08});
-      observer.observe(element);
+      if(continuousPreview){
+        observerStart();
+        // User opened this modal explicitly; animated DOM containers and
+        // throttled rAF must not freeze its car on the very first frame.
+        backupTimer=window.setInterval(()=>{
+          if(!cancelled&&visible&&performance.now()-lastFrameAt>160){
+            if(frame)window.cancelAnimationFrame(frame);
+            frame=0;
+            tick();
+          }
+        },180);
+      }else{
+        observer=new IntersectionObserver(entries=>{
+          if(entries[0]?.isIntersecting && !document.hidden)observerStart();else observerStop();
+        },{threshold:.08});
+        observer.observe(element);
+      }
       resize=new ResizeObserver(()=>{
         const w=Math.max(50,element.clientWidth),h=Math.max(50,element.clientHeight);
         renderer.setSize(w,h,false);
@@ -416,6 +433,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
       resize.observe(element);
       const cleanup=()=>{
         observer?.disconnect();resize?.disconnect();
+        if(backupTimer)window.clearInterval(backupTimer);
         controls?.dispose();
         window.cancelAnimationFrame(frame);
         scene.traverse(obj=>{
@@ -447,7 +465,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
   };
  // Scene rebuilt only when silhouette category changes, not on every scroll frame.
  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[category,modelUrl,conceptUrl]);
+ },[category,modelUrl,conceptUrl,continuousPreview]);
 
  useEffect(()=>{
    const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
