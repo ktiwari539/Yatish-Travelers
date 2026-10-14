@@ -164,7 +164,6 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <i/><i/><i/>
      </div>
      <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> MODEL GALLERY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
-     <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> REAL CAR PHOTOGRAPHY <i/> MODEL-SPECIFIC VIEW</div>
      <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
      <div className="ride-studio-garage-ticks" aria-hidden="true"><b>01</b><i/><i/><i/><i/><i/><b>100</b></div>
      <button type="button" className="ride-studio-image-action"
