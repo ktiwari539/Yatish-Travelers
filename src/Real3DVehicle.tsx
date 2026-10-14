@@ -246,7 +246,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
       const camera=new THREE.PerspectiveCamera(34,1,.1,100);
       camera.position.set(7.1,3.65,-7.8);camera.lookAt(0,.82,0);
       const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.2));
       renderer.setSize(element.clientWidth,element.clientHeight,false);
       renderer.outputColorSpace=THREE.SRGBColorSpace;
       renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -274,7 +274,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
       scene.add(new THREE.AmbientLight(0xe3ebff,1.7));
       const key=new THREE.DirectionalLight(0xffeed1,3.6);
       key.position.set(4,8,5);key.castShadow=true;
-      key.shadow.mapSize.set(1024,1024);
+      key.shadow.mapSize.set(512,512);
       key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;
       scene.add(key);
       const fill=new THREE.DirectionalLight(0x94cdff,3.5);
@@ -374,7 +374,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
             camera.position.copy(controls.target).addScaledVector(dir,distance+(wanted-distance)*.09);
           }
           controls.update(delta);
-          if((debugFrame++%12)===0){
+          if((debugFrame++%2)===0){
             // Read-only camera telemetry used to distinguish a working orbit
             // from a static/missing WebGL canvas in automated browser checks.
             const offset=camera.position.clone().sub(controls.target);
