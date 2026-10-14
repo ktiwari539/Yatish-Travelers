@@ -39,7 +39,15 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   const [visible,setVisible]=useState(true);
   const [sceneReady,setSceneReady]=useState<boolean[]>(()=>scenes.map(()=>false));
   const [cinematic,setCinematic]=useState(true);
-  const [introDone,setIntroDone]=useState(false);
+  const [introDone,setIntroDone]=useState(()=>{
+    // Only once per browser session. Deep links should never obscure a target.
+    try{return Boolean(window.location.hash)||window.sessionStorage.getItem('mateshwari-arrival-v2')==='seen';}
+    catch{return false;}
+  });
+  const finishIntro=useCallback(()=>{
+    try{window.sessionStorage.setItem('mateshwari-arrival-v2','seen');}catch{}
+    setIntroDone(true);
+  },[]);
   const [videoReady,setVideoReady]=useState(false);
   const video=useRef<HTMLVideoElement|null>(null);
   const active=vehicles[activeIndex]??vehicles[0];
@@ -47,10 +55,11 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   // Each full page mount runs the sequence once. Motion-sensitive clients skip it.
   useEffect(()=>{
     const media=window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 760px)');
-    if(media.matches){setIntroDone(true);return;}
-    const timer=window.setTimeout(()=>setIntroDone(true),2550);
+    if(media.matches){finishIntro();return;}
+    if(introDone)return;
+    const timer=window.setTimeout(finishIntro,2250);
     return()=>window.clearTimeout(timer);
-  },[]);
+  },[finishIntro,introDone]);
   useEffect(()=>{
     const node=video.current;
     if(!node)return;
@@ -140,7 +149,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
         onError={event=>{event.currentTarget.style.visibility='hidden';}}/>
       <span className="cinema-arrival-wordmark">MATESHWARI <em>TRAVELLERS</em></span>
       <span className="cinema-arrival-subline">THE JOURNEY BEGINS HERE</span>
-      <button type="button" className="cinema-arrival-skip" onClick={()=>setIntroDone(true)}>Skip intro <ArrowUpRight size={15}/></button>
+      <button type="button" className="cinema-arrival-skip" onClick={finishIntro}>Skip intro <ArrowUpRight size={15}/></button>
     </div>}
   <div className="cinema-director-scenes" aria-hidden="true">
       {scenes.map((item,i)=><div key={item.index}
