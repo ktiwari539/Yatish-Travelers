@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
 import { needsInnovaPlateReview } from './mediaSafety';
-import { studioEditorialFor } from './studioPhotography';
+import { buildFleetGallery } from './fleetGallery';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
 type ShowroomVehicle=FleetReelVehicle & {capacity?:number;modelUrl?:string};
@@ -12,21 +12,6 @@ type Props={
  onClose:()=>void;
  onQuote:(name:string)=>void;
 };
-function uniquePhotos(car:ShowroomVehicle){
- const editorial=studioEditorialFor(car.name);
- const listed=[...(editorial?[editorial.src]:[]),car.image,...(car.gallery||[])]
-   .filter((url,index,all)=>Boolean(url)&&all.indexOf(url)===index);
- // Choose the most showroom-ready angle when the APPROVED local media is
- // already part of the catalog. This is display-only: no CRM write or price
- // change and never substitutes photographs from a different model.
- const preferred:Record<string,string>={
-  'Mahindra XUV700':'/media/mt-xuv700-studio.webp',
-  'Mahindra Thar':'/media/mt-thar-red-front.webp'
- };
- const hero=preferred[car.name];
- if(!hero||!listed.includes(hero))return listed;
- return [hero,...listed.filter(url=>url!==hero)];
-}
 const knownSafePreview=(src:string)=>/^\/media\/mt-(?:thar-(?:red-front|red-rear|grey-road|grey-front-safe)|xuv700-(?:driving|studio)|traveller-safe)\.webp$/.test(src);
 function RideStudioPhoto({car,src,angle}:{car:ShowroomVehicle;src:string;angle:number}){
  const [failed,setFailed]=useState(false);
@@ -59,13 +44,15 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const dialogRef=useRef<HTMLDivElement|null>(null);
  const previousFocus=useRef<Element|null>(null);
  const active=vehicles[vehicleIndex]||vehicles[0];
- const photos=useMemo(()=>active?uniquePhotos(active):[],[active]);
+ const gallery=useMemo(()=>active?buildFleetGallery(active):[],[active]);
+ const photos=gallery.map(p=>p.src);
  const shownAngle=Math.min(angle,Math.max(photos.length-1,0));
  const image=photos[shownAngle]||'';
+ const selectedPhoto=gallery[shownAngle];
  const isReferenceApproved=knownSafePreview(image);
  const studioAssetQuality=isReferenceApproved?'reviewed-local':'editorial-reference';
- const imageSource=studioEditorialFor(active.name);
- const isEditorialChoice=Boolean(imageSource&&imageSource.src===image);
+ const imageSource=selectedPhoto;
+ const isEditorialChoice=Boolean(selectedPhoto?.reviewPending);
  const setCar=(index:number)=>{
   const destination=(index+vehicles.length)%vehicles.length;
   if(destination===vehicleIndex)return;
@@ -189,6 +176,15 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
          </div>
          <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> EXPLORE VEHICLE DETAILS</span>
        </button>
+     <div className="ride-studio-photo-strip" role="group" aria-label={'Select photo view of '+active.name}>
+       {gallery.slice(0,5).map((photo,i)=><button type="button" key={photo.src}
+          aria-label={'Show '+active.name+' photo '+(i+1)} aria-pressed={shownAngle===i}
+          className={shownAngle===i?'active':''} onClick={()=>{setAngle(i);setRevealId(n=>n+1);}}>
+         <img src={photo.src} alt="" loading="lazy" onError={e=>{e.currentTarget.style.visibility='hidden';}}/>
+         <span>{String(i+1).padStart(2,'0')}</span>
+       </button>)}
+       {gallery.length===1&&<span className="ride-studio-photo-count">More verified angles pending</span>}
+     </div>
      <div className="ride-studio-stage-footer">
       <div><strong><Gauge size={15}/> {photos.length>1?'CAMERA BAY / ACTUAL MODEL PHOTOS':'MODEL REFERENCE'}</strong>
         <span>{photos.length>1?'Swipe or use the arrows to browse real photographic angles':'True 360° rotation is available only with a verified model-specific 3D asset.'}</span></div>
@@ -208,9 +204,9 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <div className="ride-studio-energy" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/></div>
       </div>
       <div className="ride-studio-panel-meta"><span>{active.seats} seating</span><span>₹{active.rateMin??15}–₹{active.rateMax??25} / km indicative</span></div>
-      <p className="ride-studio-media-truth">{isReferenceApproved?'Reviewed model-specific photograph.':isEditorialChoice?'Licensed editorial photograph of this car model, not an actual Mateshwari fleet vehicle. Plate/privacy approval pending.':'Model-specific reference photograph. Vehicle identity, variant and colour confirmed before booking.'}</p>
-      {isEditorialChoice&&imageSource&&<p className="ride-studio-photo-credit">
-        <a href={imageSource.page} target="_blank" rel="noreferrer">{imageSource.credit}</a> · {imageSource.license} · {imageSource.model} · Local review only.
+      <p className="ride-studio-media-truth">{isReferenceApproved?'Reviewed model-specific photograph.':isEditorialChoice?'Licensed model-reference photograph for local review. Plate and variant approval remain pending.':'Model-specific reference photo. Actual assigned car, trim and colour confirmed before booking.'}</p>
+      {imageSource?.credit&&<p className="ride-studio-photo-credit">
+        <a href={imageSource.page} target="_blank" rel="noreferrer">{imageSource.credit}</a> · {imageSource.license} · {imageSource.label} · {imageSource.reviewPending?'Local review only':'Licensed model reference'}.
       </p>}
       <div className="ride-studio-switch">
        <button type="button" aria-label="Previous vehicle" onClick={()=>setCar(vehicleIndex-1)}><ArrowLeft size={18}/> Previous</button>
