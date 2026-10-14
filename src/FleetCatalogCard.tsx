@@ -4,6 +4,16 @@ import type { FleetReelVehicle } from './PremiumFleetExperience';
 import { needsInnovaPlateReview } from './mediaSafety';
 import { buildFleetGallery } from './fleetGallery';
 
+/** Thumbnail failures are explicit rather than invisible blank boxes.
+ * Never disguise missing footage as a different vehicle or angle. */
+function PhotoThumb({src,label}:{src:string;label:string}){
+ const [failed,setFailed]=useState(false);
+ useEffect(()=>setFailed(false),[src]);
+ return failed?<span className="fleet-angle-pending">Photo pending</span>:
+  <img src={src} loading="lazy" decoding="async" alt=""
+   onError={()=>setFailed(true)} aria-label={label}/>;
+}
+
 /** A genuine photograph of this exact model is always required.
  * The three independent editorial images are available for LOCAL acceptance
  * only, with attribution and licence; staff CRM photo choices are untouched.
@@ -63,7 +73,7 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
        key={item.src} type="button" className={shown===i?'active':''}
        aria-pressed={shown===i} aria-label={'View '+car.name+' photo '+(i+1)+': '+item.label}
        onClick={()=>setAngle(i)}>
-       <img src={item.src} loading="lazy" alt="" onError={e=>{e.currentTarget.style.visibility='hidden';}}/>
+       <PhotoThumb src={item.src} label={item.label}/>
        <span>{String(i+1).padStart(2,'0')}</span>
      </button>)}
      {photos.length===1&&<small className="fleet-single-photo-label">More real angles awaiting approval</small>}
