@@ -206,7 +206,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
            viewPreset={viewPreset} reducedMotion={reducedMotion}
            onUnavailable={()=>setShow3D(false)}/>
          <div className="ride-studio-3d-disclaimer">
-           {active.modelUrl?'APPROVED MODEL IF LOADED · CONCEPT FALLBACK':'UNBRANDED CC0 3D CONCEPT · NOT AN EXACT '+active.name.toUpperCase()+' REPLICA'}
+           {active.modelUrl?'APPROVED MODEL IF LOADED · CONCEPT FALLBACK':'GENERIC 3D CONCEPT · NOT AN EXACT '+active.name.toUpperCase()+' REPLICA'}
          </div>
        </div>:
        <button type="button" className="ride-studio-image-action"
