@@ -441,7 +441,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
    const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
  },[paint,status]);
 
- return <div className="vehicle-webgl" ref={host} aria-label={'Interactive concept 3D '+category+' silhouette'}>
+ return <div className="vehicle-webgl" ref={host} data-preview-source={assetLoad} aria-label={'Interactive concept 3D '+category+' silhouette'}>
    {(status==='loading'||(status==='ready'&&(modelUrl||conceptUrl)&&assetLoad==='loading'))&&
      <div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING ROTATABLE 3D VEHICLE</small></div>}
    {status==='fallback'&&<div className="vehicle-3d-fallback">3D preview is unavailable in this browser. Use the vehicle gallery below.</div>}
