@@ -377,6 +377,9 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
             const offset=camera.position.clone().sub(controls.target);
             element.dataset.cameraAzimuth=Math.atan2(offset.z,offset.x).toFixed(4);
             element.dataset.cameraDistance=offset.length().toFixed(2);
+            element.dataset.autoRotate=String(controls.autoRotate);
+            element.dataset.reduceMotion=String(current.reducedMotion);
+            element.dataset.frame=String(debugFrame);
           }
         }
         if(hasApprovedModel&&current.doorsOpen!==lastDoorsOpen){
