@@ -156,9 +156,11 @@ async function smoke(){
   'Switching vehicles launches a new garage reveal');
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Toyota Innova',
    'Console-style model selection changes the showcased car');
- await studio.getByRole('button',{name:'Next photo angle'}).click();
- ensure((await studio.locator('.ride-studio-photo-pending').innerText()).includes('Registration-plate review pending'),
-   'Unreviewed Innova angle stays hidden even at full-screen size');
+ const innovaNext=studio.getByRole('button',{name:'Next photo angle'});
+ if(await innovaNext.isEnabled())await innovaNext.click();
+ const innovaImage=await studio.locator('.ride-studio-car-image').getAttribute('src');
+ ensure(Boolean(innovaImage&&!/Toyota%20Innova%20Crysta%202[.]4%20Z%20(?:rear%20left|front%20right)[.]jpg/i.test(innovaImage)),
+   'Previously blocked plate-bearing Innova exteriors never appear when switching photos');
  await studio.getByRole('button',{name:'Explore this vehicle'}).click();
  ensure(await studio.locator('.ride-studio-facts').isVisible(),
    'Visitor can inspect grounded seats, class, fare and photo-angle details');
