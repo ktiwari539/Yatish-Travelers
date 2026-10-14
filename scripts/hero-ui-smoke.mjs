@@ -95,8 +95,25 @@ async function smoke(){
  ensure(await page.locator('.garage-luxe-v19.garage-light-ember').count()===1,
   'Amber lighting option updates the garage atmosphere');
  await studio.getByRole('button',{name:'Use ion studio lighting'}).click();
+ ensure(await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).getAttribute('aria-pressed')==='true',
+  'Real interactive Three.js concept view is the garage default');
+ ensure(await studio.getByRole('button',{name:'Pause 3D rotation'}).isVisible(),
+  'Game-style garage exposes automatic orbit rotation');
+ await studio.getByRole('button',{name:'Pause 3D rotation'}).click();
+ ensure(await studio.getByRole('button',{name:'Resume 3D rotation'}).isVisible(),
+  'Automatic orbit can be paused');
+ await studio.getByRole('button',{name:'Open concept doors'}).click();
+ ensure(await studio.getByRole('button',{name:'Close concept doors'}).isVisible(),
+  'Concept car doors have a working open/close control');
+ await studio.getByRole('button',{name:'Show front 3D camera angle'}).click();
+ ensure(await studio.getByRole('button',{name:'Show front 3D camera angle'}).getAttribute('aria-pressed')==='true',
+  'View presets switch camera angle on the 3D car');
+ await studio.getByRole('button',{name:'Zoom 3D in'}).click();
+ ensure((await studio.locator('.ride-studio-zoom-controls span').innerText()).includes('120%'),
+  'Zoom controls change the concept camera');
+ await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).click();
  ensure(await studio.locator('.ride-studio-vehicle-frame').evaluate(el=>getComputedStyle(el).animationName==='rideGarageVehicleEntry'),
-  'Garage car rolls in with a 3D-perspective animation');
+  'Actual reference photographs retain a cinematic entry transition');
  ensure(await studio.locator('.ride-studio-grid').evaluate(el=>getComputedStyle(el).animationName==='rideGarageFloor'),
   'Showroom includes animated floor perspective and lighting');
  await page.waitForTimeout(1700);
@@ -313,6 +330,8 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
    'Mobile full-screen studio has a visible exit control');
+ ensure(await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).isVisible(),
+   'Mobile users can switch from rotatable concept to real model photography');
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
  const mobileFrame=await studio.locator('.ride-studio-vehicle-frame').boundingBox();
  const mobileCameraControls=await studio.locator('.ride-studio-stage-footer').boundingBox();
