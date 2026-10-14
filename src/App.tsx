@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
+import { ArrivalIntro } from './ArrivalIntro';
 import { PremiumFleetExperience } from './PremiumFleetExperience';
 import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
@@ -449,6 +450,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <AdminDashboard />;
 
   return (
+    <>
+    <ArrivalIntro />
     <main>
       <header className="nav">
         <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
@@ -938,5 +941,6 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       )}
 
     </main>
+    </>
   );
 }
