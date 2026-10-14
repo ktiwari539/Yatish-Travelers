@@ -100,6 +100,13 @@ async function smoke(){
  await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).click();
  ensure(await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).getAttribute('aria-pressed')==='true',
   'Visitors may explicitly enter the fully interactive 3D concept garage');
+ await studio.locator('.vehicle-webgl canvas').waitFor({state:'visible',timeout:8000});
+ await page.waitForFunction(()=>Boolean(document.querySelector('.vehicle-webgl')?.getAttribute('data-camera-azimuth')),{timeout:8000});
+ const angleStart=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
+ await page.waitForTimeout(850);
+ const angleNext=Number(await studio.locator('.vehicle-webgl').getAttribute('data-camera-azimuth'));
+ ensure(Number.isFinite(angleStart)&&Number.isFinite(angleNext)&&Math.abs(angleNext-angleStart)>.01,
+  'Actual 3D camera orbits continuously; toggle is not a cosmetic no-op');
  ensure(await studio.getByRole('button',{name:'Pause 3D rotation'}).isVisible(),
   'Game-style garage exposes automatic orbit rotation');
  await studio.getByRole('button',{name:'Pause 3D rotation'}).click();
@@ -126,9 +133,16 @@ async function smoke(){
    'The studio starts with the currently selected model');
  ensure(await studio.locator('.ride-studio-car-image').count()===1,
    'Full-screen showroom uses the car model reference photo');
+ ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')).includes('Indonesia_International_Motor_Show_2018'),
+   'Ertiga studio selects the high-resolution licensed motor-show reference rather than low-resolution roadside source');
+ ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
+   'Creative Commons author/source are linked in the vehicle detail panel');
  ensure((await page.evaluate(()=>document.body.style.overflow))==='hidden',
    'Fullscreen studio locks background scrolling');
  await studio.getByRole('button',{name:'Next vehicle'}).click();
+ ensure(await studio.locator('.ride-studio-stage.is-switching').count()===1,
+  'Next begins a visible outgoing vehicle animation before changing the model');
+ await page.waitForFunction(()=>document.querySelector('.ride-studio-panel-heading h2')?.textContent?.trim()==='Toyota Innova');
  ensure(await studio.locator('.ride-studio-reveal').count()===1,
   'Switching vehicles launches a new garage reveal');
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Toyota Innova',
@@ -142,6 +156,9 @@ async function smoke(){
  ensure((await studio.locator('.ride-studio-facts').innerText()).includes('Confirm before booking'),
    'Studio does not invent available colours or trim variants');
  await studio.getByRole('button',{name:'Previous vehicle'}).click();
+ ensure(await studio.locator('.ride-studio-stage.is-switching').count()===1,
+  'Previous also animates the outgoing car rather than abruptly replacing it');
+ await page.waitForFunction(()=>document.querySelector('.ride-studio-panel-heading h2')?.textContent?.trim()==='Maruti Ertiga');
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Maruti Ertiga',
    'Previous model navigation returns to the originally selected car');
  await studio.getByRole('button',{name:'Request Maruti Ertiga quotation'}).click();
@@ -165,6 +182,16 @@ async function smoke(){
    await studio.locator('.vehicle-webgl').getAttribute('data-preview-source'):'photo-fallback';
  console.log('Generic 3D asset status (Thar concept; not exact model):',cc0Preview);
  await studio.screenshot({path:'artifacts/visual-evidence/thar-3d-optional.png',animations:'disabled'});
+ await page.keyboard.press('Escape');
+ await studio.waitFor({state:'detached'});
+ await page.locator('.premium-catalog-card[data-model="Mahindra TUV"]')
+   .getByRole('button',{name:'Open full-screen car studio for Mahindra TUV'}).click();
+ await studio.waitFor({state:'visible'});
+ ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')||'').includes('Mahindra_TUV_300_Chennai_2016'),
+   'TUV studio prefers newly selected high-resolution licensed cropped model-reference photo');
+ ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
+   'TUV photo provenance and license appear beside the preview');
+ await studio.screenshot({path:'artifacts/visual-evidence/tuv-curated-studio.png',animations:'disabled'});
  await page.keyboard.press('Escape');
  await studio.waitFor({state:'detached'});
  // Scroll narrative uses actual model reference images, not generic 3D or concept art.
