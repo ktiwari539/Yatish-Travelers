@@ -95,8 +95,11 @@ async function smoke(){
  ensure(await page.locator('.garage-luxe-v19.garage-light-ember').count()===1,
   'Amber lighting option updates the garage atmosphere');
  await studio.getByRole('button',{name:'Use ion studio lighting'}).click();
+ ensure(await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).getAttribute('aria-pressed')==='true',
+  'Truthful named-vehicle reference photos remain the default until a verified model-specific GLB exists');
+ await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).click();
  ensure(await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).getAttribute('aria-pressed')==='true',
-  'Real interactive Three.js concept view is the garage default');
+  'Visitors may explicitly enter the fully interactive 3D concept garage');
  ensure(await studio.getByRole('button',{name:'Pause 3D rotation'}).isVisible(),
   'Game-style garage exposes automatic orbit rotation');
  await studio.getByRole('button',{name:'Pause 3D rotation'}).click();
@@ -333,6 +336,7 @@ async function smoke(){
    'Mobile full-screen studio has a visible exit control');
  ensure(await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).isVisible(),
    'Mobile users can switch from rotatable concept to real model photography');
+ await studio.getByRole('button',{name:'ROTATE 3D CONCEPT'}).click();
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-3d-mobile.png',animations:'disabled'});
  await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).click();
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
