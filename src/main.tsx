@@ -44,3 +44,5 @@ import './ride-showroom-v17.css';
 import './cinematic-garage-v18.css';
 
 import './garage-luxe-v19.css';
+
+import './garage-interactive-v20.css';
