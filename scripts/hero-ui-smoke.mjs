@@ -133,7 +133,7 @@ async function smoke(){
    'The studio starts with the currently selected model');
  ensure(await studio.locator('.ride-studio-car-image').count()===1,
    'Full-screen showroom uses the car model reference photo');
- ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')).includes('Indonesia_International_Motor_Show_2018'),
+ ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')).includes('Indonesia%20International%20Motor%20Show%202018'),
    'Ertiga studio selects the high-resolution licensed motor-show reference rather than low-resolution roadside source');
  ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
    'Creative Commons author/source are linked in the vehicle detail panel');
@@ -187,7 +187,7 @@ async function smoke(){
  await page.locator('.premium-catalog-card[data-model="Mahindra TUV"]')
    .getByRole('button',{name:'Open full-screen car studio for Mahindra TUV'}).click();
  await studio.waitFor({state:'visible'});
- ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')||'').includes('Mahindra_TUV_300_Chennai_2016'),
+ ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')||'').includes('Mahindra%20TUV%20300%20Chennai%202016'),
    'TUV studio prefers newly selected high-resolution licensed cropped model-reference photo');
  ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
    'TUV photo provenance and license appear beside the preview');
