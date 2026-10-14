@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, 
 import { needsInnovaPlateReview } from './mediaSafety';
 import { Real3DVehicle, type PaintTone } from './Real3DVehicle';
 import { conceptModelFor } from './garageConceptAssets';
+import { studioEditorialFor } from './studioPhotography';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
 type ShowroomVehicle=FleetReelVehicle & {capacity?:number;modelUrl?:string};
@@ -14,7 +15,9 @@ type Props={
  onQuote:(name:string)=>void;
 };
 function uniquePhotos(car:ShowroomVehicle){
- const listed=[car.image,...(car.gallery||[])].filter((url,index,all)=>Boolean(url)&&all.indexOf(url)===index);
+ const editorial=studioEditorialFor(car.name);
+ const listed=[...(editorial?[editorial.src]:[]),car.image,...(car.gallery||[])]
+   .filter((url,index,all)=>Boolean(url)&&all.indexOf(url)===index);
  // Choose the most showroom-ready angle when the APPROVED local media is
  // already part of the catalog. This is display-only: no CRM write or price
  // change and never substitutes photographs from a different model.
@@ -47,6 +50,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [angle,setAngle]=useState(0);
  const [details,setDetails]=useState(false);
  const [revealId,setRevealId]=useState(0);
+ const [switching,setSwitching]=useState(false);
+ const switchTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [cinematicOn,setCinematicOn]=useState(true);
  const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
  // Where a strictly allowlisted CC0 concept exists, load the richer genuine
@@ -70,10 +75,28 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const image=photos[shownAngle]||'';
  const isReferenceApproved=knownSafePreview(image);
  const studioAssetQuality=isReferenceApproved?'reviewed-local':'editorial-reference';
+ const imageSource=studioEditorialFor(active.name);
+ const isEditorialChoice=Boolean(imageSource&&imageSource.src===image);
+ const hasActualModel=Boolean(active.modelUrl);
+ const availableConcept=Boolean(conceptModelFor(active.name));
  const setCar=(index:number)=>{
-  setVehicleIndex((index+vehicles.length)%vehicles.length);
-  setAngle(0);setDetails(false);setPointerDown(null);setDragging(false);setRevealId(count=>count+1);
-  setDoorsOpen(false);setZoom(1);setViewPreset('hero');
+  const destination=(index+vehicles.length)%vehicles.length;
+  if(destination===vehicleIndex)return;
+  // Exit the old vehicle first; the new image or WebGL scene mounts only
+  // after the old model visibly leaves the stage.
+  if(switchTimer.current!==null)clearTimeout(switchTimer.current);
+  setSwitching(true);
+  switchTimer.current=setTimeout(()=>{
+    setVehicleIndex(destination);
+    setAngle(0);setDetails(false);setPointerDown(null);setDragging(false);
+    setRevealId(count=>count+1);
+    setDoorsOpen(false);setZoom(1);setViewPreset('hero');
+    // In an explicitly entered 3D mode, keep it where a licensed model is
+    // available. Otherwise use this model's actual photo reference.
+    setShow3D(current=>current&&Boolean(vehicles[destination]?.modelUrl||conceptModelFor(vehicles[destination]?.name||'')));
+    setSwitching(false);
+    switchTimer.current=null;
+  },310);
  };
  const nextAngle=(delta:number)=>{
   if(photos.length<2)return;
@@ -90,6 +113,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   update();
   mq.addEventListener('change',update);
   return ()=>{
+   if(switchTimer.current!==null)clearTimeout(switchTimer.current);
    document.body.style.overflow=oldOverflow;
    mq.removeEventListener('change',update);
    if(previousFocus.current instanceof HTMLElement)previousFocus.current.focus();
@@ -143,7 +167,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
     </button>
    </div>
    <div className="ride-studio-body">
-    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality}>
+    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')+(switching?' is-switching':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality}>
      <div className="ride-studio-atmosphere" aria-hidden="true"/>
      <div className="ride-studio-softbox softbox-left" aria-hidden="true"/>
      <div className="ride-studio-softbox softbox-right" aria-hidden="true"/>
@@ -210,7 +234,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      </div>
      {!reducedMotion&&<span className="ride-studio-ambient-label" aria-hidden="true">PREMIUM ROAD EXPERIENCES</span>}
     </div>
-    <aside className="ride-studio-panel">
+    <aside className={'ride-studio-panel'+(switching?' is-switching':'')}>
       <div className="ride-studio-panel-heading">
        <span className="ride-studio-eyebrow">SELECTED MODEL / {String(vehicleIndex+1).padStart(2,'0')}</span>
        <h2>{active.name}</h2>
@@ -218,7 +242,10 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <div className="ride-studio-energy" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/></div>
       </div>
       <div className="ride-studio-panel-meta"><span>{active.seats} seating</span><span>₹{active.rateMin??15}–₹{active.rateMax??25} / km indicative</span></div>
-      <p className="ride-studio-media-truth">{show3D?'Rotatable class-based 3D concept. Exact shapes, colours and door mechanisms are not claims about your booked vehicle.':isReferenceApproved?'Reviewed model photo. Lighting does not change the actual car paint.':'Editorial reference photo. Better licensed, plate-safe imagery remains required.'}</p>
+      <p className="ride-studio-media-truth">{show3D?'Rotatable class-based 3D concept. Not an exact manufacturer model or specification.':isReferenceApproved?'Reviewed model photo. Lighting does not change the actual paint.':isEditorialChoice?'Higher-resolution editorial model reference; not a fleet photograph. Registration-plate/privacy approval remains pending.':'Editorial model reference. Better licensed, plate-safe imagery remains required.'}</p>
+      {!show3D&&isEditorialChoice&&imageSource&&<p className="ride-studio-photo-credit">
+        <a href={imageSource.page} target="_blank" rel="noreferrer">{imageSource.credit}</a> · {imageSource.license} · {imageSource.model} · Public release requires plate review.
+      </p>}
       {show3D&&<div className="ride-studio-drive-controls" aria-label="Interactive vehicle controls">
         <div className="ride-studio-drive-buttons">
           <button type="button" aria-pressed={rotationPlaying} aria-label={rotationPlaying?'Pause 3D rotation':'Resume 3D rotation'} onClick={()=>setRotationPlaying(value=>!value)}>{rotationPlaying?'Ⅱ PAUSE TURN':'▶ RESUME TURN'}</button>
