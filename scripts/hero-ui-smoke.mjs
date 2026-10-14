@@ -108,8 +108,8 @@ async function smoke(){
  ensure(await page.locator('.premium-catalog-card[data-model="Mahindra Thar"] .fleet-photo-preview-strip button').count()>=1,
   'Approved Thar model retains its own photo gallery without unrelated substitutes');
 
- ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===2,
-  'Desktop shows two-column condensed specifications');
+ ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===3,
+  'Wide-desktop photo gallery uses three full-width photographed cards per row');
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
