@@ -437,15 +437,19 @@ async function smoke(){
    'Hidden admin fleet entry is not rendered publicly');
  const innovaCard=page.locator('.premium-catalog-card[data-model="Toyota Innova"]');
  const cardAngle=innovaCard.getByRole('button',{name:'Show another angle of Toyota Innova'});
- ensure((await cardAngle.innerText()).includes('1/3'),'Innova gallery starts at the first of three photos');
- await cardAngle.click();
- ensure((await cardAngle.innerText()).includes('2/3'),'Public card gallery advances to the second photo');
- ensure((await innovaCard.locator('.premium-catalog-fallback').innerText()).includes('Registration plate review pending'),
-   'Innova rear reference is withheld until plate-safe replacement');
- await cardAngle.click();
- ensure((await cardAngle.innerText()).includes('3/3'),'Public gallery can reach third photo slot');
- ensure((await innovaCard.locator('.premium-catalog-fallback').innerText()).includes('Registration plate review pending'),
-   'Innova front reference with visible registration is withheld');
+ const visibleInnovaCount=Number(await innovaCard.getAttribute('data-gallery-count'));
+ ensure(visibleInnovaCount>=1,'At least one correct-model, plate-safe Innova reference is available');
+ if(visibleInnovaCount>1){
+   ensure((await cardAngle.innerText()).includes('1/'+visibleInnovaCount),
+     'Innova angle selector reports only the actual safe-photo count');
+   await cardAngle.click();
+   const safeUrl=(await innovaCard.locator('.premium-catalog-visual img').getAttribute('src'))||'';
+   ensure(!/Toyota%20Innova%20Crysta%202[.]4%20Z%20(?:rear%20left|front%20right)[.]jpg/i.test(safeUrl),
+     'Unsafe numbered Innova exteriors stay excluded from the photo gallery');
+ }else{
+   ensure(await cardAngle.count()===0,
+     'A single valid Innova photograph does not show a fake angle control');
+ }
  await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).click();
  ensure(await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).getAttribute('aria-pressed')==='true',
    'Cinematic gallery activates the requested alternate angle even if external photo delivery fails');
