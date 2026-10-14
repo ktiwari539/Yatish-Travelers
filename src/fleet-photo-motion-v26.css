@@ -213,3 +213,67 @@
  padding:4px;color:#53695c;background:#edf0eb;text-align:center;
  font-size:9px;line-height:1.25;font-weight:800;
 }
+
+
+/* V27 screenshot refinement: give the COMPLETE original car, not just a crop,
+   the widest part of each comparison card. These are three-column visual
+   stories, not a half-image/specification table. */
+@media(min-width:1241px){
+ #fleet .fleet-grid.fleet-compare-list{
+   grid-template-columns:repeat(3,minmax(0,1fr))!important;
+   gap:19px!important;
+ }
+}
+@media(min-width:801px) and (max-width:1240px){
+ #fleet .fleet-grid.fleet-compare-list{
+   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:17px!important;
+ }
+}
+#fleet .fleet-compare-list .premium-catalog-card.photo-rich-fleet-card{
+ grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:255px auto!important;
+ min-height:0!important;
+ border-radius:18px!important;
+}
+#fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual{
+ min-height:255px!important;height:255px!important;width:100%!important;
+ background:linear-gradient(147deg,#e8eeea,#d9e3df 46%,#edf1e9)!important;
+}
+#fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual>img{
+ object-fit:contain!important;object-position:center!important;
+ transform-origin:center!important;
+}
+#fleet .fleet-compare-list .photo-rich-fleet-card .fleet-meta{
+ min-height:221px;
+ padding:18px 20px 21px!important;
+ gap:8px!important;
+}
+#fleet .photo-rich-fleet-card .fleet-meta h3{
+ font-size:clamp(21px,1.8vw,27px)!important;
+}
+#fleet .photo-rich-fleet-card .rate{margin:2px 0!important}
+#fleet .photo-rich-fleet-card .fleet-photo-preview-strip{
+ gap:8px;margin:2px 0;
+}
+#fleet .photo-rich-fleet-card .fleet-photo-preview-strip button{
+ width:74px;height:50px;
+}
+#fleet .photo-rich-fleet-card .fleet-bottom{
+ margin-top:auto!important;
+}
+@media(max-width:800px){
+ #fleet .fleet-grid.fleet-compare-list{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ #fleet .fleet-compare-list .premium-catalog-card.photo-rich-fleet-card{
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:240px auto!important;
+ }
+ #fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual{
+  min-height:240px!important;height:240px!important;
+ }
+ #fleet .fleet-compare-list .photo-rich-fleet-card .fleet-meta{
+  min-height:195px;padding:18px 19px!important;
+ }
+}
