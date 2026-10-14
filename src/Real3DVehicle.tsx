@@ -226,7 +226,8 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
   let hasApprovedModel=false;
   let controls:OrbitControls|undefined;
   let mixer:THREE.AnimationMixer|undefined;
-  let doorActions:Record<'open'|'close',THREE.AnimationAction|undefined>={open:undefined,close:undefined};
+  let doorOpenAction:THREE.AnimationAction|undefined;
+  let doorCloseAction:THREE.AnimationAction|undefined;
   let lastDoorsOpen=false;
   let lastPreset='hero';
   let doorAmount=0;
@@ -294,13 +295,13 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
       root.add(built.vehicle);
       // Approved local GLB assets replace the conceptual 3D silhouette.
       // Uploaded assets are self-contained and validated by the local CRM backend.
-      const approvedLocal=Boolean(modelUrl && /^\/api\/models\/[0-9a-f-]{36}\.glb$/.test(modelUrl));
-      const approvedGeneric=Boolean(!approvedLocal&&conceptUrl&&ALLOWED_CC0_GARAGE_MODELS.has(conceptUrl));
-      const targetModel=approvedLocal?modelUrl:approvedGeneric?conceptUrl:undefined;
-      if(targetModel){
+      const validLocal=Boolean(modelUrl&&/^\/api\/models\/[0-9a-f-]{36}\.glb$/.test(modelUrl));
+      const validConcept=Boolean(!validLocal&&conceptUrl&&ALLOWED_CC0_GARAGE_MODELS.has(conceptUrl));
+      const target=validLocal?modelUrl:validConcept?conceptUrl:undefined;
+      if(target){
         import('three/examples/jsm/loaders/GLTFLoader.js').then(({GLTFLoader})=>{
           if(cancelled)return;
-          new GLTFLoader().load(targetModel,gltf=>{
+          new GLTFLoader().load(target,gltf=>{
             if(cancelled)return;
             const custom=gltf.scene;
             const box=new THREE.Box3().setFromObject(custom);
@@ -323,10 +324,21 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
             hasApprovedModel=true;
             if(gltf.animations.length){
               mixer=new THREE.AnimationMixer(custom);
-              const find=(mode:'open'|'close')=>gltf.animations.find(clip=>
-                new RegExp('(?:door|doors)[_-]?'+mode+'
+              const opened=gltf.animations.find(c=>/door.*open/i.test(c.name));
+              const closed=gltf.animations.find(c=>/door.*close/i.test(c.name));
+              if(opened){
+                doorOpenAction=mixer.clipAction(opened);
+                doorOpenAction.setLoop(THREE.LoopOnce,1);
+                doorOpenAction.clampWhenFinished=true;
+              }
+              if(closed){
+                doorCloseAction=mixer.clipAction(closed);
+                doorCloseAction.setLoop(THREE.LoopOnce,1);
+                doorCloseAction.clampWhenFinished=true;
+              }
+            }
           },undefined,error=>{
-            console.warn('Could not load uploaded GLB, keeping 3D concept vehicle.',error);
+            console.warn('Optional GLB failed to load; keeping local 3D concept.',error);
           });
         }).catch(()=>{/* procedural model remains available */});
       }
@@ -356,9 +368,10 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
           controls.update(delta);
         }
         if(hasApprovedModel&&current.doorsOpen!==lastDoorsOpen){
-          const action=doorActions[current.doorsOpen?'open':'close'];
-          doorActions[current.doorsOpen?'close':'open']?.stop();
-          if(action){action.reset();action.play();}
+          const next=current.doorsOpen?doorOpenAction:doorCloseAction;
+          const previous=current.doorsOpen?doorCloseAction:doorOpenAction;
+          previous?.stop();
+          if(next){next.reset();next.play();}
           lastDoorsOpen=current.doorsOpen;
         }
         mixer?.update(delta);
@@ -420,210 +433,6 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
  // Scene rebuilt only when silhouette category changes, not on every scroll frame.
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[category,modelUrl,conceptUrl]);
-
- useEffect(()=>{
-   const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
- },[paint,status]);
-
- return <div className="vehicle-webgl" ref={host} aria-label={'Interactive concept 3D '+category+' silhouette'}>
-   {status==='loading'&&<div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING 3D STUDIO</small></div>}
-   {status==='fallback'&&<div className="vehicle-3d-fallback">3D preview is unavailable in this browser. Use the vehicle gallery below.</div>}
- </div>;
-}
-, 'i').test(clip.name) ||
-                new RegExp('^'+mode+'[_-]?(?:door|doors)
-          },undefined,error=>{
-            console.warn('Could not load uploaded GLB, keeping 3D concept vehicle.',error);
-          });
-        }).catch(()=>{/* procedural model remains available */});
-      }
-
-      const tick=()=>{
-        if(cancelled||!visible)return;
-        frame=window.requestAnimationFrame(tick);
-        const delta=Math.min(clock.getDelta(),.05);
-        const current=refState.current;
-        if(controls){
-          controls.autoRotate=current.autoRotate&&!current.reducedMotion;
-          if(current.viewPreset!==lastPreset){
-            const dist=camera.position.distanceTo(controls.target);
-            const off:Record<string,[number,number,number]>={
-              hero:[.67,.31,-.68],front:[.04,.26,-1],side:[1,.27,.03],rear:[.04,.26,1]
-            };
-            const pos=off[current.viewPreset]||off.hero;
-            camera.position.set(pos[0]*dist,controls.target.y+pos[1]*dist,pos[2]*dist);
-            lastPreset=current.viewPreset;
-          }
-          const wanted=Math.max(5.2,Math.min(18,defaultDistance/current.zoom));
-          const distance=camera.position.distanceTo(controls.target);
-          if(Math.abs(distance-wanted)>.035&&!controls.autoRotate){
-            const dir=camera.position.clone().sub(controls.target).normalize();
-            camera.position.copy(controls.target).addScaledVector(dir,distance+(wanted-distance)*.09);
-          }
-          controls.update(delta);
-        }
-        const wantedDoor=current.doorsOpen&&!hasApprovedModel?1:0;
-        doorAmount+=(wantedDoor-doorAmount)*Math.min(1,delta*4);
-        built.doors.forEach((door,i)=>{door.rotation.y=(i===0?-.98:.98)*doorAmount;});
-        if(!current.reducedMotion){
-          root.position.y=Math.sin(performance.now()*.0013)*.014;
-          platform.rotation.y+=delta*.022;
-        }
-        point.intensity=current.mood==='golden-hour'?81:61;
-        point.color.set(current.mood==='golden-hour'?0xffae6f:0xd3e8ff);
-        renderer.toneMappingExposure=current.mood==='golden-hour'?1.48:1.68;
-        renderer.render(scene,camera);
-      };
-      const observerStart=()=>{visible=true;if(!frame)tick();};
-      const observerStop=()=>{visible=false;window.cancelAnimationFrame(frame);frame=0;};
-      observer=new IntersectionObserver(entries=>{
-        if(entries[0]?.isIntersecting && !document.hidden)observerStart();else observerStop();
-      },{threshold:.08});
-      observer.observe(element);
-      resize=new ResizeObserver(()=>{
-        const w=Math.max(50,element.clientWidth),h=Math.max(50,element.clientHeight);
-        renderer.setSize(w,h,false);
-        camera.aspect=w/h;camera.updateProjectionMatrix();
-      });
-      resize.observe(element);
-      const cleanup=()=>{
-        observer?.disconnect();resize?.disconnect();
-        controls?.dispose();
-        window.cancelAnimationFrame(frame);
-        scene.traverse(obj=>{
-          if(obj instanceof THREE.Mesh){
-            obj.geometry.dispose();
-            const mats=Array.isArray(obj.material)?obj.material:[obj.material];
-            mats.forEach(m=>m.dispose());
-          }
-        });
-        renderer.dispose();renderer.forceContextLoss();
-        renderer.domElement.remove();
-      };
-      engine.current={renderer,scene,camera,root,platform,point,wheels:built.wheels,
-        paintMaterial:built.paint,dispose:cleanup};
-      setStatus('ready');
-    }catch(err){
-      console.warn('WebGL preview unavailable, using fallback photo',err);
-      if(!cancelled){setStatus('fallback');onUnavailable?.();}
-    }
-  };
-  // Lazy creation only when the large showroom is about to enter the viewport.
-  const startObserver=new IntersectionObserver(entries=>{
-    if(entries[0]?.isIntersecting){initialize();startObserver.disconnect();}
-  },{rootMargin:'200px'});
-  startObserver.observe(element);
-  return()=>{
-    cancelled=true;startObserver.disconnect();
-    engine.current?.dispose();engine.current=null;
-  };
- // Scene rebuilt only when silhouette category changes, not on every scroll frame.
- // eslint-disable-next-line react-hooks/exhaustive-deps
- },[category,modelUrl]);
-
- useEffect(()=>{
-   const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
- },[paint,status]);
-
- return <div className="vehicle-webgl" ref={host} aria-label={'Interactive concept 3D '+category+' silhouette'}>
-   {status==='loading'&&<div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING 3D STUDIO</small></div>}
-   {status==='fallback'&&<div className="vehicle-3d-fallback">3D preview is unavailable in this browser. Use the vehicle gallery below.</div>}
- </div>;
-}
-,'i').test(clip.name));
-              const open=find('open'),close=find('close');
-              if(open)doorActions.open=mixer.clipAction(open).setLoop(THREE.LoopOnce,1);
-              if(close)doorActions.close=mixer.clipAction(close).setLoop(THREE.LoopOnce,1);
-              for(const action of [doorActions.open,doorActions.close])if(action)action.clampWhenFinished=true;
-            }
-          },undefined,error=>{
-            console.warn('Could not load uploaded GLB, keeping 3D concept vehicle.',error);
-          });
-        }).catch(()=>{/* procedural model remains available */});
-      }
-
-      const tick=()=>{
-        if(cancelled||!visible)return;
-        frame=window.requestAnimationFrame(tick);
-        const delta=Math.min(clock.getDelta(),.05);
-        const current=refState.current;
-        if(controls){
-          controls.autoRotate=current.autoRotate&&!current.reducedMotion;
-          if(current.viewPreset!==lastPreset){
-            const dist=camera.position.distanceTo(controls.target);
-            const off:Record<string,[number,number,number]>={
-              hero:[.67,.31,-.68],front:[.04,.26,-1],side:[1,.27,.03],rear:[.04,.26,1]
-            };
-            const pos=off[current.viewPreset]||off.hero;
-            camera.position.set(pos[0]*dist,controls.target.y+pos[1]*dist,pos[2]*dist);
-            lastPreset=current.viewPreset;
-          }
-          const wanted=Math.max(5.2,Math.min(18,defaultDistance/current.zoom));
-          const distance=camera.position.distanceTo(controls.target);
-          if(Math.abs(distance-wanted)>.035&&!controls.autoRotate){
-            const dir=camera.position.clone().sub(controls.target).normalize();
-            camera.position.copy(controls.target).addScaledVector(dir,distance+(wanted-distance)*.09);
-          }
-          controls.update(delta);
-        }
-        const wantedDoor=current.doorsOpen&&!hasApprovedModel?1:0;
-        doorAmount+=(wantedDoor-doorAmount)*Math.min(1,delta*4);
-        built.doors.forEach((door,i)=>{door.rotation.y=(i===0?-.98:.98)*doorAmount;});
-        if(!current.reducedMotion){
-          root.position.y=Math.sin(performance.now()*.0013)*.014;
-          platform.rotation.y+=delta*.022;
-        }
-        point.intensity=current.mood==='golden-hour'?81:61;
-        point.color.set(current.mood==='golden-hour'?0xffae6f:0xd3e8ff);
-        renderer.toneMappingExposure=current.mood==='golden-hour'?1.48:1.68;
-        renderer.render(scene,camera);
-      };
-      const observerStart=()=>{visible=true;if(!frame)tick();};
-      const observerStop=()=>{visible=false;window.cancelAnimationFrame(frame);frame=0;};
-      observer=new IntersectionObserver(entries=>{
-        if(entries[0]?.isIntersecting && !document.hidden)observerStart();else observerStop();
-      },{threshold:.08});
-      observer.observe(element);
-      resize=new ResizeObserver(()=>{
-        const w=Math.max(50,element.clientWidth),h=Math.max(50,element.clientHeight);
-        renderer.setSize(w,h,false);
-        camera.aspect=w/h;camera.updateProjectionMatrix();
-      });
-      resize.observe(element);
-      const cleanup=()=>{
-        observer?.disconnect();resize?.disconnect();
-        controls?.dispose();
-        window.cancelAnimationFrame(frame);
-        scene.traverse(obj=>{
-          if(obj instanceof THREE.Mesh){
-            obj.geometry.dispose();
-            const mats=Array.isArray(obj.material)?obj.material:[obj.material];
-            mats.forEach(m=>m.dispose());
-          }
-        });
-        renderer.dispose();renderer.forceContextLoss();
-        renderer.domElement.remove();
-      };
-      engine.current={renderer,scene,camera,root,platform,point,wheels:built.wheels,
-        paintMaterial:built.paint,dispose:cleanup};
-      setStatus('ready');
-    }catch(err){
-      console.warn('WebGL preview unavailable, using fallback photo',err);
-      if(!cancelled){setStatus('fallback');onUnavailable?.();}
-    }
-  };
-  // Lazy creation only when the large showroom is about to enter the viewport.
-  const startObserver=new IntersectionObserver(entries=>{
-    if(entries[0]?.isIntersecting){initialize();startObserver.disconnect();}
-  },{rootMargin:'200px'});
-  startObserver.observe(element);
-  return()=>{
-    cancelled=true;startObserver.disconnect();
-    engine.current?.dispose();engine.current=null;
-  };
- // Scene rebuilt only when silhouette category changes, not on every scroll frame.
- // eslint-disable-next-line react-hooks/exhaustive-deps
- },[category,modelUrl]);
 
  useEffect(()=>{
    const material=engine.current?.paintMaterial;if(material){material.color.setHex(paintValues[paint]);}
