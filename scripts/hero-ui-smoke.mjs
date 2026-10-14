@@ -111,6 +111,7 @@ async function smoke(){
  await studio.getByRole('button',{name:'Zoom 3D in'}).click();
  ensure((await studio.locator('.ride-studio-zoom-controls span').innerText()).includes('120%'),
   'Zoom controls change the concept camera');
+ await studio.screenshot({path:'artifacts/visual-evidence/ride-studio-3d-desktop.png',animations:'disabled'});
  await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).click();
  ensure(await studio.locator('.ride-studio-vehicle-frame').evaluate(el=>getComputedStyle(el).animationName==='rideGarageVehicleEntry'),
   'Actual reference photographs retain a cinematic entry transition');
@@ -332,6 +333,8 @@ async function smoke(){
    'Mobile full-screen studio has a visible exit control');
  ensure(await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).isVisible(),
    'Mobile users can switch from rotatable concept to real model photography');
+ await page.screenshot({path:'artifacts/visual-evidence/ride-studio-3d-mobile.png',animations:'disabled'});
+ await studio.getByRole('button',{name:'ACTUAL MODEL PHOTOS'}).click();
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
  const mobileFrame=await studio.locator('.ride-studio-vehicle-frame').boundingBox();
  const mobileCameraControls=await studio.locator('.ride-studio-stage-footer').boundingBox();
