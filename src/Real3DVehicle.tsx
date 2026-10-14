@@ -217,7 +217,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
  }|null>(null);
  const refState=useRef({progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset});
  const [status,setStatus]=useState<'loading'|'ready'|'fallback'>('loading');
- const [assetLoad,setAssetLoad]=useState<'loading'|'loaded'|'error'>('loading');
+ const [assetLoad,setAssetLoad]=useState<'local-concept'|'loading'|'loaded'|'error'>('local-concept');
  useEffect(()=>{refState.current={progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset};},[progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset]);
 
  useEffect(()=>{
@@ -300,6 +300,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
       const validConcept=Boolean(!validLocal&&conceptUrl&&ALLOWED_CC0_GARAGE_MODELS.has(conceptUrl));
       const target=validLocal?modelUrl:validConcept?conceptUrl:undefined;
       if(target){
+        setAssetLoad('loading');
         import('three/examples/jsm/loaders/GLTFLoader.js').then(({GLTFLoader})=>{
           if(cancelled)return;
           new GLTFLoader().load(target,gltf=>{
@@ -340,10 +341,10 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
               }
             }
           },undefined,error=>{
-            console.warn('Optional GLB failed to load; switching to actual vehicle photo.',error);
-            if(!cancelled){setAssetLoad('error');onUnavailable?.();}
+            console.warn('Remote GLB unavailable; rendering local rotatable concept.',error);
+            if(!cancelled)setAssetLoad('local-concept');
           });
-        }).catch(()=>{if(!cancelled){setAssetLoad('error');onUnavailable?.();}});
+        }).catch(()=>{if(!cancelled)setAssetLoad('local-concept');});
       }
 
       const tick=()=>{
@@ -442,7 +443,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
  },[paint,status]);
 
  return <div className="vehicle-webgl" ref={host} data-preview-source={assetLoad} aria-label={'Interactive concept 3D '+category+' silhouette'}>
-   {(status==='loading'||(status==='ready'&&(modelUrl||conceptUrl)&&assetLoad==='loading'))&&
+   {status==='loading'&&
      <div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING ROTATABLE 3D VEHICLE</small></div>}
    {status==='fallback'&&<div className="vehicle-3d-fallback">3D preview is unavailable in this browser. Use the vehicle gallery below.</div>}
  </div>;
