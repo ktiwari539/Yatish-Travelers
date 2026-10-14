@@ -217,6 +217,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
  }|null>(null);
  const refState=useRef({progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset});
  const [status,setStatus]=useState<'loading'|'ready'|'fallback'>('loading');
+ const [assetLoad,setAssetLoad]=useState<'loading'|'loaded'|'error'>('loading');
  useEffect(()=>{refState.current={progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset};},[progress,mood,autoRotate,doorsOpen,zoom,reducedMotion,viewPreset]);
 
  useEffect(()=>{
@@ -322,6 +323,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
             root.remove(built.vehicle);
             root.add(custom);
             hasApprovedModel=true;
+            setAssetLoad('loaded');
             if(gltf.animations.length){
               mixer=new THREE.AnimationMixer(custom);
               const opened=gltf.animations.find(c=>/door.*open/i.test(c.name));
@@ -338,9 +340,10 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
               }
             }
           },undefined,error=>{
-            console.warn('Optional GLB failed to load; keeping local 3D concept.',error);
+            console.warn('Optional GLB failed to load; switching to actual vehicle photo.',error);
+            if(!cancelled){setAssetLoad('error');onUnavailable?.();}
           });
-        }).catch(()=>{/* procedural model remains available */});
+        }).catch(()=>{if(!cancelled){setAssetLoad('error');onUnavailable?.();}});
       }
 
       const tick=()=>{
@@ -439,7 +442,8 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
  },[paint,status]);
 
  return <div className="vehicle-webgl" ref={host} aria-label={'Interactive concept 3D '+category+' silhouette'}>
-   {status==='loading'&&<div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING 3D STUDIO</small></div>}
+   {(status==='loading'||(status==='ready'&&(modelUrl||conceptUrl)&&assetLoad==='loading'))&&
+     <div className="vehicle-loading"><span className="vehicle-loading-spinner"/><small>PREPARING ROTATABLE 3D VEHICLE</small></div>}
    {status==='fallback'&&<div className="vehicle-3d-fallback">3D preview is unavailable in this browser. Use the vehicle gallery below.</div>}
  </div>;
 }
