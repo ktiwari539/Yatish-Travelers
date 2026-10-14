@@ -332,6 +332,12 @@ export function App() {
 
   const selected = liveFleet.find(item=>item.name===vehicle) ?? liveFleet[0] ?? fleet[1];
   const heroVehicle = selected;
+  // The studio entry may open with the strongest approved local vehicle
+  // photograph when nobody has made a deliberate selection. A user-selected
+  // model ALWAYS takes priority, and this does not change fare/CRM state.
+  const studioShowcaseName=liveFleet.find(car=>car.name==='Mahindra XUV700' &&
+    !missingFleetMedia &&
+    [car.image,...(car.gallery||[])].includes('/media/mt-xuv700-studio.webp'))?.name;
   const selectFeatured = (name:string)=>{
     const next=liveFleet.findIndex(item=>item.name===name);
     if(next>=0){userSelectedVehicle.current=true;setVehicle(name);}
@@ -521,7 +527,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             <span><Sparkles size={17}/> MATESHWARI MOTOR STUDIO / EXPERIENCE 02</span>
             <h3>Your ride. <em>In the spotlight.</em></h3>
             <p>An immersive showroom with dramatic lighting, real model-reference photography and a closer look at the details. Choose the vehicle that suits your journey.</p>
-            <button type="button" onClick={()=>setStudioVehicle(selected.name)}>
+            <button type="button" onClick={()=>setStudioVehicle(!userSelectedVehicle.current&&studioShowcaseName?studioShowcaseName:selected.name)}>
               <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
             </button>
             <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> STUDIO READY <b>•</b> THREE LIGHTING MOODS <b>•</b> MODEL EXPLORER</small>
