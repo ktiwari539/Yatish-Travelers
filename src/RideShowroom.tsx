@@ -199,7 +199,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      {show3D?
        <div className="ride-studio-interactive-3d" role="group" aria-label={'Rotate the '+active.category+' concept car'}>
          <Real3DVehicle key={active.name} category={active.category} modelUrl={active.modelUrl}
-           conceptUrl={conceptModelFor(active.name)}
+           conceptUrl={conceptModelFor(active.name)} continuousPreview
            paint={conceptPaint} mood={lightPreset==='ember'?'golden-hour':'daylight'} progress={.50}
            zoom={zoom} autoRotate={rotationPlaying&&cinematicOn} doorsOpen={doorsOpen}
            viewPreset={viewPreset} reducedMotion={reducedMotion}
