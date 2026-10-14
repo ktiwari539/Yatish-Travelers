@@ -18,12 +18,12 @@ export const studioReviewSources=[
  {
   model:'Mahindra TUV',
   slug:'tuv',
-  file:'mt-studio-tuv-review.jpg',
-  commonsFile:'Mahindra TUV 300 Chennai 2016 (3) (cropped).JPG',
-  credit:'SnapMeUp (original), Davey2010 (crop)',
+  file:'mt-studio-tuv-front-review.jpg',
+  commonsFile:'Mahindra TUV 300 Chennai 2016 (2).JPG',
+  credit:'SnapMeUp (masked original)',
   license:'CC BY-SA 4.0',
-  modelCaption:'Mahindra TUV300 photographed in Chennai in 2016',
-  source:'https://commons.wikimedia.org/wiki/File:Mahindra_TUV_300_Chennai_2016_(3)_(cropped).JPG',
+  modelCaption:'Mahindra TUV300 front-three-quarter photograph, with number-plate masking in the author's published version',
+  source:'https://commons.wikimedia.org/wiki/File:Mahindra_TUV_300_Chennai_2016_(2).JPG',
   rights:'https://creativecommons.org/licenses/by-sa/4.0/'
  },
  {
