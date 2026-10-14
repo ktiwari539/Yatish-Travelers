@@ -15,6 +15,13 @@ const commons=(filename:string)=>'https://commons.wikimedia.org/wiki/Special:Fil
 const page=(filename:string)=>'https://commons.wikimedia.org/wiki/File:'+filename.replaceAll(' ','_');
 type Candidate={file:string;credit:string;license:string;label:string};
 const candidates:Record<string,Candidate[]>={
+ 'Toyota Innova':[
+  {file:'2019 Toyota Innova 2.0 G (74).jpg',label:'2019 Innova cabin reference (different trim)',credit:'Bindydad123',license:'CC BY-SA 4.0'}
+ ],
+ 'Mahindra Bolero':[
+  {file:'Mahindra Bolero GLX Front.JPG',label:'Bolero GLX front reference (different trim)',credit:'Ominae',license:'CC BY-SA 4.0'},
+  {file:'Mahindra Bolero GLX Rear.JPG',label:'Bolero GLX rear reference (different trim)',credit:'Ominae',license:'CC BY-SA 4.0'}
+ ],
  'Maruti Dzire':[
   {file:'MIAS 2025 - All-new Suzuki Dzire Hybrid 03.jpg',label:'Front three-quarter',credit:'Ethan Llamas',license:'CC BY-SA 4.0'}
  ],
