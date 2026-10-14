@@ -158,6 +158,13 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure((await studio.locator('.ride-studio-panel-heading h2').innerText())==='Mahindra Thar',
    'Individual fleet cards open the studio on their own model');
+ // The richer CC0 class-concept is optional and remote; neither test CI nor
+ // a customer should be blocked if the third-party host is unreachable.
+ await page.waitForTimeout(2500);
+ const cc0Preview=await studio.locator('.vehicle-webgl').count()?
+   await studio.locator('.vehicle-webgl').getAttribute('data-preview-source'):'photo-fallback';
+ console.log('Generic 3D asset status (Thar concept; not exact model):',cc0Preview);
+ await studio.screenshot({path:'artifacts/visual-evidence/thar-3d-optional.png',animations:'disabled'});
  await page.keyboard.press('Escape');
  await studio.waitFor({state:'detached'});
  // Scroll narrative uses actual model reference images, not generic 3D or concept art.
