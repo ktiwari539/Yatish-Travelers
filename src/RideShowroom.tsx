@@ -49,10 +49,10 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [revealId,setRevealId]=useState(0);
  const [cinematicOn,setCinematicOn]=useState(true);
  const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
- // Never open the consumer garage with an unbranded low-detail concept when
- // there is no reviewed vehicle-specific 3D model. The reference photograph
- // is the truthful default; the concept orbit remains an explicit opt-in.
- const [show3D,setShow3D]=useState(()=>Boolean(vehicles.find(v=>v.name===initialName)?.modelUrl));
+ // Where a strictly allowlisted CC0 concept exists, load the richer genuine
+ // GLB on entry; if loading fails, automatically switch to named-model photos.
+ // No unrelated procedural silhouette should appear as the initial customer view.
+ const [show3D,setShow3D]=useState(()=>Boolean(vehicles.find(v=>v.name===initialName)?.modelUrl||conceptModelFor(initialName)));
  const [rotationPlaying,setRotationPlaying]=useState(true);
  const [doorsOpen,setDoorsOpen]=useState(false);
  const [viewPreset,setViewPreset]=useState<'hero'|'front'|'side'|'rear'>('hero');
