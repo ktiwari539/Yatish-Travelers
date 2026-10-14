@@ -234,6 +234,7 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
   let doorAmount=0;
   const clock=new THREE.Clock();
   let defaultDistance=11.3;
+  let debugFrame=0;
   let resize:ResizeObserver|undefined,observer:IntersectionObserver|undefined;
   const initialize=()=>{
     if(cancelled||engine.current)return;
@@ -370,6 +371,13 @@ export function Real3DVehicle({category,paint,mood,progress,modelUrl,conceptUrl,
             camera.position.copy(controls.target).addScaledVector(dir,distance+(wanted-distance)*.09);
           }
           controls.update(delta);
+          if((debugFrame++%12)===0){
+            // Read-only camera telemetry used to distinguish a working orbit
+            // from a static/missing WebGL canvas in automated browser checks.
+            const offset=camera.position.clone().sub(controls.target);
+            element.dataset.cameraAzimuth=Math.atan2(offset.z,offset.x).toFixed(4);
+            element.dataset.cameraDistance=offset.length().toFixed(2);
+          }
         }
         if(hasApprovedModel&&current.doorsOpen!==lastDoorsOpen){
           const next=current.doorsOpen?doorOpenAction:doorCloseAction;
