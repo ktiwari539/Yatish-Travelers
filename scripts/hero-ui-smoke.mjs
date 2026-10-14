@@ -69,8 +69,8 @@ async function smoke(){
  mkdirSync('artifacts/visual-evidence',{recursive:true});
  await page.locator('.fleet-studio-launch').screenshot({
    path:'artifacts/visual-evidence/ride-studio-launcher-desktop.png',animations:'disabled'});
- ensure((await page.locator('.fleet-studio-launch h3').innerText()).includes('The garage'),
-  'Main entry invites visitors into the garage rather than repeating the catalogue title');
+ ensure((await page.locator('.fleet-studio-launch h3').innerText()).includes('In the spotlight'),
+  'Main entry invites visitors into the premium spotlight experience');
  ensure(await page.locator('.fleet-grid.fleet-compare-list').count()===1,
   'Public fleet cards are reorganized into a compact comparison rather than a second photo gallery');
  await page.locator('.fleet-grid.fleet-compare-list').screenshot({
@@ -82,6 +82,19 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure(await studio.locator('.ride-studio-reveal').count()===1,
   'Garage introduction has an automatic full-screen vehicle initialization sequence');
+ ensure(await studio.locator('.ride-studio-backdrop').count()===0,
+  'Studio modal stays a single overlay rather than duplicating a second dialog');
+ ensure(await page.locator('.garage-luxe-v19.garage-light-ion').count()===1,
+  'Original high-contrast midnight blue studio palette is active');
+ await studio.getByRole('button',{name:'Use titanium studio lighting'}).click();
+ ensure(await studio.getByRole('button',{name:'Use titanium studio lighting'}).getAttribute('aria-pressed')==='true',
+  'Studio visitors can select neutral titanium lighting without changing any vehicle photo');
+ ensure(await page.locator('.garage-luxe-v19.garage-light-titanium').count()===1,
+  'Lighting theme is reflected in the current full-screen studio');
+ await studio.getByRole('button',{name:'Use ember studio lighting'}).click();
+ ensure(await page.locator('.garage-luxe-v19.garage-light-ember').count()===1,
+  'Amber lighting option updates the garage atmosphere');
+ await studio.getByRole('button',{name:'Use ion studio lighting'}).click();
  ensure(await studio.locator('.ride-studio-vehicle-frame').evaluate(el=>getComputedStyle(el).animationName==='rideGarageVehicleEntry'),
   'Garage car rolls in with a 3D-perspective animation');
  ensure(await studio.locator('.ride-studio-grid').evaluate(el=>getComputedStyle(el).animationName==='rideGarageFloor'),
