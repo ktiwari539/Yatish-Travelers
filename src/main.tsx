@@ -48,5 +48,3 @@ import './garage-luxe-v19.css';
 import './garage-interactive-v20.css';
 
 import './garage-motion-v21.css';
-
-import './fleet-atelier-v23.css';
