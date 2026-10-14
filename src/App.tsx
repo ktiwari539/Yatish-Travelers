@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
+import { FleetSpotlight } from './FleetSpotlight';
 import { PremiumFleetExperience } from './PremiumFleetExperience';
 import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
@@ -286,7 +287,6 @@ export function App() {
   const [passengers, setPassengers] = useState(4);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [studioVehicle,setStudioVehicle]=useState<string|null>(null);
-  const [studioLaunchPhotoFailed,setStudioLaunchPhotoFailed]=useState(false);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
@@ -332,12 +332,6 @@ export function App() {
 
   const selected = liveFleet.find(item=>item.name===vehicle) ?? liveFleet[0] ?? fleet[1];
   const heroVehicle = selected;
-  // The studio entry may open with the strongest approved local vehicle
-  // photograph when nobody has made a deliberate selection. A user-selected
-  // model ALWAYS takes priority, and this does not change fare/CRM state.
-  const studioShowcaseName=liveFleet.find(car=>car.name==='Mahindra XUV700' &&
-    !missingFleetMedia &&
-    [car.image,...(car.gallery||[])].includes('/media/mt-xuv700-studio.webp'))?.name;
   const selectFeatured = (name:string)=>{
     const next=liveFleet.findIndex(item=>item.name===name);
     if(next>=0){userSelectedVehicle.current=true;setVehicle(name);}
@@ -517,32 +511,13 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>}
         <div className="section-heading">
           <div><span className="kicker">THE FLEET EXPERIENCE</span><h2>Choose your ride.</h2></div>
-          <p>Pick a model in the cinematic garage, then compare the practical details below. The vehicle you choose stays linked to your quotation.</p>
+          <p>Explore our featured vehicles and compare every model below. Your selection follows through to your fare estimate.</p>
         </div>
 
-        <div className="fleet-studio-launch fleet-studio-launch-v18 garage-luxe-entry-v19" aria-label="Enter interactive cinematic vehicle garage">
-          <div className="fleet-launch-scanlines" aria-hidden="true"/>
-          <div className="fleet-launch-rays" aria-hidden="true"><i/><i/><i/></div>
-          <div className="fleet-studio-launch-copy">
-            <span><Sparkles size={17}/> MATESHWARI MOTOR STUDIO / EXPERIENCE 02</span>
-            <h3>Your ride. <em>In the spotlight.</em></h3>
-            <p>An immersive showroom with dramatic lighting, real model-reference photography and a closer look at the details. Choose the vehicle that suits your journey.</p>
-            <button type="button" onClick={()=>setStudioVehicle(!userSelectedVehicle.current&&studioShowcaseName?studioShowcaseName:selected.name)}>
-              <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
-            </button>
-            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> STUDIO READY <b>•</b> THREE LIGHTING MOODS <b>•</b> MODEL EXPLORER</small>
-          </div>
-          <div className="fleet-studio-launch-visual">
-            <div className="fleet-launch-portal" aria-hidden="true"><i/><i/><i/></div>
-            {!studioLaunchPhotoFailed?
-              <img src="/media/mt-xuv700-studio.webp" alt="Reviewed XUV700 studio model-reference vehicle promoting the interactive showroom" loading="lazy"
-                onError={()=>setStudioLaunchPhotoFailed(true)}/>:
-              <div className="fleet-studio-launch-fallback" role="img" aria-label="Vehicle photograph pending local media installation">
-                <CarFront size={102} strokeWidth={1.1}/><strong>THE GARAGE AWAITS</strong><small>Start your full-screen vehicle experience</small>
-              </div>}
-            <span className="fleet-launch-chapter">GARAGE SESSION / PRESS START <ArrowRight size={17}/></span>
-          </div>
-        </div>
+        <FleetSpotlight vehicles={liveFleet}
+          onExplore={name=>setStudioVehicle(name)}
+          onEstimate={name=>{selectFeatured(name);logInteraction('vehicle_explore','fleet',name);
+            document.getElementById('fare')?.scrollIntoView({behavior:'smooth'});}}/>
 
         <div className="fleet-tools">
           <div className="fleet-filter-block">
@@ -586,7 +561,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
         <div className="fleet-match-note fleet-compare-heading">
           <strong>THE LINEUP · QUICK COMPARISON</strong>
-          <span>{filteredFleet.length} vehicles · {fleetSort==='featured'?'admin featured order':`sorted for ${passengers} travelers`}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''} · Select to enter the studio or estimate your fare</span>
+          <span>{filteredFleet.length} vehicles · {fleetSort==='featured'?'admin featured order':`sorted for ${passengers} travelers`}{fleetFilter !== 'All' ? ` · ${fleetFilter}` : ''} · View model photos or estimate your fare</span>
         </div>
 
         <div className="fleet-grid fleet-compare-list">
