@@ -277,3 +277,20 @@
   min-height:195px;padding:18px 19px!important;
  }
 }
+/* Failed source URLs remain identifiable and cannot be selected as photo angles.
+   This is load-state feedback only, not image privacy or publication clearance. */
+#fleet .fleet-photo-preview-strip button:disabled,
+.garage-luxe-v19 .ride-studio-photo-strip button:disabled{
+ opacity:.62;cursor:not-allowed;border-color:#a4b4ad!important;
+ box-shadow:none!important;transform:none!important;
+}
+.garage-luxe-v19 .ride-studio-photo-strip .ride-studio-thumb-pending{
+ display:grid;place-items:center;width:100%;height:100%;padding:5px;
+ color:#4b6567;background:#e4ebe8;font-size:10px;
+ line-height:1.2;font-weight:700;text-align:center;
+}
+@media(prefers-reduced-motion:reduce){
+ #fleet .photo-rich-fleet-card .premium-catalog-visual>img{
+  animation:none!important;filter:none!important;
+ }
+}
