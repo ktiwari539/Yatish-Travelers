@@ -150,9 +150,19 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
    idleTimer=undefined;
    if(document.visibilityState==='visible')idleTimer=setTimeout(start,3000);
   };
+  let lastPointer:{x:number;y:number}|null=null;
   const activity=(event:Event)=>{
-   // Ignore synthetic events. Only actual interaction resets inactivity.
-   if(event.isTrusted)reset();
+   if(!event.isTrusted)return;
+   // WebKit may dispatch pointermove at unchanged coordinates while a
+   // cinematic layer animates under a stationary pointer. That is not
+   // visitor activity and must not indefinitely postpone the photo tour.
+   if(event.type==='pointermove'){
+    const pointer=event as PointerEvent;
+    if(lastPointer&&Math.abs(pointer.clientX-lastPointer.x)<5&&
+      Math.abs(pointer.clientY-lastPointer.y)<5)return;
+    lastPointer={x:pointer.clientX,y:pointer.clientY};
+   }
+   reset();
   };
   const onVisibility=()=>reset();
   const events=['pointermove','pointerdown','touchstart','wheel','keydown','focusin'];
