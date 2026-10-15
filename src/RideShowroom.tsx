@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine, Play, Pause } from 'lucide-react';
 import { needsFleetPlateReview } from './mediaSafety';
 import { buildFleetGallery, fleetThumbnailSource } from './fleetGallery';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
@@ -50,6 +50,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [switching,setSwitching]=useState(false);
  const switchTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [cinematicOn,setCinematicOn]=useState(true);
+ const [autoTourEnabled,setAutoTourEnabled]=useState(true);
+ const [tourRunning,setTourRunning]=useState(false);
  const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
  const [reducedMotion,setReducedMotion]=useState(false);
  const [pointerDown,setPointerDown]=useState<number|null>(null);
@@ -108,6 +110,56 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
    if(previousFocus.current instanceof HTMLElement)previousFocus.current.focus();
   };
  },[]);
+ // The studio is deliberately different from the fleet selection cards:
+ // after 4 seconds without activity, it automatically tours the genuine
+ // available photographs. This is NEVER represented as a rotating 3D car.
+ // A user moving, touching, typing, scrolling, or focusing pauses the tour.
+ // Reduced-motion preferences, hidden tabs and manual pause are respected.
+ useEffect(()=>{
+  if(!active||!autoTourEnabled||reducedMotion||details||switching||available.length<2){
+   setTourRunning(false);return;
+  }
+  const dialog=dialogRef.current;
+  let idleTimer:ReturnType<typeof setTimeout>|undefined;
+  let tourTimer:ReturnType<typeof setInterval>|undefined;
+  const stop=()=>{
+   if(tourTimer!==undefined)clearInterval(tourTimer);
+   tourTimer=undefined;
+   setTourRunning(false);
+  };
+  const start=()=>{
+   idleTimer=undefined;
+   if(document.visibilityState!=='visible')return;
+   setTourRunning(true);
+   tourTimer=setInterval(()=>{
+    setAngle(current=>{
+     const position=available.indexOf(current);
+     return available[(Math.max(position,0)+1)%available.length];
+    });
+   },3400);
+  };
+  const reset=()=>{
+   stop();
+   if(idleTimer!==undefined)clearTimeout(idleTimer);
+   idleTimer=undefined;
+   if(document.visibilityState==='visible')idleTimer=setTimeout(start,4000);
+  };
+  const activity=(event:Event)=>{
+   // Ignore synthetic events. Only actual interaction resets inactivity.
+   if(event.isTrusted)reset();
+  };
+  const onVisibility=()=>reset();
+  const events=['pointermove','pointerdown','touchstart','wheel','keydown','focusin'];
+  for(const event of events)dialog?.addEventListener(event,activity,{passive:true});
+  document.addEventListener('visibilitychange',onVisibility);
+  reset();
+  return ()=>{
+   if(idleTimer!==undefined)clearTimeout(idleTimer);
+   if(tourTimer!==undefined)clearInterval(tourTimer);
+   for(const event of events)dialog?.removeEventListener(event,activity);
+   document.removeEventListener('visibilitychange',onVisibility);
+  };
+ },[active?.name,galleryKey,failedSources.join('|'),autoTourEnabled,reducedMotion,details,switching]);
  useEffect(()=>{
   const handler=(event:KeyboardEvent)=>{
    if(event.key==='Escape'){event.preventDefault();onClose();return;}
@@ -208,7 +260,17 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      </div>
      <div className="ride-studio-stage-footer">
       <div><strong><Gauge size={15}/> {available.length>1?'CAMERA BAY / MODEL PHOTOGRAPHS':'MODEL REFERENCE'}</strong>
-        <span>{available.length>1?'Swipe or use the arrows to browse real photographic angles':'True 360° rotation is available only with a verified model-specific 3D asset.'}</span></div>
+        <span>{tourRunning?'Auto photo tour · genuine still photographs, not 360° rotation':available.length>1?'Browse genuine angles; idle photo tour starts after 4 seconds':'True 360° needs approved, matched vehicle-specific rotation assets.'}</span></div>
+      <div className="ride-studio-tour-controls">
+       <button type="button" className="ride-studio-tour-toggle"
+        disabled={available.length<2||reducedMotion}
+        aria-label={autoTourEnabled?'Pause automatic photo tour':'Enable automatic photo tour'}
+        aria-pressed={autoTourEnabled}
+        onClick={()=>setAutoTourEnabled(current=>!current)}>
+        {autoTourEnabled?<Pause size={15}/>:<Play size={15}/>}
+        {autoTourEnabled?(tourRunning?'Auto tour · playing':'Auto tour · idle'):'Auto tour · paused'}
+       </button>
+      </div>
       <div className="ride-studio-angle-nav" role="group" aria-label="Photo-angle controls">
        <button type="button" aria-label="Previous photo angle" disabled={available.length<2} onClick={()=>nextAngle(-1)}><ChevronLeft size={23}/></button>
        <span>{String(Math.max(available.indexOf(shownAngle)+1,0)).padStart(2,'0')} / {String(available.length).padStart(2,'0')}</span>
@@ -239,7 +301,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
       </button>
       {details?productDetails:<div className="ride-studio-preview-copy">
        <strong>THE ACTUAL VEHICLE REFERENCE</strong>
-       <p>Browse available photographs of this exact model, then inspect the booking specifications. No unrelated cars or simulated 360° rotation.</p>
+       <p>The fleet cards show one signature photograph. Here you can inspect all available angles, compare details and let the photographic tour play while idle. True vehicle rotation requires an approved matched-angle turntable.</p>
        <div><MousePointer2 size={16}/> Select another model below or use the arrow keys.</div>
        <button type="button" className="ride-studio-cinematic-toggle" aria-pressed={!cinematicOn}
          onClick={()=>setCinematicOn(value=>!value)}>
