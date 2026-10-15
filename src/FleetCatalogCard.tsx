@@ -47,8 +47,9 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
    <div className="rate"><strong>₹{car.rateMin??15}–₹{car.rateMax??25}</strong><small>/ km indicative range</small></div>
    <div className="fleet-studio-preview-note" aria-label={'Studio photography for '+car.name}>
      <Maximize2 size={15}/>
-     <span>{gallery.length>1?`${gallery.length} model-reference views inside the studio`:
-      'See this vehicle in the full-screen studio'}</span>
+     <span>{gallery.length>1?
+      'Exclusive studio: available angles, auto photo tour and specifications':
+      'Exclusive studio: immersive view and booking details'}</span>
    </div>
    <div className="fleet-bottom"><span>{car.seats} seats · {car.category}</span>
     <button type="button" onClick={onEstimate}>Estimate fare <ArrowRight size={15}/></button></div>
