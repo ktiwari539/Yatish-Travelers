@@ -72,3 +72,16 @@ export function buildFleetGallery(car:GalleryCar):GalleryPhoto[]{
 export function isPhotoPrivacyReviewed(photo:GalleryPhoto):boolean{
  return !photo.reviewPending && !/^https?:/.test(photo.src);
 }
+
+/** Use lightweight previews without altering the original full-size photo URL.
+ * Wikimedia thumbnails are delivery derivatives, never privacy redactions. */
+export function fleetThumbnailSource(src:string):string{
+ try{
+  const url=new URL(src);
+  if(url.hostname==='commons.wikimedia.org'&&url.pathname.startsWith('/wiki/Special:FilePath/')){
+   url.searchParams.set('width','360');
+   return url.toString();
+  }
+ }catch{/* relative locally sanitized assets remain unchanged */}
+ return src;
+}
