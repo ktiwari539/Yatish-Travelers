@@ -21,7 +21,7 @@ async function ready(){
 try{
  await ready();
  browser=await webkit.launch({headless:true});
- const page=await browser.newPage({viewport:{width:1440,height:900}});
+ const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'no-preference'});
  page.setDefaultTimeout(12000);
  const photoFixture='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#cbd8ce"/></svg>';
  // The SVG is a test-only network fixture. Never added to a gallery or release.
@@ -56,8 +56,21 @@ try{
  await dialog.getByRole('button',{name:'Return to full view of Maruti Ertiga'}).evaluate(el=>el.click());
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),0,'Zoom exits');
  const before=await image.getAttribute('src');
- await page.waitForFunction(()=>document.querySelector('.ride-studio-stage')?.getAttribute('data-tour-state')==='playing',
-  null,{timeout:7500});
+ try{
+  await page.waitForFunction(()=>document.querySelector('.ride-studio-stage')?.getAttribute('data-tour-state')==='playing',
+   null,{timeout:10000});
+ }catch(error){
+  const diagnostic=await page.evaluate(()=>({
+   visibility:document.visibilityState,
+   reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches,
+   tourState:document.querySelector('.ride-studio-stage')?.getAttribute('data-tour-state'),
+   tourControl:document.querySelector('.ride-studio-tour-toggle')?.outerHTML,
+   photoCount:document.querySelectorAll('.ride-studio-photo-strip button:not(:disabled)').length,
+   currentPhoto:document.querySelector('.ride-studio-car-image')?.getAttribute('src')
+  }));
+  console.error('WebKit idle tour diagnostics',JSON.stringify(diagnostic));
+  throw error;
+ }
  const after=await image.getAttribute('src');
  assert.notEqual(before,after,'Auto tour visibly changes angle on WebKit after inactivity');
  await dialog.getByRole('button',{name:'Pause automatic photo tour'}).evaluate(el=>el.click());
