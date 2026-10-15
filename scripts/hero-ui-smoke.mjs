@@ -645,6 +645,10 @@ async function smoke(){
  ensure((await tourDialog.locator('.ride-studio-car-image').getAttribute('src'))===pausedPhoto,
   'Pausing the photographic auto-tour prevents idle gallery changes');
  await tourTest.emulateMedia({reducedMotion:'reduce'});
+ await tourTest.waitForFunction(()=>{
+  const control=document.querySelector('.ride-studio-tour-toggle');
+  return control instanceof HTMLButtonElement && control.disabled;
+ },null,{timeout:4000});
  ensure(await tourDialog.getByRole('button',{name:'Enable automatic photo tour'}).isDisabled(),
   'Reduced-motion visitors cannot enable automatic photographic changes');
  await tourTest.close();
