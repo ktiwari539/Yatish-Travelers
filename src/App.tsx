@@ -351,7 +351,10 @@ export function App() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) entry.target.classList.add('is-inview');
       });
-    }, { threshold: 0.14, rootMargin: '0px 0px -8% 0px' });
+    // The fleet is a tall, responsive section. A ratio threshold of 0.14
+    // can be unreachable on narrow screens, leaving all ten cards invisible.
+    // Reveal once the section actually enters the viewport instead.
+    }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
 
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
