@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine, Play, Pause } from 'lucide-react';
 import { needsFleetPlateReview } from './mediaSafety';
-import { buildFleetGallery, fleetThumbnailSource } from './fleetGallery';
+import { buildFleetGallery, fleetThumbnailSource, studioOpeningIndex } from './fleetGallery';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
 type ShowroomVehicle=FleetReelVehicle & {capacity?:number;modelUrl?:string};
@@ -43,7 +43,9 @@ function RideStudioThumb({src,onFailure}:{src:string;onFailure:()=>void}){
 }
 export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [vehicleIndex,setVehicleIndex]=useState(()=>Math.max(0,vehicles.findIndex(v=>v.name===initialName)));
- const [angle,setAngle]=useState(0);
+ const [angle,setAngle]=useState(-1);
+ const [zoomed,setZoomed]=useState(false);
+ const [zoomPoint,setZoomPoint]=useState({x:50,y:50});
  const [failedSources,setFailedSources]=useState<string[]>([]);
  const [details,setDetails]=useState(false);
  const [revealId,setRevealId]=useState(0);
@@ -64,11 +66,12 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const photos=gallery.map(p=>p.src);
  const galleryKey=photos.join('\u001f');
  const available=photos.map((_,i)=>i).filter(i=>!failedSources.includes(photos[i]));
- const shownAngle=available.includes(angle)?angle:(available[0]??-1);
+ const openingAngle=active?studioOpeningIndex(active,gallery):-1;
+ const shownAngle=available.includes(angle)?angle:(available.includes(openingAngle)?openingAngle:(available[0]??-1));
  const image=shownAngle>=0?photos[shownAngle]:'';
  const selectedPhoto=shownAngle>=0?gallery[shownAngle]:undefined;
  const markFailed=(src:string)=>setFailedSources(prev=>prev.includes(src)?prev:[...prev,src]);
- useEffect(()=>{setFailedSources([]);setAngle(0);},[active?.name,galleryKey]);
+ useEffect(()=>{setFailedSources([]);setAngle(-1);setZoomed(false);setZoomPoint({x:50,y:50});},[active?.name,galleryKey]);
  const isReferenceApproved=knownSafePreview(image);
  const studioAssetQuality=isReferenceApproved?'reviewed-local':'editorial-reference';
  const imageSource=selectedPhoto;
@@ -82,7 +85,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   setSwitching(true);
   switchTimer.current=setTimeout(()=>{
     setVehicleIndex(destination);
-    setAngle(0);setDetails(false);setPointerDown(null);setDragging(false);
+    setAngle(-1);setZoomed(false);setDetails(false);setPointerDown(null);setDragging(false);
     setRevealId(count=>count+1);
     setSwitching(false);
     switchTimer.current=null;
@@ -92,6 +95,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   if(available.length<2)return;
   const current=available.indexOf(shownAngle);
   setAngle(available[(current+delta+available.length)%available.length]);
+  setZoomed(false);
   setRevealId(count=>count+1);
  };
  useEffect(()=>{
@@ -111,12 +115,12 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   };
  },[]);
  // The studio is deliberately different from the fleet selection cards:
- // after 4 seconds without activity, it automatically tours the genuine
+ // after brief inactivity, it automatically tours the genuine
  // available photographs. This is NEVER represented as a rotating 3D car.
  // A user moving, touching, typing, scrolling, or focusing pauses the tour.
  // Reduced-motion preferences, hidden tabs and manual pause are respected.
  useEffect(()=>{
-  if(!active||!autoTourEnabled||reducedMotion||details||switching||available.length<2){
+  if(!active||!autoTourEnabled||reducedMotion||details||zoomed||switching||available.length<2){
    setTourRunning(false);return;
   }
   const dialog=dialogRef.current;
@@ -127,22 +131,24 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
    tourTimer=undefined;
    setTourRunning(false);
   };
+  const advance=()=>{
+   setAngle(current=>{
+    const position=available.indexOf(current<0?openingAngle:current);
+    return available[(Math.max(position,0)+1)%available.length];
+   });
+  };
   const start=()=>{
    idleTimer=undefined;
    if(document.visibilityState!=='visible')return;
    setTourRunning(true);
-   tourTimer=setInterval(()=>{
-    setAngle(current=>{
-     const position=available.indexOf(current);
-     return available[(Math.max(position,0)+1)%available.length];
-    });
-   },3400);
+   advance(); // A visible change immediately after idle, not 4s + another delay.
+   tourTimer=setInterval(advance,3800);
   };
   const reset=()=>{
    stop();
    if(idleTimer!==undefined)clearTimeout(idleTimer);
    idleTimer=undefined;
-   if(document.visibilityState==='visible')idleTimer=setTimeout(start,4000);
+   if(document.visibilityState==='visible')idleTimer=setTimeout(start,3000);
   };
   const activity=(event:Event)=>{
    // Ignore synthetic events. Only actual interaction resets inactivity.
@@ -159,10 +165,10 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
    for(const event of events)dialog?.removeEventListener(event,activity);
    document.removeEventListener('visibilitychange',onVisibility);
   };
- },[active?.name,galleryKey,failedSources.join('|'),autoTourEnabled,reducedMotion,details,switching]);
+ },[active?.name,galleryKey,failedSources.join('|'),autoTourEnabled,reducedMotion,details,zoomed,switching]);
  useEffect(()=>{
   const handler=(event:KeyboardEvent)=>{
-   if(event.key==='Escape'){event.preventDefault();onClose();return;}
+   if(event.key==='Escape'){event.preventDefault();if(zoomed)setZoomed(false);else onClose();return;}
    if(event.key==='ArrowLeft'){event.preventDefault();setCar(vehicleIndex-1);return;}
    if(event.key==='ArrowRight'){event.preventDefault();setCar(vehicleIndex+1);return;}
    if(event.key==='ArrowUp'){event.preventDefault();nextAngle(1);return;}
@@ -178,7 +184,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   };
   document.addEventListener('keydown',handler);
   return()=>document.removeEventListener('keydown',handler);
- },[vehicleIndex,angle,photos.length,onClose,vehicles.length]);
+ },[vehicleIndex,angle,photos.length,onClose,vehicles.length,zoomed]);
  if(!active)return null;
  const onPointerRelease=(clientX:number)=>{
   if(pointerDown===null)return;
@@ -208,7 +214,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
     </button>
    </div>
    <div className="ride-studio-body">
-    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')+(switching?' is-switching':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality}>
+    <div className={'ride-studio-stage ride-studio-stage-v18'+(!cinematicOn?' no-cinematic':'')+(switching?' is-switching':'')+(tourRunning?' is-photo-touring':'')} data-vehicle={active.name} data-media-quality={studioAssetQuality} data-tour-state={tourRunning?'playing':autoTourEnabled?'idle':'paused'}>
      <div className="ride-studio-atmosphere" aria-hidden="true"/>
      <div className="ride-studio-softbox softbox-left" aria-hidden="true"/>
      <div className="ride-studio-softbox softbox-right" aria-hidden="true"/>
@@ -223,7 +229,12 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        <i/><i/><i/>
      </div>
      <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> GARAGE BAY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
-     <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> REAL CAR PHOTOGRAPHY <i/> MODEL-SPECIFIC VIEW</div>
+     <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> PHOTO INSPECTION <i/> AUTHENTIC MODEL REFERENCE</div>
+     <div className="ride-studio-inspection-label" aria-live="off">
+      <span>THE INSPECTION STUDIO</span>
+      <strong>{selectedPhoto?.label||'Model photograph'}</strong>
+      <small>{available.length>1?'View '+(available.indexOf(shownAngle)+1)+' of '+available.length+' · photo views, not 360° rotation':'Single photographic reference'}</small>
+     </div>
      <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
      <div className="ride-studio-illumination" role="group" aria-label="Change studio environment lighting">
        {(['ion','titanium','ember'] as const).map(preset=><button
@@ -234,25 +245,33 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      </div>
      <div className="ride-studio-garage-ticks" aria-hidden="true"><b>01</b><i/><i/><i/><i/><i/><b>100</b></div>
      <button type="button" className="ride-studio-image-action"
-         aria-label={'Explore specifications of '+active.name}
+         aria-label={(zoomed?'Return to full view of ':'Inspect photograph of ')+active.name}
+         aria-pressed={zoomed}
+         onPointerMove={event=>{
+          if(!zoomed)return;
+          const rect=event.currentTarget.getBoundingClientRect();
+          setZoomPoint({x:Math.max(10,Math.min(90,(event.clientX-rect.left)/rect.width*100)),
+           y:Math.max(10,Math.min(90,(event.clientY-rect.top)/rect.height*100))});
+         }}
          onPointerDown={event=>{if(event.pointerType!=='mouse'||event.button===0){setPointerDown(event.clientX);setDragging(false);}}}
          onPointerUp={event=>onPointerRelease(event.clientX)}
          onPointerCancel={()=>setPointerDown(null)}
-         onClick={()=>{if(dragging){setDragging(false);return;}setDetails(true);}}>
-         <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')}>
+         onClick={()=>{if(dragging){setDragging(false);return;}setZoomed(v=>!v);}}>
+         <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')+(zoomed?' is-zoomed':'')}
+           style={{'--photo-focus-x':zoomPoint.x+'%','--photo-focus-y':zoomPoint.y+'%'} as React.CSSProperties}>
            <div className="ride-studio-frame-glow" aria-hidden="true"/>
            {image&&!failedSources.includes(image)&&!needsFleetPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
            <RideStudioPhoto car={active} src={image} angle={shownAngle} onFailure={markFailed}/>
            <div className="ride-studio-frame-sweep" aria-hidden="true"/>
          </div>
-         <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> EXPLORE VEHICLE DETAILS</span>
+         <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> {zoomed?'RETURN TO FULL PHOTOGRAPH':'CLICK TO INSPECT / ZOOM PHOTOGRAPH'}</span>
        </button>
      <div className="ride-studio-photo-strip" role="group" aria-label={'Select photo view of '+active.name}>
        {gallery.map((photo,i)=><button type="button" key={photo.src}
           aria-label={'Show '+active.name+' photo '+(i+1)} aria-pressed={shownAngle===i}
           disabled={failedSources.includes(photo.src)}
           title={failedSources.includes(photo.src)?'Photo unavailable — not selectable':photo.label}
-          className={shownAngle===i?'active':''} onClick={()=>{setAngle(i);setRevealId(n=>n+1);}}>
+          className={shownAngle===i?'active':''} onClick={()=>{setAngle(i);setZoomed(false);setRevealId(n=>n+1);}}>
          <RideStudioThumb src={photo.src} onFailure={()=>markFailed(photo.src)}/>
          <span>{String(i+1).padStart(2,'0')}</span>
        </button>)}
@@ -260,7 +279,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      </div>
      <div className="ride-studio-stage-footer">
       <div><strong><Gauge size={15}/> {available.length>1?'CAMERA BAY / MODEL PHOTOGRAPHS':'MODEL REFERENCE'}</strong>
-        <span>{tourRunning?'Auto photo tour · genuine still photographs, not 360° rotation':available.length>1?'Browse genuine angles; idle photo tour starts after 4 seconds':'True 360° needs approved, matched vehicle-specific rotation assets.'}</span></div>
+        <span>{tourRunning?'Photographic auto tour · genuine stills, not 360° rotation':available.length>1?'Browse real photos; the idle tour advances after 3 seconds':'True 360° requires model-matched turntable assets.'}</span></div>
       <div className="ride-studio-tour-controls">
        <button type="button" className="ride-studio-tour-toggle"
         disabled={available.length<2||reducedMotion}
@@ -301,8 +320,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
       </button>
       {details?productDetails:<div className="ride-studio-preview-copy">
        <strong>THE ACTUAL VEHICLE REFERENCE</strong>
-       <p>The fleet cards show one signature photograph. Here you can inspect all available angles, compare details and let the photographic tour play while idle. True vehicle rotation requires an approved matched-angle turntable.</p>
-       <div><MousePointer2 size={16}/> Select another model below or use the arrow keys.</div>
+       <p>The fleet cards show one signature photograph. Here you can inspect real model photos at full size, zoom into a selected image and watch the idle photo tour. Genuine 360° requires a matching turntable capture.</p>
+       <div><MousePointer2 size={16}/> Use the thumbnail rail, photo zoom or arrow keys to explore.</div>
        <button type="button" className="ride-studio-cinematic-toggle" aria-pressed={!cinematicOn}
          onClick={()=>setCinematicOn(value=>!value)}>
          <Zap size={14}/> {cinematicOn?'Disable garage effects':'Enable garage effects'}
