@@ -85,3 +85,28 @@ export function fleetThumbnailSource(src:string):string{
  }catch{/* relative locally sanitized assets remain unchanged */}
  return src;
 }
+
+/**
+ * Cover and inspection deliberately have different editorial roles.
+ * A cover is always a documented photo of the same named car. The studio
+ * prefers another available angle instead of showing the identical image.
+ * This is a presentation choice, never an image privacy certification.
+ */
+export function fleetCoverSource(car:GalleryCar,gallery:GalleryPhoto[]):string{
+ const candidates=gallery.filter(p=>!needsFleetPlateReview(car.name,p.src));
+ if(!candidates.length)return '';
+ // Ertiga's authentic motor-show rear is stronger than the old roadside shot
+ // and gives the full-screen studio its own separate front-three-quarter hero.
+ if(car.name==='Maruti Ertiga'){
+  const rear=candidates.find(p=>p.src.includes('Rear%20view'));
+  if(rear)return rear.src;
+ }
+ return candidates.find(p=>p.src===car.image)?.src||candidates[0].src;
+}
+export function studioOpeningIndex(car:GalleryCar,gallery:GalleryPhoto[]):number{
+ if(!gallery.length)return -1;
+ const cover=fleetCoverSource(car,gallery);
+ if(gallery.length<2)return 0;
+ const other=gallery.findIndex(p=>p.src!==cover);
+ return other>=0?other:0;
+}
