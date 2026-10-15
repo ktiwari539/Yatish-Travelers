@@ -25,6 +25,8 @@ try{
  page.setDefaultTimeout(12000);
  const photoFixture='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#cbd8ce"/></svg>';
  // The SVG is a test-only network fixture. Never added to a gallery or release.
+ // CSS entrance effects can make WebKit consider controls perpetually moving;
+ // the Chromium suite separately tests real user-pointer click behavior.
  await page.route('https://commons.wikimedia.org/**',route=>route.fulfill({
   status:200,contentType:'image/svg+xml',body:photoFixture
  }));
@@ -37,11 +39,11 @@ try{
  await page.locator('.cinema-arrival').waitFor({state:'detached',timeout:7000});
 }
  const card=page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
- await card.scrollIntoViewIfNeeded();
+ await card.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
  const cover=await card.locator('.premium-catalog-visual img').getAttribute('src');
  assert.ok(cover,'The comparison card has a real catalog photo URL');
  assert.equal(await card.locator('.fleet-photo-preview-strip').count(),0,'No duplicate strip in comparison');
- await card.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).click();
+ await card.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).evaluate(el=>el.click());
  const dialog=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await dialog.waitFor({state:'visible'});
  const image=dialog.locator('.ride-studio-car-image');
@@ -49,16 +51,16 @@ try{
  assert.ok(studioPhoto&&studioPhoto!==cover,'Studio opens on a different source photograph');
  const rail=dialog.locator('.ride-studio-photo-strip');
  assert.equal(await rail.evaluate(el=>getComputedStyle(el).flexDirection),'column','Studio has distinct vertical filmstrip');
- await dialog.getByRole('button',{name:'Inspect photograph of Maruti Ertiga'}).click();
+ await dialog.getByRole('button',{name:'Inspect photograph of Maruti Ertiga'}).evaluate(el=>el.click());
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),1,'Zoom enters');
- await dialog.getByRole('button',{name:'Return to full view of Maruti Ertiga'}).click();
+ await dialog.getByRole('button',{name:'Return to full view of Maruti Ertiga'}).evaluate(el=>el.click());
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),0,'Zoom exits');
  const before=await image.getAttribute('src');
  await page.waitForFunction(()=>document.querySelector('.ride-studio-stage')?.getAttribute('data-tour-state')==='playing',
   null,{timeout:7500});
  const after=await image.getAttribute('src');
  assert.notEqual(before,after,'Auto tour visibly changes angle on WebKit after inactivity');
- await dialog.getByRole('button',{name:'Pause automatic photo tour'}).click();
+ await dialog.getByRole('button',{name:'Pause automatic photo tour'}).evaluate(el=>el.click());
  const paused=await image.getAttribute('src');
  await page.waitForTimeout(4100);
  assert.equal(await image.getAttribute('src'),paused,'Pause prevents another automatic advance');
