@@ -575,6 +575,38 @@ async function smoke(){
      'Adventure '+(i+1)+' safely continues to existing quotation form');
  }
  await journeyPage.close();
+ // Regression: remote Commons delivery can fail. Candidate URLs are not
+ // evidence that an actual image loaded; no broken angle may remain clickable.
+ const offlinePhotos=await browser.newPage({viewport:{width:1440,height:900}});
+ await offlinePhotos.route('https://commons.wikimedia.org/**',route=>route.abort());
+ await offlinePhotos.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded'});
+ const offlineIntro=offlinePhotos.locator('.cinema-arrival-skip');
+ if(await offlineIntro.count())await offlineIntro.click();
+ const offlineCard=offlinePhotos.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
+ await offlineCard.scrollIntoViewIfNeeded();
+ await offlinePhotos.waitForFunction(()=>{
+  const card=document.querySelector('.premium-catalog-card[data-model="Maruti Ertiga"]');
+  const buttons=Array.from(card?.querySelectorAll('.fleet-photo-preview-strip button')||[]);
+  return buttons.length>=2&&buttons.every(button=>button.disabled)&&
+    Boolean(card?.querySelector('.premium-catalog-fallback'));
+ },null,{timeout:10000});
+ ensure(await offlineCard.locator('.fleet-photo-preview-strip button:disabled').count()>=2,
+  'Broken Commons images are marked unavailable rather than presented as working photo angles');
+ ensure(await offlineCard.locator('.catalog-angle-button').count()===0,
+  'No working photo means no misleading carousel control');
+ await offlineCard.screenshot({path:'artifacts/visual-evidence/photo-load-failure-proof.png',animations:'disabled'});
+ await offlineCard.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).click();
+ const offlineStudio=offlinePhotos.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
+ await offlinePhotos.waitForFunction(()=>{
+  const dialog=document.querySelector('.ride-studio-dialog');
+  const buttons=Array.from(dialog?.querySelectorAll('.ride-studio-photo-strip button')||[]);
+  return buttons.length>=2&&buttons.every(button=>button.disabled);
+ },null,{timeout:10000});
+ ensure(await offlineStudio.getByRole('button',{name:'Next photo angle'}).isDisabled(),
+  'Full-screen studio excludes every failed image from navigation');
+ ensure(await offlineStudio.locator('.ride-studio-thumb-pending').count()>=2,
+  'Full-screen studio labels unavailable thumbnails instead of hiding them');
+ await offlinePhotos.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: immersive car studio, enlarged seamless fleet reel, three adventures, 10 cars, quote sync, mobile and Admin gates');
 }
