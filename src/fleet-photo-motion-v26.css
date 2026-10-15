@@ -294,3 +294,19 @@
   animation:none!important;filter:none!important;
  }
 }
+
+/* A thumbnail is never silently empty while a remote photo loads. */
+#fleet .fleet-photo-preview-strip button img.fleet-thumb-loading,
+.garage-luxe-v19 .ride-studio-photo-strip button img.fleet-thumb-loading{
+ opacity:0!important;
+}
+#fleet .fleet-photo-preview-strip button>.fleet-angle-loading,
+#fleet .fleet-photo-preview-strip button>.fleet-angle-pending,
+.garage-luxe-v19 .ride-studio-photo-strip button>.ride-studio-thumb-loading,
+.garage-luxe-v19 .ride-studio-photo-strip button>.ride-studio-thumb-pending{
+ position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;
+ display:grid!important;place-items:center!important;
+ text-align:center;line-height:1.2;font-size:9px;font-weight:750;
+ padding:5px!important;background:#e5ebe7!important;color:#4d6559!important;
+}
