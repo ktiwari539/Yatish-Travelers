@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Maximize2 } from 'lucide-react';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 import { needsFleetPlateReview } from './mediaSafety';
-import { buildFleetGallery } from './fleetGallery';
+import { buildFleetGallery, fleetCoverSource } from './fleetGallery';
 
 /**
  * The public fleet is a SELECTION experience, not a duplicate photo viewer.
@@ -17,7 +17,8 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
  const [failedSources,setFailedSources]=useState<string[]>([]);
  useEffect(()=>setFailedSources([]),[car.name,galleryKey]);
  const usable=gallery.filter(photo=>!failedSources.includes(photo.src)&&!needsFleetPlateReview(car.name,photo.src));
- const hero=usable[0];
+ const preferredCover=fleetCoverSource(car,usable);
+ const hero=usable.find(p=>p.src===preferredCover)||usable[0];
  const editorial=gallery.find(photo=>photo.reviewPending);
  const markFailed=(source:string)=>setFailedSources(prev=>prev.includes(source)?prev:[...prev,source]);
  return <article className="fleet-card premium-catalog-card photo-rich-fleet-card" data-model={car.name}
