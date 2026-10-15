@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
 import { needsFleetPlateReview } from './mediaSafety';
-import { buildFleetGallery } from './fleetGallery';
+import { buildFleetGallery, fleetThumbnailSource } from './fleetGallery';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
 type ShowroomVehicle=FleetReelVehicle & {capacity?:number;modelUrl?:string};
@@ -30,11 +30,16 @@ function RideStudioPhoto({car,src,angle,onFailure}:{car:ShowroomVehicle;src:stri
 }
 /** Keep the failed state visible. A hidden image must not remain a clickable angle. */
 function RideStudioThumb({src,onFailure}:{src:string;onFailure:()=>void}){
- const [failed,setFailed]=useState(false);
- useEffect(()=>setFailed(false),[src]);
- return failed?<span className="ride-studio-thumb-pending">Photo pending</span>:
-  <img src={src} alt="" loading="lazy" decoding="async"
-   onError={()=>{setFailed(true);onFailure();}}/>;
+ const [status,setStatus]=useState<'loading'|'ready'|'failed'>('loading');
+ useEffect(()=>setStatus('loading'),[src]);
+ return status==='failed'?<span className="ride-studio-thumb-pending">Photo pending</span>:
+  <>
+   <img src={fleetThumbnailSource(src)} alt="" loading="eager" decoding="async"
+    className={status==='ready'?'fleet-thumb-ready':'fleet-thumb-loading'}
+    onLoad={()=>setStatus('ready')}
+    onError={()=>{setStatus('failed');onFailure();}}/>
+   {status==='loading'&&<span className="ride-studio-thumb-loading">Loading photo</span>}
+  </>;
 }
 export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [vehicleIndex,setVehicleIndex]=useState(()=>Math.max(0,vehicles.findIndex(v=>v.name===initialName)));
