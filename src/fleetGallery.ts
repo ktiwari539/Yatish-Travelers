@@ -3,7 +3,7 @@
  * used only on localhost until their plates, licence, visual quality and
  * exact variant are signed off. No CRM records are changed.
  */
-import { needsInnovaPlateReview } from './mediaSafety';
+import { needsFleetPlateReview } from './mediaSafety';
 import { studioEditorialFor } from './studioPhotography';
 
 export type GalleryCar={
@@ -55,7 +55,7 @@ export function buildFleetGallery(car:GalleryCar):GalleryPhoto[]{
  ];
  const results:GalleryPhoto[]=[];
  const add=(item:GalleryPhoto)=>{
-  if(!item.src||results.some(p=>p.src===item.src)||needsInnovaPlateReview(car.name,item.src))return;
+  if(!item.src||results.some(p=>p.src===item.src)||needsFleetPlateReview(car.name,item.src))return;
   results.push(item);
  };
  for(const src of photoSources){
