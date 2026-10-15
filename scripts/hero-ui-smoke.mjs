@@ -90,8 +90,10 @@ async function smoke(){
   'Carens card shows licensed motor-show photo instead of weak showroom/street image');
  ensure(await richCard.locator('.fleet-card-photo-credit a').count()===1,
   'Editorial photographs retain photographer, licence and provenance in the card');
- ensure(await richCard.locator('.catalog-angle-button svg').getAttribute('class').then(c=>!String(c).includes('rotate')),
-  'Photo-angle controls do not falsely imply 3D rotation');
+ ensure(await richCard.locator('.fleet-photo-preview-strip,.catalog-angle-button').count()===0,
+  'Comparison cards show one signature photograph; multi-angle inspection belongs in the studio');
+ ensure(await richCard.locator('.fleet-studio-preview-note').count()===1,
+  'Single-photo cards invite visitors to a distinctly deeper studio');
  const cardLayout=await richCard.evaluate(el=>{
   const photo=el.querySelector('.premium-catalog-visual')?.getBoundingClientRect();
   const card=el.getBoundingClientRect();
@@ -102,16 +104,13 @@ async function smoke(){
  ensure(await page.locator('.fleet-launch-preview-models button').count()===3,
   'Photo-rich studio entrance features three actual, separately named vehicle previews');
  const dzireCard=page.locator('.premium-catalog-card[data-model="Maruti Dzire"]');
- ensure(await dzireCard.locator('.fleet-photo-preview-strip button').count()>=3,
-  'Dzire has at least three distinct documented model-reference angles for local review');
- const originalDzire=await dzireCard.locator('.premium-catalog-visual img').getAttribute('src');
- await dzireCard.getByRole('button',{name:/View Maruti Dzire photo 2/}).click();
- const nextDzire=await dzireCard.locator('.premium-catalog-visual img').getAttribute('src');
- ensure(Boolean(originalDzire&&nextDzire&&originalDzire!==nextDzire),
-  'A photo thumbnail actually changes the vehicle picture');
- ensure(await page.locator('.premium-catalog-card[data-model="Mahindra Thar"] .fleet-photo-preview-strip button').count()>=1,
-  'Approved Thar model retains its own photo gallery without unrelated substitutes');
-
+ ensure(Number(await dzireCard.getAttribute('data-gallery-count'))>=3,
+  'Dzire retains three configured reference views inside the studio');
+ ensure(await dzireCard.locator('.premium-catalog-visual img').count()===1,
+  'Fleet cards display one primary signature photograph rather than duplicate photo strips');
+ ensure(Number(await page.locator('.premium-catalog-card[data-model="Mahindra Thar"]').getAttribute('data-gallery-count'))>=1,
+  'Thar gallery remains configured for deeper studio inspection');
+ 
  ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===3,
   'Wide-desktop photo gallery uses three full-width photographed cards per row');
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
@@ -119,6 +118,14 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure(await studio.locator('.ride-studio-photo-strip button').count()>=1,
   'Full-screen vehicle viewer exposes actual photo thumbnails');
+ ensure(await studio.getByRole('button',{name:'Pause automatic photo tour'}).getAttribute('aria-pressed')==='true',
+  'Automatic photographic tour defaults to enabled');
+ await studio.getByRole('button',{name:'Pause automatic photo tour'}).click();
+ ensure(await studio.getByRole('button',{name:'Enable automatic photo tour'}).getAttribute('aria-pressed')==='false',
+  'Manual pause turns off automatic photo changes');
+ await studio.getByRole('button',{name:'Enable automatic photo tour'}).click();
+ ensure(await studio.getByRole('button',{name:'Pause automatic photo tour'}).getAttribute('aria-pressed')==='true',
+  'Auto photo tour can be re-enabled without changing vehicle');
  ensure(await studio.locator('.ride-studio-reveal').count()===1,
   'Garage introduction has an automatic full-screen vehicle initialization sequence');
  ensure(await studio.locator('.ride-studio-backdrop').count()===0,
@@ -446,20 +453,13 @@ async function smoke(){
  ensure((await page.locator('.premium-catalog-card[data-model="Mahindra Bolero"]').count())===0,
    'Hidden admin fleet entry is not rendered publicly');
  const innovaCard=page.locator('.premium-catalog-card[data-model="Toyota Innova"]');
- const cardAngle=innovaCard.getByRole('button',{name:'Show another angle of Toyota Innova'});
- const visibleInnovaCount=Number(await innovaCard.getAttribute('data-gallery-count'));
- ensure(visibleInnovaCount>=1,'At least one correct-model, plate-safe Innova reference is available');
- if(visibleInnovaCount>1){
-   ensure((await cardAngle.innerText()).includes('1/'+visibleInnovaCount),
-     'Innova angle selector reports only the actual safe-photo count');
-   await cardAngle.click();
-   const safeUrl=(await innovaCard.locator('.premium-catalog-visual img').getAttribute('src'))||'';
-   ensure(!/Toyota%20Innova%20Crysta%202[.]4%20Z%20(?:rear%20left|front%20right)[.]jpg/i.test(safeUrl),
-     'Unsafe numbered Innova exteriors stay excluded from the photo gallery');
- }else{
-   ensure(await cardAngle.count()===0,
-     'A single valid Innova photograph does not show a fake angle control');
- }
+ ensure(Number(await innovaCard.getAttribute('data-gallery-count'))>=1,
+  'Innova retains at least one eligible studio reference photograph');
+ ensure(await innovaCard.locator('.catalog-angle-button,.fleet-photo-preview-strip').count()===0,
+  'The fleet selection cards never duplicate the interior studio gallery');
+ const safeUrl=(await innovaCard.locator('.premium-catalog-visual img').getAttribute('src'))||'';
+ ensure(!/Toyota%20Innova%20Crysta%202[.]4%20Z%20(?:rear%20left|front%20right)[.]jpg/i.test(safeUrl),
+  'Known plate-bearing Innova exteriors remain excluded from signature cards');
  await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).click();
  ensure(await page.locator('.fleet-editorial-angles').getByRole('button',{name:'View photo angle 2'}).getAttribute('aria-pressed')==='true',
    'Cinematic gallery activates the requested alternate angle even if external photo delivery fails');
@@ -596,14 +596,10 @@ async function smoke(){
  await offlineCard.scrollIntoViewIfNeeded();
  await offlinePhotos.waitForFunction(()=>{
   const card=document.querySelector('.premium-catalog-card[data-model="Maruti Ertiga"]');
-  const buttons=Array.from(card?.querySelectorAll('.fleet-photo-preview-strip button')||[]);
-  return buttons.length>=2&&buttons.every(button=>button.disabled)&&
-    Boolean(card?.querySelector('.premium-catalog-fallback'));
+  return Boolean(card?.querySelector('.premium-catalog-fallback'));
  },null,{timeout:10000});
- ensure(await offlineCard.locator('.fleet-photo-preview-strip button:disabled').count()>=2,
-  'Broken Commons images are marked unavailable rather than presented as working photo angles');
- ensure(await offlineCard.locator('.catalog-angle-button').count()===0,
-  'No working photo means no misleading carousel control');
+ ensure(await offlineCard.locator('.fleet-photo-preview-strip,.catalog-angle-button').count()===0,
+  'No broken carousel controls are presented on signature-photo selection cards');
  await offlineCard.screenshot({path:'artifacts/visual-evidence/photo-load-failure-proof.png',animations:'disabled'});
  await offlineCard.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).click();
  const offlineStudio=offlinePhotos.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
