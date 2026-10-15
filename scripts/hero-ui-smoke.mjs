@@ -613,6 +613,41 @@ async function smoke(){
  ensure(await offlineStudio.locator('.ride-studio-thumb-pending').count()>=2,
   'Full-screen studio labels unavailable thumbnails instead of hiding them');
  await offlinePhotos.close();
+
+ // Independent deterministic test for the requested idle behaviour. The SVG
+ // below is a TEST-ONLY delivery fixture, never a displayed fleet photograph.
+ const tourTest=await browser.newPage({viewport:{width:1440,height:900}});
+ const photoFixture='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700"><rect width="1200" height="700" fill="#dce5e1"/></svg>';
+ await tourTest.route('https://commons.wikimedia.org/**',route=>route.fulfill({
+  status:200,contentType:'image/svg+xml',body:photoFixture
+ }));
+ await tourTest.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded'});
+ const testIntro=tourTest.locator('.cinema-arrival-skip');
+ if(await testIntro.count())await testIntro.click();
+ await tourTest.locator('.premium-catalog-card[data-model="Maruti Dzire"]')
+  .getByRole('button',{name:'Open full-screen car studio for Maruti Dzire'}).click();
+ const tourDialog=tourTest.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
+ await tourDialog.waitFor({state:'visible'});
+ ensure(await tourDialog.locator('.ride-studio-photo-strip button').count()>=3,
+  'Studio preserves multiple real angle source paths, unlike the selection cards');
+ await tourTest.waitForFunction(()=>{
+  const control=document.querySelector('.ride-studio-tour-toggle');
+  return Boolean(control?.textContent?.includes('playing'));
+ },null,{timeout:7500});
+ const initialPhoto=await tourDialog.locator('.ride-studio-car-image').getAttribute('src');
+ await tourTest.waitForFunction(previous=>{
+  const current=document.querySelector('.ride-studio-car-image')?.getAttribute('src');
+  return Boolean(current&&current!==previous);
+ },initialPhoto,{timeout:5000});
+ await tourDialog.getByRole('button',{name:'Pause automatic photo tour'}).click();
+ const pausedPhoto=await tourDialog.locator('.ride-studio-car-image').getAttribute('src');
+ await tourTest.waitForTimeout(3600);
+ ensure((await tourDialog.locator('.ride-studio-car-image').getAttribute('src'))===pausedPhoto,
+  'Pausing the photographic auto-tour prevents idle gallery changes');
+ await tourTest.emulateMedia({reducedMotion:'reduce'});
+ ensure(await tourDialog.getByRole('button',{name:'Enable automatic photo tour'}).isDisabled(),
+  'Reduced-motion visitors cannot enable automatic photographic changes');
+ await tourTest.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: immersive car studio, enlarged seamless fleet reel, three adventures, 10 cars, quote sync, mobile and Admin gates');
 }
