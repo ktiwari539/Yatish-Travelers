@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Images, Maximize2 } from 'lucide-react';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
-import { needsInnovaPlateReview } from './mediaSafety';
+import { needsFleetPlateReview } from './mediaSafety';
 import { buildFleetGallery } from './fleetGallery';
 
 /** Thumbnail failures are explicit rather than invisible blank boxes.
@@ -32,7 +32,7 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
  const available=photos.map((_,i)=>i).filter(i=>!failedSources.includes(photos[i]));
  const shown=available.includes(angle)?angle:(available[0]??-1);
  const src=shown>=0?photos[shown]:'';
- const reviewPending=needsInnovaPlateReview(car.name,src);
+ const reviewPending=needsFleetPlateReview(car.name,src);
  const selectedPhoto=shown>=0?gallery[shown]:undefined;
  const editorialSelected=Boolean(selectedPhoto?.reviewPending);
  const markFailed=(source:string)=>setFailedSources(prev=>prev.includes(source)?prev:[...prev,source]);
