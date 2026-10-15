@@ -92,8 +92,8 @@ async function smoke(){
   'Editorial photographs retain photographer, licence and provenance in the card');
  ensure(await richCard.locator('.fleet-photo-preview-strip,.catalog-angle-button').count()===0,
   'Comparison cards show one signature photograph; multi-angle inspection belongs in the studio');
- ensure(await richCard.locator('.fleet-studio-preview-note').count()===1,
-  'Single-photo cards invite visitors to a distinctly deeper studio');
+ ensure(await richCard.locator('.fleet-quick-specs').count()===1,
+  'Quick-selection cards show compact travel specs instead of a duplicate studio preview');
  const cardLayout=await richCard.evaluate(el=>{
   const photo=el.querySelector('.premium-catalog-visual')?.getBoundingClientRect();
   const card=el.getBoundingClientRect();
@@ -113,6 +113,7 @@ async function smoke(){
  
  ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===3,
   'Wide-desktop photo gallery uses three full-width photographed cards per row');
+ const ertigaCover=await richCard.locator('.premium-catalog-visual img').getAttribute('src');
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
@@ -155,6 +156,18 @@ async function smoke(){
    'Full-screen showroom uses the car model reference photo');
  ensure((await studio.locator('.ride-studio-car-image').getAttribute('src')).includes('Indonesia%20International%20Motor%20Show%202018'),
    'Ertiga studio selects the high-resolution licensed motor-show reference rather than low-resolution roadside source');
+ ensure((await studio.locator('.ride-studio-car-image').getAttribute('src'))!==ertigaCover,
+  'Comparison and studio open on different authentic photographs of the same Ertiga');
+ ensure(await studio.locator('.ride-studio-inspection-label').isVisible(),
+  'Studio contains a distinctive editorial image-inspection label');
+ ensure(await studio.locator('.ride-studio-photo-strip').evaluate(el=>getComputedStyle(el).flexDirection==='column'),
+  'Desktop inspection uses a vertical photographic filmstrip instead of card thumbnails');
+ await studio.getByRole('button',{name:'Inspect photograph of Maruti Ertiga'}).click();
+ ensure(await studio.locator('.ride-studio-vehicle-frame.is-zoomed').count()===1,
+  'Studio photograph genuinely enlarges for detail inspection, without pretending car rotation');
+ await studio.getByRole('button',{name:'Return to full view of Maruti Ertiga'}).click();
+ ensure(await studio.locator('.ride-studio-vehicle-frame.is-zoomed').count()===0,
+  'Zoom can be exited to restore the full vehicle photograph');
  ensure(await studio.locator('.ride-studio-photo-credit a').count()===1,
    'Creative Commons author/source are linked in the vehicle detail panel');
  ensure((await page.evaluate(()=>document.body.style.overflow))==='hidden',
