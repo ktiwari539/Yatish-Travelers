@@ -2,16 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Images, Maximize2 } from 'lucide-react';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 import { needsFleetPlateReview } from './mediaSafety';
-import { buildFleetGallery } from './fleetGallery';
+import { buildFleetGallery, fleetThumbnailSource } from './fleetGallery';
 
 /** Thumbnail failures are explicit rather than invisible blank boxes.
  * Never disguise missing footage as a different vehicle or angle. */
 function PhotoThumb({src,label,onFailure}:{src:string;label:string;onFailure:()=>void}){
- const [failed,setFailed]=useState(false);
- useEffect(()=>setFailed(false),[src]);
- return failed?<span className="fleet-angle-pending">Photo pending</span>:
-  <img src={src} loading="lazy" decoding="async" alt=""
-   onError={()=>{setFailed(true);onFailure();}} aria-label={label}/>;
+ const [status,setStatus]=useState<'loading'|'ready'|'failed'>('loading');
+ useEffect(()=>setStatus('loading'),[src]);
+ return status==='failed'?<span className="fleet-angle-pending">Photo pending</span>:
+  <>
+   <img src={fleetThumbnailSource(src)} loading="eager" decoding="async" alt=""
+    className={status==='ready'?'fleet-thumb-ready':'fleet-thumb-loading'}
+    onLoad={()=>setStatus('ready')}
+    onError={()=>{setStatus('failed');onFailure();}} aria-label={label}/>
+   {status==='loading'&&<span className="fleet-angle-loading">Loading photo</span>}
+  </>;
 }
 
 /** A genuine photograph of this exact model is always required.
