@@ -13,7 +13,7 @@ type Props={
  onQuote:(name:string)=>void;
 };
 const knownSafePreview=(src:string)=>/^\/media\/mt-(?:thar-(?:red-front|red-rear|grey-road|grey-front-safe)|xuv700-(?:driving|studio)|traveller-safe)\.webp$/.test(src);
-function RideStudioPhoto({car,src,angle}:{car:ShowroomVehicle;src:string;angle:number}){
+function RideStudioPhoto({car,src,angle,onFailure}:{car:ShowroomVehicle;src:string;angle:number;onFailure:(src:string)=>void}){
  const [failed,setFailed]=useState(false);
  useEffect(()=>setFailed(false),[src]);
  const platePending=needsInnovaPlateReview(car.name,src);
@@ -26,11 +26,20 @@ function RideStudioPhoto({car,src,angle}:{car:ShowroomVehicle;src:string;angle:n
  }
  return <img key={src} className="ride-studio-car-image" src={src}
   alt={car.name+' reference photograph — angle '+(angle+1)}
-  onError={()=>setFailed(true)} draggable={false}/>;
+  onError={()=>{setFailed(true);onFailure(src);}} draggable={false}/>;
+}
+/** Keep the failed state visible. A hidden image must not remain a clickable angle. */
+function RideStudioThumb({src,onFailure}:{src:string;onFailure:()=>void}){
+ const [failed,setFailed]=useState(false);
+ useEffect(()=>setFailed(false),[src]);
+ return failed?<span className="ride-studio-thumb-pending">Photo pending</span>:
+  <img src={src} alt="" loading="lazy" decoding="async"
+   onError={()=>{setFailed(true);onFailure();}}/>;
 }
 export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const [vehicleIndex,setVehicleIndex]=useState(()=>Math.max(0,vehicles.findIndex(v=>v.name===initialName)));
  const [angle,setAngle]=useState(0);
+ const [failedSources,setFailedSources]=useState<string[]>([]);
  const [details,setDetails]=useState(false);
  const [revealId,setRevealId]=useState(0);
  const [switching,setSwitching]=useState(false);
@@ -46,9 +55,13 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const active=vehicles[vehicleIndex]||vehicles[0];
  const gallery=useMemo(()=>active?buildFleetGallery(active):[],[active]);
  const photos=gallery.map(p=>p.src);
- const shownAngle=Math.min(angle,Math.max(photos.length-1,0));
- const image=photos[shownAngle]||'';
- const selectedPhoto=gallery[shownAngle];
+ const galleryKey=photos.join('\u001f');
+ const available=photos.map((_,i)=>i).filter(i=>!failedSources.includes(photos[i]));
+ const shownAngle=available.includes(angle)?angle:(available[0]??-1);
+ const image=shownAngle>=0?photos[shownAngle]:'';
+ const selectedPhoto=shownAngle>=0?gallery[shownAngle]:undefined;
+ const markFailed=(src:string)=>setFailedSources(prev=>prev.includes(src)?prev:[...prev,src]);
+ useEffect(()=>{setFailedSources([]);setAngle(0);},[active?.name,galleryKey]);
  const isReferenceApproved=knownSafePreview(image);
  const studioAssetQuality=isReferenceApproved?'reviewed-local':'editorial-reference';
  const imageSource=selectedPhoto;
@@ -69,8 +82,9 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   },310);
  };
  const nextAngle=(delta:number)=>{
-  if(photos.length<2)return;
-  setAngle(current=>(current+delta+photos.length)%photos.length);
+  if(available.length<2)return;
+  const current=available.indexOf(shownAngle);
+  setAngle(available[(current+delta+available.length)%available.length]);
   setRevealId(count=>count+1);
  };
  useEffect(()=>{
@@ -122,7 +136,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   <div><span>Passenger configuration</span><strong>{active.seats}</strong></div>
   <div><span>Vehicle category</span><strong>{active.category}</strong></div>
   <div><span>Indicative / km</span><strong>₹{active.rateMin??15}–₹{active.rateMax??25}</strong></div>
-  <div><span>Reference photo angles</span><strong>{photos.length}</strong></div>
+  <div><span>Available photo angles</span><strong>{available.length}</strong></div>
   <div><span>Colour / variant</span><strong>Confirm before booking</strong></div>
   <div><span>Assigned vehicle</span><strong>Confirmed on enquiry</strong></div>
  </div>;
@@ -170,28 +184,30 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
          onClick={()=>{if(dragging){setDragging(false);return;}setDetails(true);}}>
          <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')}>
            <div className="ride-studio-frame-glow" aria-hidden="true"/>
-           {image&&!needsInnovaPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
-           <RideStudioPhoto car={active} src={image} angle={shownAngle}/>
+           {image&&!failedSources.includes(image)&&!needsInnovaPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
+           <RideStudioPhoto car={active} src={image} angle={shownAngle} onFailure={markFailed}/>
            <div className="ride-studio-frame-sweep" aria-hidden="true"/>
          </div>
          <span className="ride-studio-zoom-hint"><Maximize2 size={16}/> EXPLORE VEHICLE DETAILS</span>
        </button>
      <div className="ride-studio-photo-strip" role="group" aria-label={'Select photo view of '+active.name}>
-       {gallery.slice(0,5).map((photo,i)=><button type="button" key={photo.src}
+       {gallery.map((photo,i)=><button type="button" key={photo.src}
           aria-label={'Show '+active.name+' photo '+(i+1)} aria-pressed={shownAngle===i}
+          disabled={failedSources.includes(photo.src)}
+          title={failedSources.includes(photo.src)?'Photo unavailable — not selectable':photo.label}
           className={shownAngle===i?'active':''} onClick={()=>{setAngle(i);setRevealId(n=>n+1);}}>
-         <img src={photo.src} alt="" loading="lazy" onError={e=>{e.currentTarget.style.visibility='hidden';}}/>
+         <RideStudioThumb src={photo.src} onFailure={()=>markFailed(photo.src)}/>
          <span>{String(i+1).padStart(2,'0')}</span>
        </button>)}
-       {gallery.length===1&&<span className="ride-studio-photo-count">More verified angles pending</span>}
+       {available.length<=1&&<span className="ride-studio-photo-count">More working angles pending review</span>}
      </div>
      <div className="ride-studio-stage-footer">
-      <div><strong><Gauge size={15}/> {photos.length>1?'CAMERA BAY / ACTUAL MODEL PHOTOS':'MODEL REFERENCE'}</strong>
-        <span>{photos.length>1?'Swipe or use the arrows to browse real photographic angles':'True 360° rotation is available only with a verified model-specific 3D asset.'}</span></div>
+      <div><strong><Gauge size={15}/> {available.length>1?'CAMERA BAY / MODEL PHOTOGRAPHS':'MODEL REFERENCE'}</strong>
+        <span>{available.length>1?'Swipe or use the arrows to browse real photographic angles':'True 360° rotation is available only with a verified model-specific 3D asset.'}</span></div>
       <div className="ride-studio-angle-nav" role="group" aria-label="Photo-angle controls">
-       <button type="button" aria-label="Previous photo angle" disabled={photos.length<2} onClick={()=>nextAngle(-1)}><ChevronLeft size={23}/></button>
-       <span>{String(shownAngle+1).padStart(2,'0')} / {String(Math.max(photos.length,1)).padStart(2,'0')}</span>
-       <button type="button" aria-label="Next photo angle" disabled={photos.length<2} onClick={()=>nextAngle(1)}><ChevronRight size={23}/></button>
+       <button type="button" aria-label="Previous photo angle" disabled={available.length<2} onClick={()=>nextAngle(-1)}><ChevronLeft size={23}/></button>
+       <span>{String(Math.max(available.indexOf(shownAngle)+1,0)).padStart(2,'0')} / {String(available.length).padStart(2,'0')}</span>
+       <button type="button" aria-label="Next photo angle" disabled={available.length<2} onClick={()=>nextAngle(1)}><ChevronRight size={23}/></button>
       </div>
      </div>
      {!reducedMotion&&<span className="ride-studio-ambient-label" aria-hidden="true">PREMIUM ROAD EXPERIENCES</span>}
