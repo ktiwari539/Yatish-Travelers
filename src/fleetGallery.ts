@@ -62,7 +62,7 @@ export function buildFleetGallery(car:GalleryCar):GalleryPhoto[]{
   // Preserve author/licence data on the curated motor-show rear cover.
   // Its exact source remains in editorial review; this is NOT plate approval.
   const ertigaRear=car.name==='Maruti Ertiga'&&
-    decodeURIComponent(src).includes('Rear view - April 26 2018.jpg');
+    (src.includes('Rear%20view%20-%20April%2026%202018.jpg')||src.includes('Rear_view_-_April_26_2018.jpg'));
   const rearCredit=ertigaRear?{
    credit:'Wilzz99 · Wikimedia Commons',license:'CC BY-SA 4.0',
    page:'https://commons.wikimedia.org/wiki/File:Suzuki_Ertiga_GX_1.5_-_Indonesia_International_Motor_Show_2018_-_Rear_view_-_April_26_2018.jpg'
@@ -106,7 +106,7 @@ export function fleetCoverSource(car:GalleryCar,gallery:GalleryPhoto[]):string{
  if(!candidates.length)return '';
  // Ertiga's authentic motor-show rear is stronger than the old roadside shot
  // and gives the full-screen studio its own separate front-three-quarter hero.
- if(car.name==='Maruti Ertiga'){
+ if(car.name==='Maruti Ertiga'&&isLocal()){
   const rear=candidates.find(p=>p.src.includes('Rear%20view'));
   if(rear)return rear.src;
  }
