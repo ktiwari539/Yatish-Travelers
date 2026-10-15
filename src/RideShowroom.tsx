@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowRight, CarFront, ChevronLeft, ChevronRight, Maximize2, MousePointer2, ShieldCheck, Sparkles, X, Zap, Gauge, ScanLine } from 'lucide-react';
-import { needsInnovaPlateReview } from './mediaSafety';
+import { needsFleetPlateReview } from './mediaSafety';
 import { buildFleetGallery } from './fleetGallery';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
 
@@ -16,7 +16,7 @@ const knownSafePreview=(src:string)=>/^\/media\/mt-(?:thar-(?:red-front|red-rear
 function RideStudioPhoto({car,src,angle,onFailure}:{car:ShowroomVehicle;src:string;angle:number;onFailure:(src:string)=>void}){
  const [failed,setFailed]=useState(false);
  useEffect(()=>setFailed(false),[src]);
- const platePending=needsInnovaPlateReview(car.name,src);
+ const platePending=needsFleetPlateReview(car.name,src);
  if(!src||platePending||failed){
   return <div className="ride-studio-photo-pending" role="img" aria-label={car.name+' photograph awaiting review'}>
    <CarFront size={75} strokeWidth={1.1}/>
@@ -184,7 +184,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
          onClick={()=>{if(dragging){setDragging(false);return;}setDetails(true);}}>
          <div key={active.name+'-'+shownAngle} className={'ride-studio-vehicle-frame '+(isReferenceApproved?'is-reviewed':'is-editorial')}>
            <div className="ride-studio-frame-glow" aria-hidden="true"/>
-           {image&&!failedSources.includes(image)&&!needsInnovaPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
+           {image&&!failedSources.includes(image)&&!needsFleetPlateReview(active.name,image)&&<img className="ride-studio-image-atmosphere" src={image} aria-hidden="true" alt=""/>}
            <RideStudioPhoto car={active} src={image} angle={shownAngle} onFailure={markFailed}/>
            <div className="ride-studio-frame-sweep" aria-hidden="true"/>
          </div>
