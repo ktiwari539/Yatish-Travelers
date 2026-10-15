@@ -34,7 +34,7 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
    <div className="fleet-shade"/>
    {onExplore&&<button type="button" className="fleet-showroom-card-cta" onClick={onExplore}
      aria-label={'Open full-screen car studio for '+car.name}>
-     <Maximize2 size={15}/> Enter Car Studio
+     <Maximize2 size={15}/> Inspect in Studio
    </button>}
    <div className="fleet-number">{String(index+1).padStart(2,'0')}</div>
    <span className="fleet-type">{car.category}</span>
@@ -45,13 +45,12 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
   <div className="fleet-meta">
    <span>{car.tag}</span><h3>{car.name}</h3>
    <div className="rate"><strong>₹{car.rateMin??15}–₹{car.rateMax??25}</strong><small>/ km indicative range</small></div>
-   <div className="fleet-studio-preview-note" aria-label={'Studio photography for '+car.name}>
-     <Maximize2 size={15}/>
-     <span>{gallery.length>1?
-      'Exclusive studio: available angles, auto photo tour and specifications':
-      'Exclusive studio: immersive view and booking details'}</span>
+   <div className="fleet-quick-specs" aria-label={'Quick comparison details for '+car.name}>
+      <span>{car.seats} seats</span>
+      <span>{car.category}</span>
+      <span>Final fare on enquiry</span>
    </div>
-   <div className="fleet-bottom"><span>{car.seats} seats · {car.category}</span>
+   <div className="fleet-bottom"><span>EXPLORE THE COLLECTION</span>
     <button type="button" onClick={onEstimate}>Estimate fare <ArrowRight size={15}/></button></div>
    {hero?.credit&&<small className="fleet-card-photo-credit">
      <a href={hero.page} target="_blank" rel="noopener noreferrer">
