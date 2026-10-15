@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, CarFront, ChevronLeft, ChevronRight, Compass, MoveUpRight } from 'lucide-react';
 import { needsFleetPlateReview } from './mediaSafety';
+import { buildFleetGallery, isPhotoPrivacyReviewed } from './fleetGallery';
 
 export type FleetReelVehicle={
   name:string;seats:string;tag:string;category:string;image:string;
@@ -8,6 +9,16 @@ export type FleetReelVehicle={
 };
 type Props={vehicles:FleetReelVehicle[];activeName:string;onSelect:(name:string)=>void;onQuote:(name:string)=>void};
 
+/** The rolling reel gets a DIFFERENT photographic role from selection cards.
+ * Prefer a distinct, already locally reviewed angle. Never surface an
+ * unreviewed remote photo just to manufacture visual variety.
+ */
+function reelEditorialPhoto(vehicle:FleetReelVehicle):string{
+ const alternate=buildFleetGallery(vehicle).find(photo=>
+  photo.src!==vehicle.image&&isPhotoPrivacyReviewed(photo)&&
+  !needsFleetPlateReview(vehicle.name,photo.src));
+ return alternate?.src||vehicle.image;
+}
 type ModelImageProps={vehicle:FleetReelVehicle;src:string;alt:string;duplicate?:boolean};
 /**
  * A vehicle card may only show THAT vehicle's actual catalog photo.
@@ -276,9 +287,9 @@ export function PremiumFleetExperience({vehicles,activeName,onSelect,onQuote}:Pr
             aria-pressed={copy===1?undefined:index===activeIndex}
             onClick={()=>choose(index)}>
             <div className="fleet-editorial-tile-photo" data-vehicle={vehicle.name}>
-              <ModelImage vehicle={vehicle} src={vehicle.image}
-                alt={vehicle.name+' model reference photo'}
-                duplicate={!hasUniquePhoto(vehicle)}/>
+              <ModelImage vehicle={vehicle} src={reelEditorialPhoto(vehicle)}
+                alt={vehicle.name+' editorial model-reference photograph'}
+                duplicate={!hasUniquePhoto(vehicle,reelEditorialPhoto(vehicle))}/>
               <span>{vehicle.category.toUpperCase()}</span>
             </div>
             <div className="fleet-editorial-tile-foot">
