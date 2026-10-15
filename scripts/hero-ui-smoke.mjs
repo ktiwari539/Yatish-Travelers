@@ -73,6 +73,10 @@ async function smoke(){
   'Main entry invites visitors into the premium spotlight experience');
  ensure(await page.locator('.fleet-grid.fleet-compare-list').count()===1,
   'Public fleet cards are reorganized into a compact comparison rather than a second photo gallery');
+ // The entire fleet section is taller than a viewport. It must be revealed
+ // before any screenshot claims to show the actual car cards.
+ await page.locator('#fleet').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>document.querySelector('#fleet')?.classList.contains('is-inview'));
  await page.locator('.fleet-grid.fleet-compare-list').screenshot({
    path:'artifacts/visual-evidence/fleet-quick-comparison-desktop.png',animations:'disabled'});
  ensure(await page.locator('.premium-catalog-card .premium-catalog-visual img').count()>=5,
@@ -374,6 +378,12 @@ async function smoke(){
  ensure(mobileEmail&&mobileBooking&&mobileEmail.y+mobileEmail.height+6<mobileBooking.y,
    'Mobile email CTA must not overlap the Ertiga booking panel');
  await page.screenshot({path:'artifacts/visual-evidence/mobile-quote-cta.png'});
+ await page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>document.querySelector('#fleet')?.classList.contains('is-inview'),null,{timeout:4000});
+ ensure(await page.locator('#fleet').evaluate(node=>getComputedStyle(node).opacity)!=='0',
+   'Tall mobile fleet actually reveals its cards while scrolling');
+ await page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]').screenshot({
+   path:'artifacts/visual-evidence/mobile-choose-your-ride-visible.png',animations:'disabled'});
  // Mobile studio must fit a small screen without clipped controls.
  await page.getByRole('button',{name:'Enter the Car Studio'}).click();
  await studio.waitFor({state:'visible'});
