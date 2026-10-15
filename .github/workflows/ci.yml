@@ -36,11 +36,14 @@ jobs:
       - name: Install browser for UI smoke tests
         run: |
           npm install --no-save playwright
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
           sudo apt-get install -y -qq ffmpeg
 
       - name: Chromium interaction smoke
         run: node scripts/hero-ui-smoke.mjs
+
+      - name: WebKit Safari-engine studio smoke
+        run: node scripts/webkit-studio-smoke.mjs
 
       - name: Upload visual QA screenshots
         if: always()
