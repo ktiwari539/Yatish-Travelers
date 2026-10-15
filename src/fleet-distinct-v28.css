@@ -265,3 +265,30 @@
   animation:none!important;transform:none!important;filter:none!important;
  }
 }
+
+/* Final screenshot QA: prevent older garage rules from washing out copy. */
+.garage-luxe-v19 .ride-studio-preview-copy p{
+ color:#315b46!important;opacity:1!important;
+ line-height:1.55!important;
+}
+.garage-luxe-v19 .ride-studio-preview-copy>div{
+ color:#38644c!important;opacity:1!important;
+}
+.garage-luxe-v19 .ride-studio-photo-credit{
+ color:#745c3e!important;opacity:1!important;
+}
+.garage-luxe-v19 .ride-studio-car-title{
+ display:none!important; /* vehicle name already appears in the details panel */
+}
+@media(max-width:760px){
+ .garage-luxe-v19 .ride-studio-inspection-label{
+  top:62px!important;left:5%!important;max-width:59%!important;
+  gap:2px!important;
+ }
+ .garage-luxe-v19 .ride-studio-inspection-label strong{
+  font-size:13px!important;line-height:1.1!important;
+ }
+ .garage-luxe-v19 .ride-studio-inspection-label small{
+  display:none!important; /* keeps caption off the main photo on mobile */
+ }
+}
