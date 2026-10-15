@@ -30,7 +30,12 @@ try{
  }));
  await page.goto(root,{waitUntil:'domcontentloaded'});
  const intro=page.locator('.cinema-arrival-skip');
- if(await intro.count())await intro.click();
+ if(await intro.count()){
+ // Safari/WebKit reports this cinematic button as continuously moving.
+ // DOM-activate its real onClick handler rather than waiting for stability.
+ await intro.evaluate(button=>(button).click());
+ await page.locator('.cinema-arrival').waitFor({state:'detached',timeout:7000});
+}
  const card=page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
  await card.scrollIntoViewIfNeeded();
  const cover=await card.locator('.premium-catalog-visual img').getAttribute('src');
