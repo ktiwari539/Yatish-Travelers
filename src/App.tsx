@@ -285,7 +285,6 @@ export function App() {
   const [passengers, setPassengers] = useState(4);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [studioVehicle,setStudioVehicle]=useState<string|null>(null);
-  const [studioLaunchPhotoFailed,setStudioLaunchPhotoFailed]=useState(false);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
   const [quoteMode, setQuoteMode] = useState<QuoteMode>('quote');
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
@@ -333,9 +332,6 @@ export function App() {
   // The studio entry may open with the strongest approved local vehicle
   // photograph when nobody has made a deliberate selection. A user-selected
   // model ALWAYS takes priority, and this does not change fare/CRM state.
-  const studioShowcaseName=liveFleet.find(car=>car.name==='Mahindra XUV700' &&
-    !missingFleetMedia &&
-    [car.image,...(car.gallery||[])].includes('/media/mt-xuv700-studio.webp'))?.name;
   const selectFeatured = (name:string)=>{
     const next=liveFleet.findIndex(item=>item.name===name);
     if(next>=0){userSelectedVehicle.current=true;setVehicle(name);}
@@ -521,41 +517,21 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <p>Pick a model in the cinematic garage, then compare the practical details below. The vehicle you choose stays linked to your quotation.</p>
         </div>
 
-        <div className="fleet-studio-launch fleet-studio-launch-v18 garage-luxe-entry-v19" aria-label="Enter interactive cinematic vehicle garage">
-          <div className="fleet-launch-scanlines" aria-hidden="true"/>
-          <div className="fleet-launch-rays" aria-hidden="true"><i/><i/><i/></div>
+        <div className="fleet-studio-launch fleet-studio-launch-v18 garage-luxe-entry-v19 fleet-studio-entry-v30" aria-label="Vehicle inspection studio">
           <div className="fleet-studio-launch-copy">
-            <span><Sparkles size={17}/> MATESHWARI MOTOR STUDIO / EXPERIENCE 02</span>
-            <h3>Your ride. <em>In the spotlight.</em></h3>
-            <p>An immersive showroom with dramatic lighting, real model-reference photography and a closer look at the details. Choose the vehicle that suits your journey.</p>
-            <button type="button" onClick={()=>setStudioVehicle(!userSelectedVehicle.current&&studioShowcaseName?studioShowcaseName:selected.name)}>
-              <CarFront size={21}/> Enter the Car Studio <ArrowRight size={20}/>
+            <span><Sparkles size={17}/> A DIFFERENT WAY TO INSPECT</span>
+            <h3>Compare outside. <em>Inspect inside.</em></h3>
+            <p>The catalog below helps you choose a vehicle. Inside the studio, inspect a full-size model photograph, zoom into details, review available angles and check booking specifications.</p>
+            <button type="button" onClick={()=>setStudioVehicle(selected.name)}>
+              <CarFront size={21}/> Open inspection studio <ArrowRight size={20}/>
             </button>
-            <small className="fleet-studio-launch-note"><span className="fleet-launch-live-dot"/> REAL MODEL PHOTOS <b>•</b> INTERACTIVE ANGLES <b>•</b> QUOTE READY</small>
+            <small className="fleet-studio-launch-note">PHOTO INSPECTION <b>•</b> VEHICLE DETAILS <b>•</b> REQUEST A QUOTE</small>
           </div>
-          <div className="fleet-studio-launch-visual">
-            <div className="fleet-launch-portal" aria-hidden="true"><i/><i/><i/></div>
-            {!studioLaunchPhotoFailed?
-              <img src="/media/mt-xuv700-studio.webp" alt="Reviewed XUV700 studio model-reference vehicle promoting the interactive showroom" loading="lazy"
-                onError={()=>setStudioLaunchPhotoFailed(true)}/>:
-              <div className="fleet-studio-launch-fallback" role="img" aria-label="Vehicle photograph pending local media installation">
-                <CarFront size={102} strokeWidth={1.1}/><strong>THE GARAGE AWAITS</strong><small>Start your full-screen vehicle experience</small>
-              </div>}
-            <div className="fleet-launch-preview-models" role="group" aria-label="Open a photographed vehicle in the studio">
-              {[
-                {name:'Mahindra XUV700',src:'/media/mt-xuv700-studio.webp'},
-                {name:'Mahindra Thar',src:'/media/mt-thar-red-front.webp'},
-                {name:'Tempo Traveller',src:'/media/mt-traveller-safe.webp'}
-              ].filter(item=>liveFleet.some(v=>v.name===item.name))
-                .map(item=><button key={item.name} type="button"
-                  onClick={()=>setStudioVehicle(item.name)}
-                  aria-label={'Explore '+item.name+' real photos'}>
-                    <img src={item.src} alt="" loading="lazy"
-                      onError={event=>{event.currentTarget.style.visibility='hidden';}}/>
-                    <span>{item.name}</span>
-                  </button>)}
-            </div>
-            <span className="fleet-launch-chapter">THREE REAL MODELS · PHOTOS FIRST <ArrowRight size={17}/></span>
+          <div className="fleet-studio-entry-guide" aria-label="What makes the inspection studio different">
+            <div><small>01 / COMPARE</small><strong>Choose your model</strong><span>Browse the ten photographed vehicle cards below, with seating and indicative rates.</span></div>
+            <div><small>02 / INSPECT</small><strong>Open full-screen studio</strong><span>See authentic photo angles, inspect details at closer zoom and navigate with touch or keyboard.</span></div>
+            <div><small>03 / PLAN</small><strong>Request the same vehicle</strong><span>Carry the chosen model directly into the existing quotation flow.</span></div>
+            <span className="fleet-studio-entry-truth">360° rotation appears only when approved, same-model turntable frames are installed.</span>
           </div>
         </div>
 
