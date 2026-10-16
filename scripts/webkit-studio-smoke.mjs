@@ -92,14 +92,27 @@ try{
  await reducedPage.route('https://commons.wikimedia.org/**',route=>route.fulfill({
   status:200,contentType:'image/svg+xml',body:photoFixture
  }));
+ await reducedPage.emulateMedia({reducedMotion:'reduce'});
  await reducedPage.goto(root,{waitUntil:'domcontentloaded'});
+ assert.equal(await reducedPage.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),true,
+  'WebKit test context is actually emulating reduced motion');
  const reducedIntro=reducedPage.locator('.cinema-arrival-skip');
  if(await reducedIntro.count())await reducedIntro.evaluate(el=>el.click());
  const reducedCard=reducedPage.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
  await reducedCard.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).evaluate(el=>el.click());
  const reducedDialog=reducedPage.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await reducedDialog.waitFor({state:'visible'});
- await reducedPage.waitForFunction(()=>document.querySelector('.ride-studio-tour-toggle')?.hasAttribute('disabled'));
+ try{
+  await reducedPage.waitForFunction(()=>document.querySelector('.ride-studio-tour-toggle')?.hasAttribute('disabled'),null,{timeout:10000});
+ }catch(error){
+  console.error('Reduced-motion failure diagnostics',JSON.stringify(await reducedPage.evaluate(()=>({
+   mediaMatches:matchMedia('(prefers-reduced-motion: reduce)').matches,
+   button:document.querySelector('.ride-studio-tour-toggle')?.outerHTML,
+   modal:!!document.querySelector('.ride-studio-dialog'),
+   visibility:document.visibilityState
+  }))));
+  throw error;
+ }
  assert.equal(await reducedDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),true,
   'Safari initial reduced-motion preference prevents auto tour');
  await reducedPage.close();
