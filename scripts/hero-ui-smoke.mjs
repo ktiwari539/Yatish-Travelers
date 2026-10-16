@@ -291,6 +291,13 @@ async function smoke(){
  ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
    'Mobile full-screen studio has a visible exit control');
  ensure(await studio.locator('.vehicle-webgl').count()===0,'Mobile studio never shows fake cars');
+ await page.waitForFunction(()=>{
+  const image=document.querySelector('.ride-studio-car-image');
+  return (image instanceof HTMLImageElement&&image.complete&&image.naturalWidth>0)||
+   Boolean(document.querySelector('.ride-studio-photo-pending'));
+ },null,{timeout:6500}).catch(()=>{});
+ ensure(await studio.locator('.ride-studio-photo-loading,.ride-studio-photo-pending,.ride-studio-car-image').count()>=1,
+  'Mobile photo stage always shows either an authentic loaded image or explicit load feedback');
  await page.screenshot({path:'artifacts/visual-evidence/ride-studio-mobile.png',animations:'disabled'});
  const mobileFrame=await studio.locator('.ride-studio-vehicle-frame').boundingBox();
  const mobileCameraControls=await studio.locator('.ride-studio-stage-footer').boundingBox();
