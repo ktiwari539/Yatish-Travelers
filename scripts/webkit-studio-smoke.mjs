@@ -102,17 +102,18 @@ try{
  await reducedCard.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).evaluate(el=>el.click());
  const reducedDialog=reducedPage.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await reducedDialog.waitFor({state:'visible'});
- try{
-  await reducedPage.waitForFunction(()=>document.querySelector('.ride-studio-tour-toggle')?.hasAttribute('disabled'),null,{timeout:10000});
- }catch(error){
-  console.error('Reduced-motion failure diagnostics',JSON.stringify(await reducedPage.evaluate(()=>({
-   mediaMatches:matchMedia('(prefers-reduced-motion: reduce)').matches,
-   button:document.querySelector('.ride-studio-tour-toggle')?.outerHTML,
-   modal:!!document.querySelector('.ride-studio-dialog'),
-   visibility:document.visibilityState
-  }))));
-  throw error;
+ // The browser diagnostic already proved the element becomes disabled.
+ // Playwright's browser-side waitForFunction can stall in WebKit even when true;
+ // assert the actual control state directly instead.
+ const tourToggle=reducedDialog.getByRole('button',{name:'Enable automatic photo slideshow'});
+ await tourToggle.waitFor({state:'visible'});
+ let disabled=false;
+ for(let attempt=0;attempt<20;attempt++){
+  disabled=await tourToggle.isDisabled();
+  if(disabled)break;
+  await reducedPage.waitForTimeout(200);
  }
+ assert.equal(disabled,true,'Safari reduced-motion disables the slideshow control');
  assert.equal(await reducedDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),true,
   'Safari initial reduced-motion preference prevents auto tour');
  await reducedPage.close();
