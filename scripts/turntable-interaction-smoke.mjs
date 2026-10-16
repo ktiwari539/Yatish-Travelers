@@ -25,7 +25,7 @@ async function run(engine,name){
  const context=await browser.newContext({viewport:{width:1100,height:820},reducedMotion:'no-preference'});
  const page=await context.newPage();
  await page.route('**/__test_frame_*.svg',route=>{
-  const m=route.request().url().match(/__test_frame_(\\d+)\\.svg/);
+  const m=route.request().url().match(/__test_frame_(\d+)\.svg/);
   const n=m?Number(m[1]):0;
   // Each deliberately numbered SVG has different test pixels. Never a vehicle.
   return route.fulfill({status:200,contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300"><rect width="600" height="300" fill="rgb(${n*5},100,150)"/><text x="100" y="150" font-size="70">TEST ${n}</text></svg>`});
@@ -35,7 +35,7 @@ async function run(engine,name){
  await viewer.waitFor();
  await page.waitForFunction(()=>document.querySelector('.ride-genuine-turntable')?.getAttribute('data-turntable-ready')==='true');
  const image=viewer.locator('img');
- const index=async()=>Number((await image.getAttribute('src')).match(/_(\\d+)\\.svg$/)?.[1]);
+ const index=async()=>Number((await image.getAttribute('src')).match(/_(\d+)\.svg$/)?.[1]);
  const first=await index();
  await page.waitForTimeout(850);
  assert.notEqual(await index(),first,name+': automatic frame advancement');
