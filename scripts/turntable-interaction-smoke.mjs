@@ -14,6 +14,7 @@ writeFileSync(entry,`import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {PhotoTurntable} from './PhotoTurntable';
 const frames=Array.from({length:36},(_,i)=>'/__test_frame_'+String(i).padStart(2,'0')+'.svg');
+if(new URLSearchParams(location.search).has('broken'))frames[7]='/__test_broken.svg';
 function Test(){const [failed,setFailed]=React.useState(false);return <div>{failed?<p role="alert">Frame failure fallback</p>:<PhotoTurntable model="TEST FIXTURE NOT A CAR" frames={frames} onFailure={()=>setFailed(true)}/>}</div>}
 createRoot(document.getElementById('root')!).render(<Test/>);
 `);
@@ -56,6 +57,14 @@ async function run(engine,name){
  await page.mouse.up();
  await page.waitForTimeout(3950);
  assert.notEqual(await index(),dragged,name+': resumes after drag and idle');
+ // An unreadable frame must fall back rather than advertise a working spin.
+ const broken=await context.newPage();
+ await broken.route('**/__test_frame_*.svg',route=>route.fulfill({status:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300"/>'}));
+ await broken.route('**/__test_broken.svg',route=>route.fulfill({status:404,body:'missing frame'}));
+ await broken.goto(url+'?broken=1');
+ await broken.getByRole('alert',{name:'Frame failure fallback'}).waitFor({timeout:10000});
+ assert.equal(await broken.locator('.ride-genuine-turntable').count(),0,name+': corrupted frame unmounts turntable');
+ await broken.close();
  await context.close();
  const reduced=await browser.newContext({reducedMotion:'reduce'});
  const slow=await reduced.newPage();
