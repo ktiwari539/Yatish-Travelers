@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
-import { PremiumFleetExperience } from './PremiumFleetExperience';
 import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
 
@@ -331,7 +330,6 @@ export function App() {
   },[]);
 
   const selected = liveFleet.find(item=>item.name===vehicle) ?? liveFleet[0] ?? fleet[1];
-  const heroVehicle = selected;
   // The studio entry may open with the strongest approved local vehicle
   // photograph when nobody has made a deliberate selection. A user-selected
   // model ALWAYS takes priority, and this does not change fare/CRM state.
@@ -456,7 +454,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       <header className="nav">
         <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
         <nav>
-          <a href="#motion-fleet">Experience</a>
+          <a href="#journeys">Journeys</a>
           <a href="#fleet">Fleet</a>
           <a href="#services">Services</a>
           <a href="#corporate">Corporate</a>
@@ -469,7 +467,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           {mobileMenuOpen?<X size={22}/>:<Menu size={22}/>}
         </button>
         {mobileMenuOpen&&<nav className="mobile-nav-panel" id="mobile-main-nav" aria-label="Mobile navigation">
-          {[['Fleet experience','#motion-fleet'],['Vehicle options','#fleet'],['Fare estimator','#fare'],['Services','#services'],['Corporate','#corporate'],['Journeys','#journeys'],['Contact','#contact']].map(([label,href])=>(
+          {[['Journey inspiration','#journeys'],['Vehicle options','#fleet'],['Fare estimator','#fare'],['Services','#services'],['Corporate','#corporate'],['Journeys','#journeys'],['Contact','#contact']].map(([label,href])=>(
             <a key={href} href={href} onClick={()=>setMobileMenuOpen(false)}>{label}<ArrowRight size={15}/></a>
           ))}
           <a className="mobile-nav-quote" href="#fare" onClick={()=>setMobileMenuOpen(false)}>Get a quote <ArrowRight size={16}/></a>
@@ -492,7 +490,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
               Request a Quote <ArrowRight size={17}/>
             </button>
             <WhatsappLink source="hero" label="Chat on WhatsApp" className="secondary hero-whatsapp"/>
-            <a className="hero-fleet-link" href="#motion-fleet">Explore the Fleet <ArrowRight size={15}/></a>
+            <a className="hero-fleet-link" href="#fleet">Explore the Fleet <ArrowRight size={15}/></a>
           </div>
           <a className="cinematic-landing-email" href={contactEmail+'?subject='+encodeURIComponent('Travel enquiry — Mateshwari Travellers')}
             onClick={()=>logInteraction('email_click','hero')}><Mail size={15}/> Prefer email? Contact us directly</a>
@@ -780,13 +778,10 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           <a href="tel:+919340098177"><Phone size={17}/> Call us</a>
         </div>
       </section>
-      <div className="fleet-final-intro">
-        <span className="kicker">THE FINAL CHAPTER · CHOOSE YOUR RIDE</span>
-        <h2>Before the journey begins, <em>meet your ride.</em></h2>
-        <p>One collection, thoughtfully arranged. Scroll through real model references, compare the details and choose the vehicle that feels right for your route. Your quotation is only a click away.</p>
-      </div>
-      <PremiumFleetExperience vehicles={liveFleet} activeName={heroVehicle.name}
-        onSelect={selectFeatured} onQuote={name=>{selectFeatured(name);openQuote('quote','featured-fleet',name);}}/>
+      {/* The ten-model photographic selection already lives in #fleet.
+          Do not repeat it in a second end-of-page cinematic gallery.
+          The previously approved imagery and reel component remain in source
+          for future review; quotation and CRM data are unchanged. */}
       {studioVehicle&&<RideShowroom vehicles={liveFleet} initialName={studioVehicle}
         onClose={()=>setStudioVehicle(null)}
         onQuote={name=>{selectFeatured(name);setStudioVehicle(null);openQuote('quote','car-studio',name);}}/>}
