@@ -69,7 +69,7 @@ async function smoke(){
  mkdirSync('artifacts/visual-evidence',{recursive:true});
  await page.locator('.fleet-studio-launch').screenshot({
    path:'artifacts/visual-evidence/ride-studio-launcher-desktop.png',animations:'disabled'});
- ensure((await page.locator('.fleet-studio-launch h3').innerText()).includes('In the spotlight'),
+ ensure((await page.locator('.fleet-studio-launch h3').innerText()).includes('Inspect inside'),
   'Main entry invites visitors into the premium spotlight experience');
  ensure(await page.locator('.fleet-grid.fleet-compare-list').count()===1,
   'Public fleet cards are reorganized into a compact comparison rather than a second photo gallery');
@@ -101,8 +101,10 @@ async function smoke(){
  });
  ensure(cardLayout.ratio>.35&&cardLayout.height>=235,
   'The restored gallery gives real model photography generous space');
- ensure(await page.locator('.fleet-launch-preview-models button').count()===3,
-  'Photo-rich studio entrance features three actual, separately named vehicle previews');
+ ensure(await page.locator('.fleet-studio-entry-guide>div').count()===3,
+  'Studio entry explains three distinct steps instead of repeating the same vehicle thumbnails');
+ ensure(await page.locator('.fleet-launch-preview-models,.fleet-studio-launch-visual').count()===0,
+  'Studio launcher contains no duplicate vehicle gallery');
  const dzireCard=page.locator('.premium-catalog-card[data-model="Maruti Dzire"]');
  ensure(Number(await dzireCard.getAttribute('data-gallery-count'))>=3,
   'Dzire retains three configured reference views inside the studio');
@@ -114,7 +116,7 @@ async function smoke(){
  ensure((await page.locator('.fleet-grid.fleet-compare-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length))===3,
   'Wide-desktop photo gallery uses three full-width photographed cards per row');
  const ertigaCover=await richCard.locator('.premium-catalog-visual img').getAttribute('src');
- await page.getByRole('button',{name:'Enter the Car Studio'}).click();
+ await page.getByRole('button',{name:'Open inspection studio'}).click();
  const studio=page.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
  await studio.waitFor({state:'visible'});
  ensure(await studio.locator('.ride-studio-photo-strip button').count()>=1,
@@ -286,7 +288,7 @@ async function smoke(){
  await page.locator('.premium-catalog-card[data-model="Maruti Ertiga"]').screenshot({
    path:'artifacts/visual-evidence/mobile-choose-your-ride-visible.png',animations:'disabled'});
  // Mobile studio must fit a small screen without clipped controls.
- await page.getByRole('button',{name:'Enter the Car Studio'}).click();
+ await page.getByRole('button',{name:'Open inspection studio'}).click();
  await studio.waitFor({state:'visible'});
  ensure(await studio.getByRole('button',{name:'Close car studio'}).isVisible(),
    'Mobile full-screen studio has a visible exit control');
