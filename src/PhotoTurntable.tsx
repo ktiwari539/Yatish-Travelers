@@ -16,6 +16,8 @@ export function PhotoTurntable({model,frames,onFailure}:{
  const [reducedMotion,setReducedMotion]=useState(false);
  const [visible,setVisible]=useState(true);
  const drag=useRef<{x:number;frame:number}|null>(null);
+ const failureCallback=useRef(onFailure);
+ useEffect(()=>{failureCallback.current=onFailure;},[onFailure]);
  const resume=useRef<ReturnType<typeof setTimeout>|null>(null);
  const stopTimeout=()=>{if(resume.current!==null)clearTimeout(resume.current);resume.current=null;};
  const interaction=()=>{
@@ -34,9 +36,9 @@ export function PhotoTurntable({model,frames,onFailure}:{
    img.src=src;
   }));
   void Promise.all(operations).then(()=>{if(mounted)setReady(true);})
-   .catch(()=>{if(mounted)onFailure();});
+   .catch(()=>{if(mounted)failureCallback.current();});
   return()=>{mounted=false;for(const img of loaded){img.onload=null;img.onerror=null;}};
- },[frames,onFailure]);
+ },[frames]);
  useEffect(()=>{
   const mq=matchMedia('(prefers-reduced-motion: reduce)');
   const update=()=>setReducedMotion(mq.matches);
