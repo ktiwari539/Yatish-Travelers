@@ -42,6 +42,8 @@ async function run(engine,name){
  await viewer.getByRole('button',{name:'Pause 360-degree rotation'}).click();
  const held=await index();await page.waitForTimeout(750);
  assert.equal(await index(),held,name+': explicit pause');
+ // Resume first so the drag-hold test cannot pass just because manual pause is on.
+ await viewer.getByRole('button',{name:'Resume 360-degree rotation'}).click();
  const viewport=viewer.locator('.ride-turntable-viewport');
  await viewport.focus();await page.keyboard.press('ArrowRight');
  assert.equal(await index(),(held+1)%36,name+': focused arrow advances one frame');
@@ -52,7 +54,6 @@ async function run(engine,name){
  await page.waitForTimeout(3600);
  assert.equal(await index(),dragged,name+': held pointer never restarts autoplay');
  await page.mouse.up();
- await viewer.getByRole('button',{name:'Resume 360-degree rotation'}).click();
  await page.waitForTimeout(3950);
  assert.notEqual(await index(),dragged,name+': resumes after drag and idle');
  await context.close();
