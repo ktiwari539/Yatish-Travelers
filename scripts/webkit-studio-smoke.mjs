@@ -55,6 +55,11 @@ try{
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),1,'Zoom enters');
  await dialog.getByRole('button',{name:'Return to full view of Maruti Ertiga'}).evaluate(el=>el.click());
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),0,'Zoom exits');
+ assert.ok((await dialog.locator('.ride-studio-turntable-status').innerText()).includes('360° unavailable'),
+  'The Safari studio never advertises a real spin without matching photos');
+ assert.equal(await dialog.locator('.ride-genuine-turntable').count(),0,
+  'No fake turntable renders in Safari when there are no verified assets');
+ await dialog.getByRole('button',{name:'Enable automatic photo slideshow'}).evaluate(el=>el.click());
  const before=await image.getAttribute('src');
  try{
   await page.waitForFunction(()=>document.querySelector('.ride-studio-stage')?.getAttribute('data-tour-state')==='playing',
@@ -73,13 +78,13 @@ try{
  }
  const after=await image.getAttribute('src');
  assert.notEqual(before,after,'Auto tour visibly changes angle on WebKit after inactivity');
- await dialog.getByRole('button',{name:'Pause automatic photo tour'}).evaluate(el=>el.click());
+ await dialog.getByRole('button',{name:'Pause automatic photo slideshow'}).evaluate(el=>el.click());
  const paused=await image.getAttribute('src');
  await page.waitForTimeout(4100);
  assert.equal(await image.getAttribute('src'),paused,'Pause prevents another automatic advance');
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.waitForFunction(()=>document.querySelector('.ride-studio-tour-toggle')?.hasAttribute('disabled'));
- assert.equal(await dialog.getByRole('button',{name:'Enable automatic photo tour'}).isDisabled(),true,
+ assert.equal(await dialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),true,
   'Reduced-motion prevents auto tour');
  await page.keyboard.press('Escape');
  await dialog.waitFor({state:'detached'});
