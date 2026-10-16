@@ -245,7 +245,7 @@ async function smoke(){
    'After the closing trip CTA, visitors reach contact rather than another car catalog');
  ensure((await page.locator('.hero-fleet-link').getAttribute('href'))==='#fleet',
    'The cinematic intro now links to the single official fleet gallery');
- ensure((await page.locator('header.nav a[href="#journeys"]').count())===1,
+ ensure((await page.locator('header.nav a[href="#route-playground"]').count())===1,
    'Main navigation directs the separate Experience concept to journeys');
  const cardModels=await page.locator('.premium-catalog-card').evaluateAll(cards=>
    cards.map(card=>card.getAttribute('data-model')));
