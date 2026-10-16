@@ -82,12 +82,27 @@ try{
  const paused=await image.getAttribute('src');
  await page.waitForTimeout(4100);
  assert.equal(await image.getAttribute('src'),paused,'Pause prevents another automatic advance');
- await page.emulateMedia({reducedMotion:'reduce'});
- await page.waitForFunction(()=>document.querySelector('.ride-studio-tour-toggle')?.hasAttribute('disabled'));
- assert.equal(await dialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),true,
-  'Reduced-motion prevents auto tour');
  await page.keyboard.press('Escape');
  await dialog.waitFor({state:'detached'});
+ // Safari OS motion preference is present when a new page mounts. Check that
+ // initial setting directly rather than depending on an emulated live OS event.
+ const reducedPage=await browser.newPage({
+  viewport:{width:1440,height:900},reducedMotion:'reduce'
+ });
+ await reducedPage.route('https://commons.wikimedia.org/**',route=>route.fulfill({
+  status:200,contentType:'image/svg+xml',body:photoFixture
+ }));
+ await reducedPage.goto(root,{waitUntil:'domcontentloaded'});
+ const reducedIntro=reducedPage.locator('.cinema-arrival-skip');
+ if(await reducedIntro.count())await reducedIntro.evaluate(el=>el.click());
+ const reducedCard=reducedPage.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
+ await reducedCard.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).evaluate(el=>el.click());
+ const reducedDialog=reducedPage.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
+ await reducedDialog.waitFor({state:'visible'});
+ await reducedPage.waitForFunction(()=>document.querySelector('.ride-studio-tour-toggle')?.hasAttribute('disabled'));
+ assert.equal(await reducedDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),true,
+  'Safari initial reduced-motion preference prevents auto tour');
+ await reducedPage.close();
  console.log('PASS WebKit: distinct cover, photographic studio, vertical rail, zoom, idle playback, pause, reduced motion, Escape');
 }finally{
  if(browser)await browser.close();
