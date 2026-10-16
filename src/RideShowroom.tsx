@@ -190,6 +190,10 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  },[active?.name,galleryKey,failedSources.join('|'),autoTourEnabled,reducedMotion,details,zoomed,turntableMode,switching]);
  useEffect(()=>{
   const handler=(event:KeyboardEvent)=>{
+   // Arrow keys belong to the focused genuine photographic turntable.
+   // Otherwise the global studio navigation steals them and switches cars.
+   if((event.target as Element|null)?.closest?.('.ride-turntable-viewport') &&
+      (event.key==='ArrowLeft'||event.key==='ArrowRight'))return;
    if(event.key==='Escape'){event.preventDefault();if(zoomed)setZoomed(false);else onClose();return;}
    if(event.key==='ArrowLeft'){event.preventDefault();setCar(vehicleIndex-1);return;}
    if(event.key==='ArrowRight'){event.preventDefault();setCar(vehicleIndex+1);return;}
