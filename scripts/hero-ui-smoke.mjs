@@ -119,14 +119,18 @@ async function smoke(){
  await studio.waitFor({state:'visible'});
  ensure(await studio.locator('.ride-studio-photo-strip button').count()>=1,
   'Full-screen vehicle viewer exposes actual photo thumbnails');
- ensure(await studio.getByRole('button',{name:'Pause automatic photo tour'}).getAttribute('aria-pressed')==='true',
-  'Automatic photographic tour defaults to enabled');
- await studio.getByRole('button',{name:'Pause automatic photo tour'}).click();
- ensure(await studio.getByRole('button',{name:'Enable automatic photo tour'}).getAttribute('aria-pressed')==='false',
-  'Manual pause turns off automatic photo changes');
- await studio.getByRole('button',{name:'Enable automatic photo tour'}).click();
- ensure(await studio.getByRole('button',{name:'Pause automatic photo tour'}).getAttribute('aria-pressed')==='true',
-  'Auto photo tour can be re-enabled without changing vehicle');
+ ensure(await studio.getByRole('button',{name:'Enable automatic photo slideshow'}).getAttribute('aria-pressed')==='false',
+  'Still-photo slideshow starts disabled, not misrepresented as car rotation');
+ ensure((await studio.locator('.ride-studio-turntable-status').innerText()).includes('360° unavailable'),
+  '360-degree mode is unavailable for models without verified turntable frames');
+ ensure(await studio.locator('.ride-genuine-turntable').count()===0,
+  'Never manufacture 360-degree views out of unrelated still photographs');
+ await studio.getByRole('button',{name:'Enable automatic photo slideshow'}).click();
+ ensure(await studio.getByRole('button',{name:'Pause automatic photo slideshow'}).getAttribute('aria-pressed')==='true',
+  'Visitors can optionally enable a clearly labelled photo slideshow');
+ await studio.getByRole('button',{name:'Pause automatic photo slideshow'}).click();
+ ensure(await studio.getByRole('button',{name:'Enable automatic photo slideshow'}).getAttribute('aria-pressed')==='false',
+  'Slideshow can be stopped without affecting vehicle selection');
  ensure(await studio.locator('.ride-studio-reveal').count()===1,
   'Garage introduction has an automatic full-screen vehicle initialization sequence');
  ensure(await studio.locator('.ride-studio-backdrop').count()===0,
@@ -523,12 +527,13 @@ async function smoke(){
   const control=document.querySelector('.ride-studio-tour-toggle');
   return Boolean(control?.textContent?.includes('playing'));
  },null,{timeout:7500});
+ await tourDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).click();
  const initialPhoto=await tourDialog.locator('.ride-studio-car-image').getAttribute('src');
  await tourTest.waitForFunction(previous=>{
   const current=document.querySelector('.ride-studio-car-image')?.getAttribute('src');
   return Boolean(current&&current!==previous);
  },initialPhoto,{timeout:5000});
- await tourDialog.getByRole('button',{name:'Pause automatic photo tour'}).click();
+ await tourDialog.getByRole('button',{name:'Pause automatic photo slideshow'}).click();
  const pausedPhoto=await tourDialog.locator('.ride-studio-car-image').getAttribute('src');
  await tourTest.waitForTimeout(3600);
  ensure((await tourDialog.locator('.ride-studio-car-image').getAttribute('src'))===pausedPhoto,
@@ -538,7 +543,7 @@ async function smoke(){
   const control=document.querySelector('.ride-studio-tour-toggle');
   return control instanceof HTMLButtonElement && control.disabled;
  },null,{timeout:4000});
- ensure(await tourDialog.getByRole('button',{name:'Enable automatic photo tour'}).isDisabled(),
+ ensure(await tourDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),
   'Reduced-motion visitors cannot enable automatic photographic changes');
  await tourTest.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
