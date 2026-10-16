@@ -16,19 +16,27 @@ type Props={
 };
 const knownSafePreview=(src:string)=>/^\/media\/mt-(?:thar-(?:red-front|red-rear|grey-road|grey-front-safe)|xuv700-(?:driving|studio)|traveller-safe)\.webp$/.test(src);
 function RideStudioPhoto({car,src,angle,onFailure}:{car:ShowroomVehicle;src:string;angle:number;onFailure:(src:string)=>void}){
- const [failed,setFailed]=useState(false);
- useEffect(()=>setFailed(false),[src]);
+ const [status,setStatus]=useState<'loading'|'ready'|'failed'>('loading');
+ useEffect(()=>setStatus('loading'),[src]);
  const platePending=needsFleetPlateReview(car.name,src);
- if(!src||platePending||failed){
+ if(!src||platePending||status==='failed'){
   return <div className="ride-studio-photo-pending" role="img" aria-label={car.name+' photograph awaiting review'}>
    <CarFront size={75} strokeWidth={1.1}/>
    <strong>{car.name}</strong>
    <span>{platePending?'Registration-plate review pending':'A model-specific photo is not currently available'}</span>
   </div>;
  }
- return <img key={src} className="ride-studio-car-image" src={src}
-  alt={car.name+' reference photograph — angle '+(angle+1)}
-  onError={()=>{setFailed(true);onFailure(src);}} draggable={false}/>;
+ return <>
+  {status==='loading'&&<div className="ride-studio-photo-loading" role="status">
+   <CarFront size={32} strokeWidth={1.2}/>
+   <span>Loading {car.name} photograph…</span>
+  </div>}
+  <img key={src} className="ride-studio-car-image" src={src}
+   style={{opacity:status==='ready'?1:0}}
+   alt={car.name+' reference photograph — angle '+(angle+1)}
+   onLoad={()=>setStatus('ready')}
+   onError={()=>{setStatus('failed');onFailure(src);}} draggable={false}/>
+ </>;
 }
 /** Keep the failed state visible. A hidden image must not remain a clickable angle. */
 function RideStudioThumb({src,onFailure}:{src:string;onFailure:()=>void}){
