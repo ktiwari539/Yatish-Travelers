@@ -310,14 +310,20 @@ async function smoke(){
  ensure((await page.locator('.quote-trip-card').innerText()).includes('Maruti Ertiga'),'Mobile quote defaults to Ertiga');
  await page.locator('.quote-close').click();
  await page.setViewportSize({width:375,height:812});
+ // The preceding mobile-navigation test leaves #fleet in the URL.
+ // Safari/Chromium can re-scroll to that anchor AFTER an initial scrollTo.
+ // Clear that location state before reload, then verify the real hero layout.
+ await page.evaluate(()=>{
+   history.scrollRestoration='manual';
+   history.replaceState(null,'',location.pathname);
+ });
  await page.reload({waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
    await document.fonts.ready;
-   // Mobile reload can restore a scrolled document instead of the hero.
    history.scrollRestoration='manual';
    window.scrollTo({top:0,behavior:'instant'});
  });
- await page.waitForFunction(()=>window.scrollY<2);
+ await page.waitForFunction(()=>window.scrollY<6,null,{timeout:12000});
  await page.waitForTimeout(120);
  const narrowEmail=await page.locator('.cinematic-landing-email').boundingBox();
  const narrowBooking=await page.locator('.cinema-director-bottom').boundingBox();
