@@ -22,7 +22,7 @@ export function PhotoTurntable({model,frames,onFailure}:{
  const stopTimeout=()=>{if(resume.current!==null)clearTimeout(resume.current);resume.current=null;};
  const interaction=()=>{
   setIdle(false);stopTimeout();
-  resume.current=setTimeout(()=>setIdle(true),3000);
+  if(!drag.current)resume.current=setTimeout(()=>setIdle(true),3000);
  };
  useEffect(()=>{
   let mounted=true;
@@ -56,6 +56,8 @@ export function PhotoTurntable({model,frames,onFailure}:{
   return()=>clearInterval(timer);
  },[ready,manualPause,idle,reducedMotion,visible,frames]);
  useEffect(()=>()=>stopTimeout(),[]);
+ // Changing the selected model must reset the controls and any stale drag.
+ useEffect(()=>{setManualPause(false);setIdle(true);drag.current=null;stopTimeout();},[model,frames]);
  const begin=(event:React.PointerEvent)=>{
   if(!ready)return;
   event.currentTarget.setPointerCapture(event.pointerId);
@@ -76,6 +78,7 @@ export function PhotoTurntable({model,frames,onFailure}:{
    data-turntable-ready={ready?'true':'false'}>
    <div className="ride-turntable-viewport" tabIndex={0}
     onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={end}
+    onLostPointerCapture={()=>{if(drag.current){drag.current=null;interaction();}}}
     onKeyDown={event=>{
       if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
        event.preventDefault();interaction();
