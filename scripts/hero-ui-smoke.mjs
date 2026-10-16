@@ -523,11 +523,11 @@ async function smoke(){
  await tourDialog.waitFor({state:'visible'});
  ensure(await tourDialog.locator('.ride-studio-photo-strip button').count()>=3,
   'Studio preserves multiple real angle source paths, unlike the selection cards');
+ await tourDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).click();
  await tourTest.waitForFunction(()=>{
   const control=document.querySelector('.ride-studio-tour-toggle');
   return Boolean(control?.textContent?.includes('playing'));
  },null,{timeout:7500});
- await tourDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).click();
  const initialPhoto=await tourDialog.locator('.ride-studio-car-image').getAttribute('src');
  await tourTest.waitForFunction(previous=>{
   const current=document.querySelector('.ride-studio-car-image')?.getAttribute('src');
@@ -547,7 +547,7 @@ async function smoke(){
   'Reduced-motion visitors cannot enable automatic photographic changes');
  await tourTest.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
- console.log('PASS: immersive car studio, enlarged seamless fleet reel, three adventures, 10 cars, quote sync, mobile and Admin gates');
+ console.log('PASS: single fleet gallery, genuine 360 gating, opt-in photo slideshow, three adventures, ten cars, quotes, mobile and Admin');
 }
 try{await smoke();}
 finally{
