@@ -454,7 +454,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       <header className="nav">
         <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
         <nav>
-          <a href="#journeys">Journeys</a>
+          <a href="#route-playground">Journeys</a>
           <a href="#fleet">Fleet</a>
           <a href="#services">Services</a>
           <a href="#corporate">Corporate</a>
@@ -467,7 +467,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
           {mobileMenuOpen?<X size={22}/>:<Menu size={22}/>}
         </button>
         {mobileMenuOpen&&<nav className="mobile-nav-panel" id="mobile-main-nav" aria-label="Mobile navigation">
-          {[['Journey inspiration','#journeys'],['Vehicle options','#fleet'],['Fare estimator','#fare'],['Services','#services'],['Corporate','#corporate'],['Journeys','#journeys'],['Contact','#contact']].map(([label,href])=>(
+          {[['Journey inspiration','#route-playground'],['Vehicle options','#fleet'],['Fare estimator','#fare'],['Services','#services'],['Corporate','#corporate'],['Journeys','#route-playground'],['Contact','#contact']].map(([label,href])=>(
             <a key={href} href={href} onClick={()=>setMobileMenuOpen(false)}>{label}<ArrowRight size={15}/></a>
           ))}
           <a className="mobile-nav-quote" href="#fare" onClick={()=>setMobileMenuOpen(false)}>Get a quote <ArrowRight size={16}/></a>
