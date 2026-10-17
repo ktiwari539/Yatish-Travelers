@@ -3,6 +3,7 @@
 import {readdir,readFile,stat} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 const [folder,model,...extra]=process.argv.slice(2);
 if(!folder||!model||extra.length){
  console.error('Usage: node scripts/audit-360-pack.mjs <frame-directory> "<exact catalog model>"');
@@ -42,6 +43,9 @@ try{
   }
   if(!w||!h||w<640||h<360||w>8192||h>8192)failures.push(name+': invalid/unsupported frame dimensions');
   if(w&&h){dimensions.add(w+'x'+h);canonicalWidth??=w;canonicalHeight??=h;}
+  // Decode the whole frame, not just the RIFF header. Fail closed if ffmpeg is missing.
+  const decoded=spawnSync('ffmpeg',['-v','error','-nostdin','-i',p,'-frames:v','1','-f','null','-'],{encoding:'utf8',timeout:15000});
+  if(decoded.error||decoded.status!==0)failures.push(name+': failed image decode: '+String(decoded.error?.message??decoded.stderr??decoded.status).slice(0,160));
   const digest=createHash('sha256').update(bytes).digest('hex');
   if(hashes.has(digest))failures.push(name+': exact duplicate of '+hashes.get(digest));
   hashes.set(digest,name);
@@ -51,7 +55,7 @@ try{
  if(entries.length!==names.length)failures.push('Not every file could be audited');
 }catch(error){failures.push('Cannot audit directory: '+String(error?.message??error));}
 const result={model,slug,folder:root,frames:entries.length,dimensions:[...dimensions],checksums:entries,failures,
- technicalStatus:failures.length?'FAIL':'PASS — structural validation only',
+ technicalStatus:failures.length?'FAIL':'PASS — structural/decode validation only',
  certification:'NOT CERTIFIED: requires documented commercial rights, exact vehicle/trim, true full-orbit visual review, plate redaction in pixels and approved evidence ID'};
 console.log(JSON.stringify(result,null,2));
 if(failures.length)process.exitCode=1;
