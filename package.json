@@ -5,20 +5,31 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "node scripts/dev.mjs",
+    "api": "node server/crm.mjs",
+    "test:api": "node --test server/*.test.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "visuals:install": "node scripts/install-visuals.mjs",
+    "scorpio:install": "node scripts/install-scorpio-media.mjs",
+    "fleet:install": "node scripts/install-fleet-media.mjs",
+    "media:install": "node scripts/install-complete-media.mjs",
+    "verify:fleet": "node scripts/verify-local-fleet.mjs",
+    "studio:install": "node scripts/install-studio-review.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "typescript": "^5.9.3",
-    "vite": "^7.1.9"
+    "vite": "^7.1.9",
+    "@types/three": "^0.180.0"
   }
 }

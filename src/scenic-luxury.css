@@ -1,0 +1,258 @@
+/* Mateshwari Travellers — Scenic Luxury 2026
+ * Final layer: art-directed travel imagery, quiet motion, clear calls-to-action.
+ * Hero scenes are editorial, not representation of our assigned fleet vehicles. */
+:root{--visual-ivory:#f9f5ec;--visual-ink:#1a392c;--visual-bronze:#af8050}
+.scenic-image{opacity:0;transition:opacity .55s ease,transform .5s ease;will-change:auto}
+.scenic-image.is-ready{opacity:1}
+.cinematic-photo-layer{background:linear-gradient(140deg,#d4c2a3,#7c8e79);overflow:hidden}
+.cinematic-photo-layer img{
+  width:100%;height:100%;object-fit:cover;object-position:center 55%;
+  filter:contrast(1.03) saturate(.96) brightness(.99);
+}
+.hero-poster.luxury-hero-photo{
+  background:linear-gradient(140deg,#c2b9a5,#3a5b43);
+  box-shadow:0 32px 105px rgba(25,48,33,.24),0 6px 22px rgba(27,44,31,.12)
+}
+.hero-poster.luxury-hero-photo:hover{box-shadow:0 40px 115px rgba(25,48,33,.29)}
+.luxury-hero-photo-wash{
+  background:
+    linear-gradient(180deg,rgba(12,34,28,.24),transparent 33%,rgba(14,36,26,.15) 53%,rgba(8,29,22,.87) 100%),
+    linear-gradient(90deg,rgba(30,28,22,.05),transparent 55%);
+}
+.cinematic-hero-caption{bottom:26px}
+.cinematic-hero-caption h2{
+  font-size:clamp(33px,3.5vw,56px);
+  max-width:360px;
+  color:#fffaf0;
+  line-height:1.03;
+  text-shadow:0 3px 18px rgba(0,0,0,.13)
+}
+.cinematic-hero-caption p{font-size:11px;max-width:460px;color:#eaece4}
+.hero-selected-vehicle{
+  position:absolute;z-index:8;right:24px;top:85px;
+  padding:14px 16px;border-radius:15px;min-width:174px;
+  display:grid;gap:4px;text-align:left;
+  border:1px solid rgba(255,255,255,.45);
+  background:rgba(249,247,239,.92);
+  backdrop-filter:blur(16px) saturate(1.08);
+  box-shadow:0 13px 30px rgba(9,36,24,.15);
+  color:#183e2e;
+}
+.hero-selected-vehicle>span{font-size:8px;font-weight:900;letter-spacing:.12em;color:#977344}
+.hero-selected-vehicle>strong{font-size:16px;letter-spacing:-.045em;line-height:1.1}
+.hero-selected-vehicle>small{font-size:10px;color:#68796a}
+.luxury-hero-edition{font-size:7px;top:31px;right:28px;color:#fffde9;text-shadow:0 3px 16px rgba(0,0,0,.5)}
+.car-stage .floating-card{z-index:11}
+.hero-actions{align-items:center;flex-wrap:wrap}
+.hero .hero-copy h1{line-height:1.02}
+.hero .trust-row{margin-top:26px;row-gap:13px}
+.hero .trust-row span{white-space:normal}
+.hero-vehicle-picker{z-index:13}
+
+/* Immersive short photographic interlude. */
+.luxury-interlude{
+  position:relative;isolation:isolate;overflow:hidden;color:#fffaf1;
+  height:min(720px,75svh);min-height:450px;margin:0;background:#1b3a2b;
+}
+.luxury-interlude.is-compact{
+  max-width:calc(100% - 8vw);margin:60px auto 38px;
+  height:min(520px,57svh);min-height:420px;
+  border-radius:27px;
+  box-shadow:0 30px 90px rgba(20,53,35,.18)
+}
+.luxury-interlude-scene{position:absolute;inset:0;overflow:hidden}
+.luxury-interlude-scene img{
+  height:100%;width:100%;object-fit:cover;object-position:center 48%;
+  transform:scale(1.06) translate3d(calc(var(--landscape-x,0)*-14px),calc(var(--landscape-y,0)*-9px),0);
+  transition:transform .2s linear,opacity .6s ease;filter:saturate(1.08) contrast(1.02)
+}
+.luxury-interlude-overlay{
+ position:absolute;inset:0;z-index:1;
+ background:linear-gradient(90deg,rgba(8,35,28,.87) 0%,rgba(9,40,31,.73) 31%,rgba(12,42,31,.15) 75%,rgba(7,30,22,.08)),
+  linear-gradient(0deg,rgba(7,26,21,.55) 0%,transparent 46%);
+}
+.luxury-interlude-text{position:relative;z-index:3;padding:clamp(52px,7vw,115px) 6.5%;max-width:710px;display:flex;flex-direction:column;justify-content:center;height:100%}
+.luxury-interlude-text>span{display:inline-flex;gap:9px;align-items:center;color:#ecc58d;font-size:10px;letter-spacing:.16em;font-weight:850}
+.luxury-interlude-text h2{
+  font-size:clamp(47px,6.6vw,91px);line-height:.98;letter-spacing:-.06em;font-weight:800;
+  margin:18px 0;max-width:720px
+}
+.luxury-interlude-text h2 em{font-family:Georgia,serif;font-weight:500;color:#f1d3a6}
+.luxury-interlude-text>p{font-size:13px;line-height:1.7;color:#d8dfd5;max-width:505px}
+.luxury-interlude-text>div{display:flex;gap:12px;align-items:center;margin-top:19px;flex-wrap:wrap}
+.luxury-interlude-text a{
+  display:inline-flex;gap:9px;align-items:center;border-radius:99px;
+  padding:13px 17px;text-decoration:none;border:1px solid rgba(255,255,255,.37);
+  font-size:12px;font-weight:850;color:#fff9ee;
+  transition:transform .25s,background .25s
+}
+.luxury-interlude-text a:first-child{background:#f7e7d0;color:#1b412f;border-color:#f7e7d0}
+.luxury-interlude-text a:hover{transform:translateY(-3px);background:#fff7e6;color:#244331}
+.luxury-interlude-meta{position:absolute;z-index:3;bottom:18px;left:6.5%;right:6.5%;display:flex;justify-content:space-between;gap:12px;align-items:center;color:#e4e9d6;font-size:9px;letter-spacing:.08em}
+.luxury-interlude-meta a{color:#f3e7d6;font-size:9px;text-underline-offset:3px;letter-spacing:0}
+
+/* Services: preview the experience, not generic flat cards. */
+.service-grid .cinematic-service-card{
+  display:flex;flex-direction:column;
+  padding:0 0 25px!important;min-height:370px;
+  border-radius:23px;background:#fffdf8;overflow:hidden;
+  border:1px solid rgba(25,64,42,.11);
+  box-shadow:0 18px 45px rgba(25,55,38,.08);
+}
+.service-grid .cinematic-service-card:hover{transform:translateY(-7px);box-shadow:0 28px 58px rgba(23,57,37,.15)}
+.cinematic-service-media{position:relative;overflow:hidden;height:183px;min-height:183px;background:#d5d4c3}
+.cinematic-service-media img{height:100%;width:100%;object-fit:cover;filter:saturate(.92) contrast(1.02);transition:transform .65s cubic-bezier(.2,.8,.2,1)}
+.cinematic-service-card:hover .cinematic-service-media img{transform:scale(1.06)}
+.cinematic-service-media:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,37,22,.2),transparent 62%,rgba(12,36,25,.23));pointer-events:none}
+.cinematic-service-media>span{
+  position:absolute;left:18px;top:18px;z-index:2;color:#fffdf1;letter-spacing:.13em;font-size:9px;
+  padding:8px 11px;border:1px solid rgba(255,255,255,.4);
+  background:rgba(16,53,36,.54);backdrop-filter:blur(12px);border-radius:99px;font-weight:850
+}
+.service-grid .cinematic-service-card .service-icon{
+  position:relative;z-index:4;margin:-22px 25px 0;background:#fff7ea;
+  border:1px solid rgba(29,65,41,.10);color:#936732;
+  box-shadow:0 10px 24px rgba(30,58,36,.12);width:51px;height:51px;border-radius:16px
+}
+.service-grid .cinematic-service-card>small{margin:15px 26px 0;font-size:9px;color:#a17546}
+.service-grid .cinematic-service-card>h3{margin:7px 26px 4px;font-size:21px;letter-spacing:-.04em;color:#1e3f30}
+.service-grid .cinematic-service-card>p{margin:5px 26px 17px;flex:1;color:#5c7361;font-size:12px;line-height:1.65}
+.service-grid .cinematic-service-card>button{
+  display:inline-flex;gap:9px;align-items:center;align-self:flex-start;
+  margin:0 26px;border:0;background:none;padding:3px 0;color:#236043;font-weight:850;font-size:12px
+}
+.service-grid .cinematic-service-card>button:hover{color:#9d6b3e}
+/* Corporate photography separates premium business travel from a dense bullet-grid. */
+.corporate-image-panel{
+  position:relative;z-index:2;width:100%;height:clamp(260px,29vw,430px);overflow:hidden;
+  border:1px solid rgba(13,52,32,.13);border-radius:26px;
+  margin:0 auto 52px;background:#d1d6cd;box-shadow:0 28px 70px rgba(25,55,37,.13);
+}
+.corporate-image-panel>img{height:100%;width:100%;object-fit:cover;object-position:center;filter:saturate(.90) contrast(1.05);transition:transform .7s}
+.corporate-image-panel:hover>img{transform:scale(1.035)}
+.corporate-image-panel:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,45,35,.76) 0%,rgba(16,57,43,.46) 48%,transparent 90%),linear-gradient(0deg,rgba(8,26,21,.3),transparent)}
+.corporate-image-overlay{position:absolute;z-index:2;left:5%;right:5%;bottom:12%;max-width:650px;display:grid;gap:12px}
+.corporate-image-overlay>small{color:#edc594;letter-spacing:.18em;font-weight:900;font-size:10px}
+.corporate-image-overlay>strong{color:#fffaf0;font-weight:800;font-size:clamp(32px,3.6vw,56px);letter-spacing:-.06em;line-height:1.06}
+.corporate-image-overlay>span{color:#e7e9da;font-size:11px}
+.corporate-panel{backdrop-filter:none}
+
+/* Stories: more light, clearer editorial identity and more realistic photography. */
+.stories-teaser{background:radial-gradient(ellipse at 65% 22%,rgba(209,166,107,.2),transparent 48%),linear-gradient(133deg,#1d4937,#133126 85%)}
+.cinematic-stories-stack{perspective:1200px}
+.cinematic-stories-stack .story-stack-card{border:1px solid rgba(255,255,255,.25);box-shadow:0 35px 75px rgba(4,25,17,.35)}
+.cinematic-stories-stack .story-stack-card img{filter:saturate(.93) brightness(.95) contrast(1.02);transition:transform .8s ease}
+.cinematic-stories-stack .story-stack-card:hover img{transform:scale(1.06)}
+.cinematic-stories-stack .story-stack-card:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(3,22,15,.75) 100%);pointer-events:none}
+.cinematic-stories-stack .story-stack-card>div{z-index:3}
+.cinematic-stories-stack .story-stack-card small{font-weight:900;letter-spacing:.13em;color:#efc18a}
+.cinematic-route-editorial .route-tile-visual{background:#345746}
+.cinematic-route-editorial .route-tile img{filter:saturate(.96) contrast(1.05);transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.cinematic-route-editorial .route-tile:hover img{filter:saturate(1.06) contrast(1.06)}
+
+/* Tablet */
+@media(min-width:761px) and (max-width:1120px){
+  .hero{padding:133px 5vw 80px;gap:30px}
+  .hero h1{font-size:clamp(50px,6vw,74px)}
+  .car-stage{min-height:485px}
+  .hero-poster.luxury-hero-photo{height:406px;top:5%}
+  .cinematic-hero-caption h2{font-size:35px}
+  .hero-selected-vehicle{top:74px;right:14px;padding:10px 13px;min-width:150px}
+  .hero-selected-vehicle strong{font-size:14px}
+  .luxury-interlude.is-compact{max-width:calc(100% - 7vw);height:450px;margin:48px auto 34px}
+  .luxury-interlude-text h2{font-size:clamp(46px,6vw,68px)}
+  .corporate-image-panel{height:330px}
+  .service-grid .cinematic-service-card{min-height:405px}
+}
+/* Phone */
+@media(max-width:760px){
+ .hero{overflow:visible;padding:112px 5vw 68px}
+ .hero .hero-copy h1{font-size:clamp(43px,10vw,61px)}
+ .hero-actions{gap:10px}
+ .hero-actions a{font-size:12px}
+ .hero .trust-row{margin-top:20px;gap:10px}
+ .car-stage{min-height:450px}
+ .hero-poster.luxury-hero-photo{height:342px;top:0}
+ .cinematic-hero-caption{bottom:20px;left:19px;right:18px}
+ .cinematic-hero-caption h2{font-size:clamp(30px,7vw,41px);max-width:280px}
+ .cinematic-hero-caption p{font-size:9px;line-height:1.45;max-width:290px}
+ .luxury-hero-edition{display:none}
+ .hero-selected-vehicle{right:13px;top:63px;padding:9px 11px;min-width:0;max-width:165px;border-radius:12px;gap:3px}
+ .hero-selected-vehicle>span{font-size:7px}
+ .hero-selected-vehicle>strong{font-size:12px}
+ .hero-selected-vehicle>small{font-size:8px}
+ .luxury-hero-corner{max-width:calc(100% - 30px);font-size:7px}
+ .luxury-hero-photo-layer img{object-position:58% 50%}
+ .car-stage .floating-card{right:0;bottom:1%;padding:11px 13px}
+ .car-stage .floating-card strong{font-size:17px}
+ .car-stage .motion-pill{display:none}
+ .luxury-interlude.is-compact{max-width:calc(100% - 8vw);margin:40px auto 15px;min-height:515px;height:65svh;border-radius:21px}
+ .luxury-interlude-scene img{object-position:60% center}
+ .luxury-interlude-overlay{background:linear-gradient(90deg,rgba(7,32,24,.9),rgba(11,39,29,.38) 95%),linear-gradient(0deg,rgba(4,24,19,.65),transparent 55%)}
+ .luxury-interlude-text{padding:53px 8% 75px;max-width:100%}
+ .luxury-interlude-text h2{font-size:clamp(40px,9vw,57px);line-height:1.03}
+ .luxury-interlude-text>p{font-size:12px;max-width:90%}
+ .luxury-interlude-text>div{align-items:stretch;gap:9px}
+ .luxury-interlude-text a{font-size:10px;padding:11px 13px}
+ .luxury-interlude-meta{bottom:14px;left:8%;right:8%;display:grid;gap:6px}
+ .luxury-interlude-meta span,.luxury-interlude-meta a{font-size:8px}
+ .service-grid .cinematic-service-card{min-height:330px;border-radius:20px}
+ .cinematic-service-media{height:177px;min-height:177px}
+ .corporate-image-panel{height:355px;margin-bottom:30px;border-radius:18px}
+ .corporate-image-panel>img{object-position:55% center}
+ .corporate-image-overlay{bottom:9%;left:7%;right:7%}
+ .corporate-image-overlay>strong{font-size:clamp(29px,8vw,43px)}
+ .stories-teaser .stories-teaser-stack{min-height:350px}
+ .cinematic-stories-stack .story-stack-card{height:210px}
+ .cinematic-route-editorial .route-tile-visual{aspect-ratio:1.05}
+}
+@media(max-width:390px){
+ .hero-selected-vehicle{top:63px;right:11px;max-width:135px;padding:8px}
+ .hero-selected-vehicle>strong{font-size:11px}
+ .hero-poster.luxury-hero-photo{height:320px}
+ .car-stage{min-height:425px}
+ .cinematic-hero-caption h2{font-size:30px}
+ .luxury-interlude-text h2{font-size:40px}
+}
+@media(prefers-reduced-motion:reduce){
+ .scenic-image,.luxury-interlude-scene img,.corporate-image-panel>img,.cinematic-service-media img{transition:none!important;transform:none!important}
+ .scenic-image{opacity:1}
+ .luxury-interlude{scroll-behavior:auto}
+}
+
+/* Story page: scenery-led opening, not invented customer testimonials */
+.stories-hero.cinematic-stories-hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:linear-gradient(135deg,#1d4736,#102b21);
+  min-height:75svh;color:#fffbf1
+}
+.cinematic-stories-hero .stories-hero-background{
+  position:absolute;z-index:-2;inset:0;height:100%;width:100%;
+  object-fit:cover;object-position:center 50%;filter:saturate(.9) contrast(1.08)
+}
+.cinematic-stories-hero:before{
+  content:'';position:absolute;z-index:-1;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(10,37,26,.91) 0%,rgba(15,40,29,.78) 42%,rgba(16,39,28,.16) 100%),
+  linear-gradient(0deg,rgba(7,26,18,.4),transparent 55%)
+}
+.cinematic-stories-hero .stories-hero-glow{opacity:.1;pointer-events:none}
+.cinematic-stories-hero h1{color:#fff9ed;max-width:920px;font-size:clamp(50px,7vw,108px);letter-spacing:-.07em}
+.cinematic-stories-hero .kicker{color:#eac392}
+.cinematic-stories-hero>p{color:#e1e8da;max-width:650px}
+.cinematic-stories-hero .secondary{color:#fffaf0;border-color:rgba(255,255,255,.55);background:rgba(19,55,34,.4)}
+.cinematic-stories-hero .secondary:hover{background:rgba(240,214,176,.25)}
+.stories-gallery .story-feature-image{background:#c7d6c2}
+.stories-gallery .story-feature-image img{object-fit:cover;width:100%;height:100%;filter:saturate(.93) contrast(1.04)}
+.stories-gallery .story-feature-copy small{font-size:10px;letter-spacing:.12em;color:#a47b48;font-weight:850}
+.stories-gallery .story-feature-copy strong{font-size:11px;color:#647f69}
+.stories-gallery .story-feature:hover .story-feature-image img{transform:scale(1.04)}
+@media(max-width:760px){
+ .stories-hero.cinematic-stories-hero{min-height:75svh;padding:125px 6vw 90px}
+ .cinematic-stories-hero h1{font-size:clamp(50px,11vw,70px);line-height:1}
+ .cinematic-stories-hero:before{background:linear-gradient(90deg,rgba(11,36,25,.90),rgba(12,36,25,.60)),linear-gradient(0deg,rgba(6,21,16,.54),transparent)}
+ .cinematic-stories-hero .stories-hero-background{object-position:57% center}
+ .stories-gallery .story-feature-image{min-height:260px}
+}
+@media(prefers-reduced-motion:reduce){
+ .stories-gallery .story-feature-image img{transition:none!important;transform:none!important}
+}

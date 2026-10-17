@@ -1,0 +1,145 @@
+/* v24: Restore the requested photo-rich Choose Your Ride design.
+   Enhance real car photographs — never fake a 360° camera with flat photos. */
+#fleet .fleet-grid.fleet-compare-list{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:18px!important;
+ align-items:stretch!important;
+}
+#fleet .fleet-compare-list .premium-catalog-card.photo-rich-fleet-card{
+ display:grid!important;
+ grid-template-columns:minmax(0,46%) minmax(0,54%)!important;
+ min-height:255px!important;
+ background:#fffdfa!important;
+ overflow:hidden!important;
+ border-radius:19px!important;
+ border:1px solid rgba(75,104,83,.17)!important;
+ box-shadow:0 16px 45px rgba(33,52,41,.078)!important;
+ transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease!important;
+}
+#fleet .fleet-compare-list .premium-catalog-card.photo-rich-fleet-card:hover{
+ transform:translateY(-3px)!important;
+ border-color:rgba(105,137,102,.37)!important;
+ box-shadow:0 24px 55px rgba(33,52,41,.13)!important;
+}
+#fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual{
+ position:relative!important;
+ width:100%!important;height:100%!important;min-height:255px!important;
+ border-radius:0!important;
+ background:linear-gradient(138deg,#dfe7df,#edf1e9 55%,#d7dfd7)!important;
+ isolation:isolate;
+}
+#fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual>img{
+ width:100%!important;height:100%!important;
+ object-fit:cover!important;object-position:center!important;
+ display:block!important;filter:none!important;
+ transition:transform .65s cubic-bezier(.18,.65,.22,1)!important;
+}
+#fleet .fleet-compare-list .photo-rich-fleet-card:hover .premium-catalog-visual>img{
+ transform:scale(1.055)!important;
+}
+#fleet .photo-rich-fleet-card .fleet-shade{
+ pointer-events:none;
+ background:linear-gradient(to top,rgba(12,34,25,.45),transparent 36%)!important;
+}
+#fleet .photo-rich-fleet-card .fleet-type{
+ background:rgba(247,248,242,.93)!important;
+ color:#2c533e!important;border:1px solid rgba(96,124,104,.3)!important;
+ font-size:9px!important;letter-spacing:.045em!important;
+}
+#fleet .photo-rich-fleet-card .fleet-number{
+ background:rgba(33,73,52,.83);color:#fff4da;
+ border-radius:8px;padding:7px 9px;
+}
+#fleet .photo-rich-fleet-card .fleet-showroom-card-cta{
+ background:rgba(22,68,44,.92)!important;
+ border:1px solid rgba(241,239,216,.69)!important;
+ padding:10px 12px!important;
+ border-radius:9px!important;
+ font-size:11px!important;color:#fffdf1!important;
+ box-shadow:0 8px 20px rgba(7,24,11,.17);
+}
+#fleet .photo-rich-fleet-card .catalog-angle-button{
+ display:flex;align-items:center;gap:5px;
+ min-width:62px;justify-content:center;
+ border-radius:9px!important;background:rgba(251,250,242,.97)!important;
+ color:#285240!important;border:1px solid #cddccf!important;
+ padding:8px 9px!important;font-size:10px!important;
+ scale:1!important;transform:none!important;
+}
+#fleet .photo-rich-fleet-card .fleet-meta{
+ display:flex!important;
+ flex-direction:column;justify-content:center;
+ padding:25px clamp(16px,2vw,33px)!important;
+ gap:10px!important;
+}
+#fleet .photo-rich-fleet-card .fleet-meta>span{font-size:10px!important;color:#9d8059}
+#fleet .photo-rich-fleet-card .fleet-meta h3{
+ font-size:clamp(22px,2vw,31px)!important;
+ line-height:1.12!important;letter-spacing:-.045em!important;
+ color:#274938!important;
+}
+#fleet .photo-rich-fleet-card .rate{margin:5px 0!important;gap:7px!important}
+#fleet .photo-rich-fleet-card .rate strong{
+ font-size:clamp(20px,2vw,27px)!important;
+ color:#ac8153!important;
+}
+#fleet .photo-rich-fleet-card .rate small{color:#718377;font-size:10px!important}
+#fleet .photo-rich-fleet-card .fleet-bottom{margin-top:6px!important}
+#fleet .photo-rich-fleet-card .fleet-bottom button{
+ color:#285a45!important;
+ font-size:11px!important;
+ border-radius:8px;
+}
+#fleet .photo-rich-fleet-card .fleet-bottom>span{color:#67796c}
+#fleet .photo-rich-fleet-card .fleet-photo-editorial-note{
+ position:absolute!important;z-index:4;
+ left:12px;right:auto;top:auto;bottom:58px;
+ font-size:9px;font-weight:800;letter-spacing:.04em;
+ padding:6px 8px;border-radius:6px;
+ background:rgba(255,254,246,.93);color:#3f5545;
+}
+#fleet .photo-rich-fleet-card .fleet-card-photo-credit{
+ color:#7c897e;font-size:9px;line-height:1.4;
+}
+#fleet .photo-rich-fleet-card .fleet-card-photo-credit a{
+ color:#6a6b55;text-decoration:underline;
+}
+#fleet .fleet-studio-launch-v18 .fleet-studio-launch-visual>img{
+ object-fit:contain!important;
+ object-position:center;
+ border-radius:13px!important;
+ background:linear-gradient(130deg,rgba(238,244,240,.76),rgba(215,230,221,.63));
+ box-shadow:0 35px 64px rgba(10,38,31,.28)!important;
+ clip-path:none!important;
+}
+#fleet .fleet-studio-launch-v18 .fleet-studio-launch-fallback{
+ background:linear-gradient(135deg,#cedbd1,#f4f1e7)!important;
+ border:1px solid #9fbca9;
+ color:#244d3b!important;
+}
+@media(max-width:1120px){
+ #fleet .fleet-grid.fleet-compare-list{grid-template-columns:1fr!important}
+ #fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual{min-height:255px!important}
+}
+@media(max-width:760px){
+ #fleet .fleet-compare-list .premium-catalog-card.photo-rich-fleet-card{
+  grid-template-columns:1fr!important;grid-template-rows:230px auto!important;
+  min-height:0!important;
+ }
+ #fleet .fleet-compare-list .photo-rich-fleet-card .premium-catalog-visual{
+  min-height:230px!important;height:230px!important;
+ }
+ #fleet .fleet-compare-list .photo-rich-fleet-card .fleet-meta{
+  padding:19px 21px 21px!important;
+ }
+ #fleet .photo-rich-fleet-card .fleet-photo-editorial-note{bottom:52px}
+ #fleet .fleet-studio-launch-v18 .fleet-studio-launch-visual>img{
+  width:95%!important;height:80%!important;object-fit:contain!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #fleet .photo-rich-fleet-card,#fleet .photo-rich-fleet-card .premium-catalog-visual img{
+  transition:none!important;transform:none!important;
+ }
+}
