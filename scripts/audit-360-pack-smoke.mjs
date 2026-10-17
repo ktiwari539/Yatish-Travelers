@@ -13,8 +13,7 @@ try{
  await mkdir(target);
  for(let i=0;i<24;i++){
   // Identifiable artificial color test data, explicitly never vehicle imagery.
-  const color='#'+[i*9%256,i*7%256,i*11%256].map(v=>v.toString(16).padStart(2,'0')).join('');
-  execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-f','lavfi','-i','color=c='+color+':s=640x360:d=0.1','-frames:v','1','-y',join(target,String(i).padStart(3,'0')+'.webp')]);
+  execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-f','lavfi','-i','testsrc2=s=640x360:d=0.1','-vf','hue=h='+String(i*13),'-frames:v','1','-y',join(target,String(i).padStart(3,'0')+'.webp')]);
  }
  assert.equal(validate().status,0,'Complete 24-frame synthetic WebP pack must pass');
  const first=join(target,'000.webp'),second=join(target,'001.webp');
