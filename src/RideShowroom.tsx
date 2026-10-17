@@ -343,6 +343,15 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
          {turntableMode?'Inspect still photos':'View verified 360° rotation'}
        </button>:<span>360° unavailable · verified rotation frames for this exact model are not installed.</span>}
       </div>
+      {active.name==='Maruti Ertiga'&&!verified360&&<p className="ride-studio-media-truth">
+       <a href="https://www.suzukicaribbean.com/assets/360viewer/ertiga/large/main.html"
+          target="_blank" rel="noopener noreferrer"
+          aria-label="Open Suzuki manufacturer's Ertiga 360-degree reference in a new tab">
+         Explore Suzuki's actual Ertiga 360° viewer ↗
+       </a>
+       {' '}Manufacturer-hosted reference, opens in a new tab. Overseas specification;
+       not a verified view of Mateshwari's assigned vehicle.
+      </p>}
       <p className="ride-studio-media-truth">{isReferenceApproved?'Reviewed model-specific photograph.':isEditorialChoice?'Licensed model-reference photograph for local review. Plate and variant approval remain pending.':'Model-specific reference photo. Actual assigned car, trim and colour confirmed before booking.'}</p>
       {imageSource?.credit&&<p className="ride-studio-photo-credit">
         <a href={imageSource.page} target="_blank" rel="noreferrer">{imageSource.credit}</a> · {imageSource.license} · {imageSource.label} · {imageSource.reviewPending?'Local review only':'Licensed model reference'}.
