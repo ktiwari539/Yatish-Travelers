@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Read-only preflight for an operator-approved photographic 360 frame pack.
-// Never installs assets, changes the registry or certifies legal/visual rights.
+// Non-mutating technical integrity audit. A PASS is NEVER a rights/visual approval.
 import {readdir,readFile,stat} from 'node:fs/promises';
-import {resolve,basename,join} from 'node:path';
+import {resolve,join} from 'node:path';
 import {createHash} from 'node:crypto';
 const [folder,model,...extra]=process.argv.slice(2);
 if(!folder||!model||extra.length){
@@ -10,34 +9,49 @@ if(!folder||!model||extra.length){
  process.exit(2);
 }
 const slug=model.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-const root=resolve(folder);
-const failures=[];
-const items=(await readdir(root,{withFileTypes:true})).filter(x=>!x.name.startsWith('.'));
-if(items.some(x=>!x.isFile()))failures.push('Pack must contain only plain frame files');
-const names=items.map(x=>x.name).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-if(names.length<24||names.length>72)failures.push('Expected 24 to 72 frames, got '+names.length);
-if(names.some(x=>!/^[a-zA-Z0-9_-]+\.webp$/.test(x)))failures.push('Unexpected/non-WebP filename');
-const hashes=new Map(),sizes=new Map(),entries=[];
-for(const name of names){
- const path=join(root,name);
- const s=await stat(path);
- if(s.size>4*1024*1024||s.size<1024)failures.push(name+': unexpected frame size ('+s.size+' bytes)');
- const bytes=await readFile(path);
- // WebP RIFF container: metadata/bitstream needs separate decode review.
- if(bytes.toString('ascii',0,4)!=='RIFF'||bytes.toString('ascii',8,12)!=='WEBP')failures.push(name+': invalid WebP signature');
- const hash=createHash('sha256').update(bytes).digest('hex');
- if(hashes.has(hash))failures.push(name+': duplicate bytes of '+hashes.get(hash));
- hashes.set(hash,name);
- entries.push({name,sha256:hash,bytes:s.size});
- // VP8X extended WebP carries canvas size at bytes 24..29.
- if(bytes.toString('ascii',12,16)==='VP8X'&&bytes.length>=30){
-  const w=1+bytes.readUIntLE(24,3),h=1+bytes.readUIntLE(27,3);
-  sizes.set(name,w+'x'+h);
+const root=resolve(folder),failures=[],entries=[],hashes=new Map(),dimensions=new Set();
+if(!slug)failures.push('Invalid vehicle model');
+try{
+ const items=await readdir(root,{withFileTypes:true});
+ if(items.some(x=>!x.isFile()))failures.push('Pack contains a directory or link');
+ if(items.some(x=>x.name.startsWith('.')))failures.push('Pack contains hidden files');
+ const names=items.map(x=>x.name).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+ if(names.length<24||names.length>72)failures.push('Expected 24 to 72 frames; received '+names.length);
+ if(names.some(x=>!/^[a-zA-Z0-9_-]+\.webp$/.test(x)))failures.push('Frame names must be safe .webp filenames only');
+ let canonicalWidth=null,canonicalHeight=null;
+ for(const name of names){
+  if(!/^[a-zA-Z0-9_-]+\.webp$/.test(name))continue;
+  const p=join(root,name);
+  const info=await stat(p);
+  if(!info.isFile())continue;
+  const bytes=await readFile(p);
+  if(bytes.length<1024||bytes.length>4*1024*1024)failures.push(name+': unsupported file size '+bytes.length);
+  if(bytes.length<30||bytes.toString('ascii',0,4)!=='RIFF'||bytes.toString('ascii',8,12)!=='WEBP'||
+    bytes.readUInt32LE(4)+8!==bytes.length){
+   failures.push(name+': invalid or incomplete WebP RIFF container');continue;
+  }
+  const codec=bytes.toString('ascii',12,16);
+  let w=null,h=null;
+  if(codec==='VP8X'&&bytes.length>=30){
+   w=1+bytes.readUIntLE(24,3);h=1+bytes.readUIntLE(27,3);
+  }else if(codec==='VP8 '&&bytes.length>=30&&bytes[23]===0x9d&&bytes[24]===0x01&&bytes[25]===0x2a){
+   w=bytes.readUInt16LE(26)&0x3fff;h=bytes.readUInt16LE(28)&0x3fff;
+  }else if(codec==='VP8L'&&bytes.length>=25&&bytes[20]===0x2f){
+   const bits=bytes.readUInt32LE(21);
+   w=(bits&0x3fff)+1;h=((bits>>>14)&0x3fff)+1;
+  }
+  if(!w||!h||w<640||h<360||w>8192||h>8192)failures.push(name+': invalid/unsupported frame dimensions');
+  if(w&&h){dimensions.add(w+'x'+h);canonicalWidth??=w;canonicalHeight??=h;}
+  const digest=createHash('sha256').update(bytes).digest('hex');
+  if(hashes.has(digest))failures.push(name+': exact duplicate of '+hashes.get(digest));
+  hashes.set(digest,name);
+  entries.push({name,sha256:digest,bytes:bytes.length,width:w,height:h});
  }
-}
-if(sizes.size&&new Set(sizes.values()).size>1)failures.push('Inconsistent WebP canvas dimensions');
-const summary={model,slug,folder:root,frames:entries.length,bytes:entries.reduce((a,b)=>a+b.bytes,0),
- dimensions:sizes.size===names.length?[...new Set(sizes.values())][0]:'Not verified for all files',
- checksums:entries,failures,approval:'NOT CERTIFIED — requires written rights, exact model/trim, full 360 visual orbit, frame-by-frame plate/background review and owner approval'};
-console.log(JSON.stringify(summary,null,2));
+ if(dimensions.size!==1)failures.push('Every frame must have the same valid canvas dimensions');
+ if(entries.length!==names.length)failures.push('Not every file could be audited');
+}catch(error){failures.push('Cannot audit directory: '+String(error?.message??error));}
+const result={model,slug,folder:root,frames:entries.length,dimensions:[...dimensions],checksums:entries,failures,
+ technicalStatus:failures.length?'FAIL':'PASS — structural validation only',
+ certification:'NOT CERTIFIED: requires documented commercial rights, exact vehicle/trim, true full-orbit visual review, plate redaction in pixels and approved evidence ID'};
+console.log(JSON.stringify(result,null,2));
 if(failures.length)process.exitCode=1;
