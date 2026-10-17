@@ -27,6 +27,7 @@ jobs:
         run: |
           node --check scripts/dev.mjs
           node --check scripts/verify-local-fleet.mjs
+          node --check scripts/audit-360-pack.mjs
           node --check scripts/install-complete-media.mjs
           node --check scripts/install-fleet-media.mjs
           node --check scripts/install-scorpio-media.mjs
