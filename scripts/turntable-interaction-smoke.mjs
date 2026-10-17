@@ -62,7 +62,7 @@ async function run(engine,name){
  await broken.route('**/__test_frame_*.svg',route=>route.fulfill({status:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300"/>'}));
  await broken.route('**/__test_broken.svg',route=>route.fulfill({status:404,body:'missing frame'}));
  await broken.goto(url+'?broken=1');
- await broken.getByRole('alert',{name:'Frame failure fallback'}).waitFor({timeout:10000});
+ await broken.getByText('Frame failure fallback',{exact:true}).waitFor({state:'visible',timeout:10000});
  assert.equal(await broken.locator('.ride-genuine-turntable').count(),0,name+': corrupted frame unmounts turntable');
  await broken.close();
  await context.close();
