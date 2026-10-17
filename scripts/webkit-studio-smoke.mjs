@@ -64,7 +64,7 @@ try{
  assert.equal(await manufacturer.count(),1,'Ertiga studio exposes one clearly identified manufacturer reference');
  assert.equal(await manufacturer.getAttribute('href'),'https://www.suzukicaribbean.com/assets/360viewer/ertiga/large/main.html');
  assert.equal(await manufacturer.getAttribute('target'),'_blank','Manufacturer reference opens independently');
- const rel=(await manufacturer.getAttribute('rel')||'').split(/\\s+/);
+ const rel=(await manufacturer.getAttribute('rel')||'').split(/\s+/);
  assert.ok(rel.includes('noopener')&&rel.includes('noreferrer'),'Cross-origin new tab does not get opener/referrer');
  assert.ok((await manufacturer.locator('..').innerText()).includes('not a verified view of Mateshwari'),
   'Reference must not be represented as the specific fleet vehicle');
