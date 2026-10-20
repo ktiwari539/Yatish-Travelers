@@ -123,7 +123,7 @@ async function smoke(){
   'Full-screen vehicle viewer exposes actual photo thumbnails');
  ensure(await studio.getByRole('button',{name:'Enable automatic photo slideshow'}).getAttribute('aria-pressed')==='false',
   'Still-photo slideshow starts disabled, not misrepresented as car rotation');
- ensure((await studio.locator('.ride-studio-turntable-status').innerText()).includes('360° unavailable'),
+ ensure((await studio.locator('.ride-studio-turntable-status').innerText()).includes('tailored quotation'),
   '360-degree mode is unavailable for models without verified turntable frames');
  ensure(await studio.locator('.ride-genuine-turntable').count()===0,
   'Never manufacture 360-degree views out of unrelated still photographs');
