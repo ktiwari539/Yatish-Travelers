@@ -59,15 +59,11 @@ try{
   'The Safari studio never advertises a real spin without matching photos');
  assert.equal(await dialog.locator('.ride-genuine-turntable').count(),0,
   'No fake turntable renders in Safari when there are no verified assets');
- // Official source is navigable without copying/embedding Suzuki media.
- const manufacturer=dialog.getByRole('link',{name:'Open Suzuki manufacturer\'s Ertiga 360-degree reference in a new tab'});
- assert.equal(await manufacturer.count(),1,'Ertiga studio exposes one clearly identified manufacturer reference');
- assert.equal(await manufacturer.getAttribute('href'),'https://www.suzukicaribbean.com/assets/360viewer/ertiga/large/main.html');
- assert.equal(await manufacturer.getAttribute('target'),'_blank','Manufacturer reference opens independently');
- const rel=(await manufacturer.getAttribute('rel')||'').split(/\s+/);
- assert.ok(rel.includes('noopener')&&rel.includes('noreferrer'),'Cross-origin new tab does not get opener/referrer');
- assert.ok((await manufacturer.locator('..').innerText()).includes('not a verified view of Mateshwari'),
-  'Reference must not be represented as the specific fleet vehicle');
+ // Discontinued 360 experiment must not distract customers from the photo gallery.
+ assert.equal(await dialog.getByRole('link',{name:/Suzuki manufacturer/}).count(),0,
+  'No outbound manufacturer viewer in customer gallery');
+ assert.ok((await dialog.locator('.ride-studio-preview-copy').innerText()).includes('tailored quote'),
+  'Premium gallery guides visitors to a quotation');
 
  await dialog.getByRole('button',{name:'Enable automatic photo slideshow'}).evaluate(el=>el.click());
  const before=await image.getAttribute('src');
