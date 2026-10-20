@@ -123,6 +123,25 @@ try{
  assert.equal(await reducedDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),true,
   'Safari initial reduced-motion preference prevents auto tour');
  await reducedPage.close();
+ // Mobile-width release gate: preserve the selected vehicle and quotation CTA.
+ const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+ await mobile.route('https://commons.wikimedia.org/**',route=>route.fulfill({status:200,contentType:'image/svg+xml',body:photoFixture}));
+ await mobile.goto(root,{waitUntil:'domcontentloaded'});
+ const mobileIntro=mobile.locator('.cinema-arrival-skip');
+ if(await mobileIntro.count())await mobileIntro.evaluate(el=>el.click());
+ const mobileCard=mobile.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
+ await mobileCard.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).evaluate(el=>el.click());
+ const mobileDialog=mobile.getByRole('dialog',{name:'Mateshwari full-screen vehicle studio'});
+ await mobileDialog.waitFor({state:'visible'});
+ assert.ok(await mobileDialog.getByRole('button',{name:'Request Maruti Ertiga quotation'}).count(),
+  'Mobile visitor retains an accessible car-specific quotation action');
+ assert.ok(await mobileDialog.getByRole('button',{name:'Close car studio'}).count(),
+  'Mobile visitor can close the car studio');
+ assert.equal(await mobileDialog.locator('.ride-genuine-turntable').count(),0,
+  'Abandoned 360 experiment never displays on mobile');
+ await mobileDialog.getByRole('button',{name:'Close car studio'}).evaluate(el=>el.click());
+ await mobileDialog.waitFor({state:'detached'});
+ await mobile.close();
  console.log('PASS WebKit: distinct cover, photographic studio, vertical rail, zoom, idle playback, pause, reduced motion, Escape');
 }finally{
  if(browser)await browser.close();
