@@ -55,7 +55,7 @@ try{
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),1,'Zoom enters');
  await dialog.getByRole('button',{name:'Return to full view of Maruti Ertiga'}).evaluate(el=>el.click());
  assert.equal(await dialog.locator('.ride-studio-vehicle-frame.is-zoomed').count(),0,'Zoom exits');
- assert.ok((await dialog.locator('.ride-studio-turntable-status').innerText()).includes('360° unavailable'),
+ assert.ok((await dialog.locator('.ride-studio-turntable-status').innerText()).includes('tailored quotation'),
   'The Safari studio never advertises a real spin without matching photos');
  assert.equal(await dialog.locator('.ride-genuine-turntable').count(),0,
   'No fake turntable renders in Safari when there are no verified assets');
