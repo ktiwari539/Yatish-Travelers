@@ -305,6 +305,11 @@ async function smoke(){
  const mobileCameraControls=await studio.locator('.ride-studio-stage-footer').boundingBox();
  ensure(mobileFrame&&mobileCameraControls&&mobileFrame.y+mobileFrame.height+5<=mobileCameraControls.y,
    'Mobile cinematic car frame does not overlap the camera-angle footer');
+ // Check the model-specific booking action can be reached at mobile widths.
+ const mobileQuote=studio.getByRole('button',{name:'Request Maruti Ertiga quotation'});
+ ensure(await mobileQuote.count()===1,'Mobile showroom exposes exactly one selected-model quotation CTA');
+ await mobileQuote.scrollIntoViewIfNeeded();
+ ensure(await mobileQuote.isVisible(),'Selected-model quotation CTA is reachable on a phone viewport');
  await studio.getByRole('button',{name:'Close car studio'}).click();
  await studio.waitFor({state:'detached'});
  await page.locator('.mobile-booking-bar button').click();
