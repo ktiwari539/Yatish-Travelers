@@ -63,7 +63,7 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
  const switchTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [cinematicOn,setCinematicOn]=useState(true);
  const [autoTourEnabled,setAutoTourEnabled]=useState(false); // Optional photo slideshow, never 360 rotation
- const [turntableMode,setTurntableMode]=useState(false);
+ const [turntableMode,setTurntableMode]=useState(false); // legacy gated support; no assets enabled
  const [tourRunning,setTourRunning]=useState(false);
  const [lightPreset,setLightPreset]=useState<'ion'|'titanium'|'ember'>('ion');
  const [reducedMotion,setReducedMotion]=useState(false);
@@ -233,8 +233,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
   <div ref={dialogRef} className="ride-studio-dialog" role="dialog" aria-modal="true"
     aria-label="Mateshwari full-screen vehicle studio">
    <div className="ride-studio-topbar">
-    <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>MOTOR STUDIO</span></strong><small>INTERACTIVE FLEET PREVIEW</small></div>
-    <span className="ride-studio-step">SELECT THE REAL VEHICLE <i/> EXPLORE PHOTO ANGLES <i/> INSPECT DETAILS</span>
+    <div className="ride-studio-wordmark"><Sparkles size={17}/><strong>MATESHWARI <span>MOTOR STUDIO</span></strong><small>PREMIUM VEHICLE GALLERY</small></div>
+    <span className="ride-studio-step">CHOOSE YOUR RIDE <i/> EXPLORE PHOTOGRAPHS <i/> REQUEST A QUOTE</span>
     <button ref={closeRef} className="ride-studio-close" type="button" onClick={onClose} aria-label="Close car studio">
      <X size={20}/> <span>Exit studio</span>
     </button>
@@ -257,9 +257,9 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
      <div className="ride-studio-stage-head"><span className="ride-studio-eyebrow"><Zap size={14}/> GARAGE BAY / {String(vehicleIndex+1).padStart(2,'0')} — {String(vehicles.length).padStart(2,'0')}</span><span>{isReferenceApproved?'REVIEWED LOCAL REFERENCE':'EDITORIAL MODEL REFERENCE'}</span></div>
      <div className="ride-studio-scanner" aria-hidden="true"><ScanLine size={14}/> PHOTO INSPECTION <i/> AUTHENTIC MODEL REFERENCE</div>
      <div className="ride-studio-inspection-label" aria-live="off">
-      <span>THE INSPECTION STUDIO</span>
+      <span>THE VEHICLE GALLERY</span>
       <strong>{selectedPhoto?.label||'Model photograph'}</strong>
-      <small>{turntableMode?'Verified same-model 360° photo spin':available.length>1?'Photo '+(available.indexOf(shownAngle)+1)+' of '+available.length+' · not 360° rotation':'Single reference photograph'}</small>
+      <small>{turntableMode?'Verified same-model 360° photo spin':available.length>1?'Photo '+(available.indexOf(shownAngle)+1)+' of '+available.length+' · not 360° rotation':'Vehicle reference photograph'}</small>
      </div>
      <div className="ride-studio-car-title" aria-hidden="true"><small>THE GARAGE / {String(vehicleIndex+1).padStart(2,'0')}</small><strong>{active.name}</strong></div>
      <div className="ride-studio-illumination" role="group" aria-label="Change studio environment lighting">
@@ -309,8 +309,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        {available.length<=1&&<span className="ride-studio-photo-count">More working angles pending review</span>}
      </div>
      <div className="ride-studio-stage-footer">
-      <div><strong><Gauge size={15}/> {turntableMode?'VERIFIED 360° TURNTABLE':available.length>1?'STILL PHOTO INSPECTION':'MODEL REFERENCE'}</strong>
-        <span>{turntableMode?'Drag the verified frame sequence to rotate the same model.':tourRunning?'Photo slideshow playing · not 360°':available.length>1?'Browse still photos, or enable the slideshow. Not a rotating car.':'360° unavailable without matched rotation frames.'}</span></div>
+      <div><strong><Gauge size={15}/> {turntableMode?'VERIFIED 360° TURNTABLE':available.length>1?'PHOTO GALLERY':'VEHICLE PREVIEW'}</strong>
+        <span>{turntableMode?'Drag the verified frame sequence to rotate the same model.':tourRunning?'Photo slideshow playing · not 360°':available.length>1?'Browse still photos, or enable the slideshow. Not a rotating car.':'Explore the vehicle photograph and request a personalised quote.'}</span></div>
       <div className="ride-studio-tour-controls">
        <button type="button" className="ride-studio-tour-toggle"
         disabled={available.length<2||reducedMotion}
@@ -341,17 +341,8 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        {verified360?<button type="button" onClick={()=>setTurntableMode(v=>!v)}
          aria-pressed={turntableMode} aria-label={turntableMode?'Switch to still photographs':'Open verified 360-degree rotation'}>
          {turntableMode?'Inspect still photos':'View verified 360° rotation'}
-       </button>:<span>360° unavailable · verified rotation frames for this exact model are not installed.</span>}
+       </button>:<span>Explore vehicle photographs, compare details and request a tailored quotation.</span>}
       </div>
-      {active.name==='Maruti Ertiga'&&!verified360&&<p className="ride-studio-media-truth">
-       <a href="https://www.suzukicaribbean.com/assets/360viewer/ertiga/large/main.html"
-          target="_blank" rel="noopener noreferrer"
-          aria-label="Open Suzuki manufacturer's Ertiga 360-degree reference in a new tab">
-         Explore Suzuki's actual Ertiga 360° viewer ↗
-       </a>
-       {' '}Manufacturer-hosted reference, opens in a new tab. Overseas specification;
-       not a verified view of Mateshwari's assigned vehicle.
-      </p>}
       <p className="ride-studio-media-truth">{isReferenceApproved?'Reviewed model-specific photograph.':isEditorialChoice?'Licensed model-reference photograph for local review. Plate and variant approval remain pending.':'Model-specific reference photo. Actual assigned car, trim and colour confirmed before booking.'}</p>
       {imageSource?.credit&&<p className="ride-studio-photo-credit">
         <a href={imageSource.page} target="_blank" rel="noreferrer">{imageSource.credit}</a> · {imageSource.license} · {imageSource.label} · {imageSource.reviewPending?'Local review only':'Licensed model reference'}.
@@ -365,16 +356,16 @@ export function RideShowroom({vehicles,initialName,onClose,onQuote}:Props){
        {details?'Hide vehicle details':'Explore this vehicle'} <ArrowRight size={18}/>
       </button>
       {details?productDetails:<div className="ride-studio-preview-copy">
-       <strong>THE ACTUAL VEHICLE REFERENCE</strong>
-       <p>The fleet cards show one signature photograph. Here you can inspect full-size model photographs, zoom and optionally play a still-photo slideshow. Genuine 360° needs verified rotation frames.</p>
-       <div><MousePointer2 size={16}/> Use the thumbnail rail, photo zoom or arrow keys to explore.</div>
+       <strong>EXPLORE YOUR NEXT JOURNEY</strong>
+       <p>Explore curated model photographs, inspect the details, and request a tailored quote. The actual assigned vehicle and variant are confirmed before booking.</p>
+       <div><MousePointer2 size={16}/> Browse photos, zoom in or switch vehicles. Request a quote when you find your ride.</div>
        <button type="button" className="ride-studio-cinematic-toggle" aria-pressed={!cinematicOn}
          onClick={()=>setCinematicOn(value=>!value)}>
          <Zap size={14}/> {cinematicOn?'Disable garage effects':'Enable garage effects'}
        </button>
       </div>}
       <div className="ride-studio-panel-bottom">
-       <p><ShieldCheck size={16}/> Editorial/local preview. Model photographs are not proof of vehicle ownership. Check image licences and plates before publication.</p>
+       <p><ShieldCheck size={16}/> Model photographs are for reference. Confirm the assigned vehicle, seating and variant before booking.</p>
        <button type="button" className="ride-studio-quote" onClick={()=>onQuote(active.name)}>
          Request {active.name} quotation <ArrowRight size={19}/>
        </button>
