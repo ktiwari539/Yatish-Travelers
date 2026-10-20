@@ -1,0 +1,189 @@
+/* V17: high-impact car selection with a full-screen photographic studio.
+   The angle carousel uses available approved/model-reference photographs, not
+   fabricated 3D rotations or invented colour/trim inventory. */
+.fleet-studio-launch{
+ position:relative;isolation:isolate;display:grid;grid-template-columns:1.1fr .9fr;
+ align-items:center;gap:0;overflow:hidden;min-height:clamp(360px,32vw,505px);
+ margin:16px 0 39px;border-radius:32px;border:1px solid #d2d7cb;
+ background:radial-gradient(ellipse at 82% 35%,#457960,#1e4636 50%,#102b22 100%);
+ box-shadow:0 34px 75px rgba(16,53,33,.17);color:#fff9ec;
+}
+.fleet-studio-launch:before{
+ content:'THE COLLECTION';position:absolute;left:30%;top:6%;
+ font-size:clamp(66px,10vw,160px);font-weight:900;color:rgba(255,255,255,.038);
+ white-space:nowrap;letter-spacing:-.09em;pointer-events:none;
+}
+.fleet-studio-launch-copy{position:relative;z-index:2;padding:clamp(32px,4.7vw,70px);max-width:780px}
+.fleet-studio-launch-copy>span{display:flex;gap:10px;align-items:center;font-size:10px;font-weight:900;color:#f1c98f;letter-spacing:.19em}
+.fleet-studio-launch-copy h3{font-size:clamp(44px,5.8vw,88px);line-height:.98;letter-spacing:-.075em;margin:18px 0}
+.fleet-studio-launch-copy h3 em{font-family:Georgia,serif;font-weight:400;color:#e8c590}
+.fleet-studio-launch-copy p{font-size:clamp(12px,1.15vw,16px);line-height:1.7;color:#d4dfd2;max-width:450px;margin:0 0 27px}
+.fleet-studio-launch-copy button{display:inline-flex;align-items:center;gap:12px;border:0;border-radius:100px;padding:18px 27px;background:#f5dfb9;color:#194330;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,.22);transition:transform .25s}
+.fleet-studio-launch-copy button:hover{transform:translateY(-3px)}
+.fleet-studio-launch-copy button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.fleet-studio-launch-note{display:block;margin-top:18px;font-size:10px;color:#bccdbf;line-height:1.6}
+.fleet-studio-launch-visual{position:relative;align-self:stretch;min-height:270px;display:grid;place-items:center;overflow:hidden}
+.fleet-studio-launch-visual:before{content:'';position:absolute;width:90%;height:68%;border-radius:50%;border:1px solid rgba(238,221,165,.24);transform:perspective(650px) rotateX(66deg);box-shadow:0 0 0 32px rgba(234,214,155,.06),0 0 0 72px rgba(234,214,155,.04)}
+.fleet-studio-launch-visual>img{position:relative;z-index:1;max-height:480px;width:105%;height:100%;object-fit:contain;filter:drop-shadow(0 30px 38px rgba(0,0,0,.48));animation:rideStudioLaunchFloat 6s ease-in-out infinite alternate}
+.fleet-studio-launch-visual>span{position:absolute;right:25px;bottom:27px;z-index:2;font-size:10px;letter-spacing:.13em;color:#e8dbc2;font-weight:800}
+
+.fleet-editorial .fleet-reel-group .fleet-editorial-tile{
+ flex:0 0 clamp(340px,34vw,590px)!important;
+ width:clamp(340px,34vw,590px)!important;
+ border-radius:25px!important;
+}
+.fleet-editorial .fleet-reel-group{gap:20px!important;padding-right:20px!important}
+.fleet-editorial .fleet-editorial-tile-photo{height:clamp(240px,25vw,375px)!important}
+.fleet-editorial .fleet-editorial-tile-foot{padding:21px 21px!important;gap:13px!important}
+.fleet-editorial .fleet-editorial-tile-foot>strong{font-size:clamp(15px,1.25vw,21px)!important}
+.fleet-editorial .fleet-editorial-tile-foot>span{font-size:12px!important}
+.fleet-editorial .fleet-editorial-tile-foot svg{width:23px;height:23px}
+.fleet-editorial .fleet-editorial-tile-photo>span{top:15px;left:16px;font-size:10px;padding:7px 11px}
+.fleet-editorial .fleet-editorial-rail{padding:12px 0 22px}
+.fleet-editorial .fleet-reel-group .fleet-editorial-tile[data-vehicle="Mahindra Thar"] img{object-fit:contain}
+
+.ride-studio-backdrop{
+ position:fixed;inset:0;z-index:9999;padding:0;isolation:isolate;
+ background:#0d231c;color:#fff5df;animation:rideBackdropIn .27s ease-out both;
+}
+.ride-studio-dialog{height:100dvh;width:100vw;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;background:#0d241c;color:#fff6e6}
+.ride-studio-topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:82px;padding:14px clamp(20px,2.8vw,60px);border-bottom:1px solid rgba(255,255,255,.13);background:#102c22}
+.ride-studio-wordmark{display:flex;align-items:center;gap:10px;font-size:14px;letter-spacing:.085em}
+.ride-studio-wordmark svg{color:#dfb77c}
+.ride-studio-wordmark strong span{color:#d8aa6b}
+.ride-studio-wordmark small{display:block;align-self:center;margin-left:15px;color:#a9c1b2;font-size:9px;letter-spacing:.14em}
+.ride-studio-step{font-size:10px;letter-spacing:.12em;color:#a2b9a6;display:flex;align-items:center;gap:12px}
+.ride-studio-step i{display:block;height:1px;width:25px;background:#d2a875}
+.ride-studio-close,.ride-studio-switch button,.ride-studio-angle-nav button{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid rgba(234,221,194,.25);border-radius:100px;background:rgba(255,255,255,.06);padding:12px 16px;color:#fff8e9;cursor:pointer}
+.ride-studio-close:hover,.ride-studio-switch button:hover,.ride-studio-angle-nav button:hover{background:rgba(255,255,255,.15)}
+.ride-studio-close:focus-visible,.ride-studio-dialog button:focus-visible{outline:3px solid #efc788;outline-offset:3px}
+.ride-studio-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(310px,.64fr);min-height:0}
+.ride-studio-stage{position:relative;min-height:0;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 50%,#537960 0%,#285440 34%,#0b281e 80%);border-right:1px solid rgba(255,255,255,.12)}
+.ride-studio-stage:before{content:'';position:absolute;inset:0;background:linear-gradient(175deg,rgba(223,185,120,.06),transparent 35%,rgba(0,0,0,.42));pointer-events:none}
+.ride-studio-orbit{position:absolute;inset:10% 7%;z-index:0;pointer-events:none;display:grid;place-items:center}
+.ride-studio-orbit i{position:absolute;width:70%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(239,207,151,.13);box-shadow:0 0 0 45px rgba(239,207,151,.025),0 0 0 90px rgba(239,207,151,.018);transform:perspective(720px) rotateX(66deg)}
+.ride-studio-orbit i:nth-child(2){width:95%;opacity:.55}
+.ride-studio-orbit i:nth-child(3){width:120%;opacity:.35}
+.ride-studio-stage-head{position:absolute;left:clamp(18px,3vw,54px);right:clamp(18px,3vw,54px);top:28px;display:flex;justify-content:space-between;gap:14px;align-items:center;color:#e9c99a;font-weight:850;letter-spacing:.13em;font-size:10px;z-index:2}
+.ride-studio-stage-head>span:last-child{color:#b6d2bf}
+.ride-studio-eyebrow{font-size:10px;font-weight:950;letter-spacing:.16em;color:#e0b880}
+.ride-studio-image-action{position:absolute;z-index:1;inset:9% 4% 15%;display:flex;align-items:center;justify-content:center;border:0;cursor:pointer;background:transparent;color:inherit;touch-action:pan-y;overflow:hidden}
+.ride-studio-image-action:after{content:'';position:absolute;bottom:5%;width:65%;height:16%;border-radius:50%;background:rgba(1,17,11,.4);filter:blur(40px);pointer-events:none}
+.ride-studio-car-image{position:relative;z-index:2;width:100%;height:100%;object-fit:contain;object-position:center;filter:drop-shadow(0 30px 28px rgba(0,0,0,.4));animation:rideCarReveal .85s cubic-bezier(.22,.8,.2,1) both;pointer-events:none}
+.ride-studio-photo-pending{position:relative;z-index:2;min-height:45%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;text-align:center;color:#f7e9d2}
+.ride-studio-photo-pending svg{color:#e7c795}
+.ride-studio-photo-pending strong{font-size:clamp(26px,4vw,52px);letter-spacing:-.06em}
+.ride-studio-photo-pending span{font-size:12px;color:#b5c9b9}
+.ride-studio-zoom-hint{position:absolute;z-index:4;bottom:6%;display:inline-flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.14em;font-weight:900;background:rgba(7,36,24,.78);border:1px solid rgba(255,255,255,.23);border-radius:100px;padding:12px 18px;color:#f7e9d5;pointer-events:none}
+.ride-studio-stage-footer{position:absolute;bottom:27px;left:clamp(18px,3vw,54px);right:clamp(18px,3vw,54px);z-index:3;display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.ride-studio-stage-footer>div:first-child{display:grid;gap:5px;max-width:55%;font-size:10px;line-height:1.55;color:#b6cebd}
+.ride-studio-stage-footer>div:first-child strong{font-size:11px;color:#f3d6a8;letter-spacing:.11em}
+.ride-studio-angle-nav{display:flex;align-items:center;gap:12px;font-size:11px;white-space:nowrap;font-weight:900}
+.ride-studio-angle-nav button{width:38px;height:38px;padding:0}
+.ride-studio-angle-nav button:disabled{opacity:.32;cursor:not-allowed}
+.ride-studio-ambient-label{position:absolute;top:38%;left:0;right:0;text-align:center;font-size:clamp(48px,7vw,110px);font-weight:950;letter-spacing:-.08em;color:rgba(247,225,185,.025);pointer-events:none}
+.ride-studio-panel{display:flex;flex-direction:column;min-height:0;overflow-y:auto;padding:clamp(25px,3vw,52px);background:radial-gradient(ellipse at 100% 0%,rgba(189,142,82,.13),transparent 53%),#102f24}
+.ride-studio-panel-heading h2{font-size:clamp(38px,3.3vw,66px);line-height:.99;letter-spacing:-.065em;margin:17px 0 12px}
+.ride-studio-panel-heading p{color:#d7c19d;font-size:14px}
+.ride-studio-panel-meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.ride-studio-panel-meta span{font-size:10px;letter-spacing:.03em;border:1px solid #547461;padding:9px 12px;border-radius:100px;color:#d7e7d8}
+.ride-studio-switch{display:flex;gap:10px;margin:27px 0 15px}
+.ride-studio-switch button{flex:1;font-size:11px;padding:12px 11px}
+.ride-studio-detail-button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:19px 21px;background:#e9d1a8;color:#153e2c;border:0;border-radius:16px;font-size:13px;font-weight:900;text-align:left;cursor:pointer}
+.ride-studio-preview-copy{padding:26px 0 10px;color:#b6c9bb}
+.ride-studio-preview-copy strong{font-size:11px;letter-spacing:.16em;color:#d9b17d}
+.ride-studio-preview-copy p{font-size:13px;line-height:1.65}
+.ride-studio-preview-copy>div{display:flex;align-items:center;gap:9px;font-size:11px}
+.ride-studio-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:15px 0}
+.ride-studio-facts>div{padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;display:grid;gap:8px;background:rgba(255,255,255,.035)}
+.ride-studio-facts span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#a8bcac}
+.ride-studio-facts strong{font-size:13px;color:#f8e9d3;line-height:1.35}
+.ride-studio-panel-bottom{margin-top:auto;padding-top:30px}
+.ride-studio-panel-bottom p{display:flex;align-items:flex-start;gap:9px;font-size:10px;line-height:1.55;color:#a3c0ac;margin-bottom:15px}
+.ride-studio-panel-bottom p svg{flex-shrink:0;margin-top:1px}
+.ride-studio-quote{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;border-radius:16px;padding:19px 21px;background:#25694a;color:#fff9e8;font-weight:900;font-size:12px;cursor:pointer}
+.ride-studio-quote:hover{background:#33825d}
+.ride-studio-model-rail{display:flex;gap:10px;overflow-x:auto;min-height:111px;max-height:150px;padding:14px 26px;background:#0b241b;border-top:1px solid rgba(255,255,255,.14);scrollbar-width:thin}
+.ride-studio-model-rail button{flex:0 0 clamp(135px,11vw,194px);display:grid;text-align:left;gap:5px;padding:12px 16px;border-radius:13px;background:#18392c;border:1px solid #3e624c;color:#f5ead7;cursor:pointer}
+.ride-studio-model-rail button.active{background:#ead3ac;color:#173e2c;border-color:#e7c28b}
+.ride-studio-model-rail button small{font-size:10px;letter-spacing:.09em;opacity:.78}
+.ride-studio-model-rail button strong{font-size:13px;white-space:nowrap}
+.ride-studio-model-rail button span{font-size:9px;opacity:.76}
+@keyframes rideBackdropIn{from{opacity:0}to{opacity:1}}
+@keyframes rideCarReveal{from{opacity:0;transform:translate3d(5%,3%,0) scale(.80)}to{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+@keyframes rideStudioLaunchFloat{from{transform:translate3d(-1%,1.5%,0) scale(.96)}to{transform:translate3d(1%,-1.5%,0) scale(1.02)}}
+@media(max-width:1050px){
+ .ride-studio-step{display:none}
+ .ride-studio-body{grid-template-columns:minmax(0,1.3fr) minmax(280px,.85fr)}
+ .ride-studio-panel{padding:25px}
+}
+@media(max-width:760px){
+ .fleet-studio-launch{grid-template-columns:1fr;min-height:0;border-radius:24px}
+ .fleet-studio-launch-copy{padding:33px 25px 10px}
+ .fleet-studio-launch-copy h3{font-size:clamp(44px,10vw,67px)}
+ .fleet-studio-launch-visual{min-height:260px;max-height:310px}
+ .fleet-studio-launch-visual>img{max-height:310px}
+ .fleet-editorial .fleet-reel-group{gap:15px!important;padding-right:15px!important}
+ .fleet-editorial .fleet-reel-group .fleet-editorial-tile{flex:0 0 clamp(300px,84vw,400px)!important;width:clamp(300px,84vw,400px)!important}
+ .fleet-editorial .fleet-editorial-tile-photo{height:clamp(225px,62vw,300px)!important}
+ .ride-studio-topbar{min-height:60px;padding:12px 15px}
+ .ride-studio-wordmark small{display:none}
+ .ride-studio-wordmark{font-size:11px}
+ .ride-studio-close{padding:10px}
+ .ride-studio-close span{display:none}
+ .ride-studio-dialog{grid-template-rows:auto minmax(0,1fr) auto}
+ .ride-studio-body{display:flex;flex-direction:column;overflow-y:auto}
+ .ride-studio-stage{min-height:45svh;flex-shrink:0;border-right:0;border-bottom:1px solid rgba(255,255,255,.15)}
+ .ride-studio-stage-head{top:15px;left:17px;right:17px;font-size:8px}
+ .ride-studio-stage-head>span:last-child{display:none}
+ .ride-studio-image-action{inset:13% 2% 15%}
+ .ride-studio-zoom-hint{font-size:8px;padding:9px 12px}
+ .ride-studio-stage-footer{bottom:13px;left:17px;right:17px}
+ .ride-studio-stage-footer>div:first-child span{font-size:9px}
+ .ride-studio-panel{overflow:visible;flex:1;padding:24px 21px 28px}
+ .ride-studio-panel-heading h2{font-size:43px;margin-top:8px}
+ .ride-studio-panel-meta{margin-top:10px}
+ .ride-studio-switch{margin:17px 0 12px}
+ .ride-studio-panel-bottom{margin-top:10px;padding-top:15px}
+ .ride-studio-model-rail{padding:11px 13px;min-height:91px;max-height:105px}
+ .ride-studio-model-rail button{flex-basis:160px;padding:10px 12px}
+ .ride-studio-facts{grid-template-columns:1fr 1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ .ride-studio-backdrop,.ride-studio-car-image,.fleet-studio-launch-visual>img{animation:none!important;transition:none!important}
+ .fleet-studio-launch-copy button:hover{transform:none}
+}
+
+/* Independent studio entry from each public fleet card. */
+.fleet-card .premium-catalog-visual{position:relative}
+.fleet-card .fleet-showroom-card-cta{
+ position:absolute;z-index:8;bottom:15px;left:15px;
+ display:inline-flex;align-items:center;gap:8px;padding:10px 14px;
+ border:1px solid rgba(255,255,255,.64);border-radius:100px;
+ background:rgba(12,48,31,.91);color:#fff8e8;font-weight:900;font-size:11px;
+ cursor:pointer;box-shadow:0 7px 20px rgba(0,0,0,.15);
+}
+.fleet-card .fleet-showroom-card-cta:hover{background:#23714a}
+.fleet-card .fleet-showroom-card-cta:focus-visible{outline:3px solid #eac38a;outline-offset:3px}
+
+/* QA refinements: launcher fallback and always-reachable desktop quotation. */
+.fleet-studio-launch-fallback{
+ position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:17px;text-align:center;color:#f5e4c8;
+ padding:35px;min-height:300px;
+}
+.fleet-studio-launch-fallback svg{color:#ebc99b;filter:drop-shadow(0 8px 20px rgba(0,0,0,.24))}
+.fleet-studio-launch-fallback strong{font-size:20px;font-weight:900;letter-spacing:.18em}
+.fleet-studio-launch-fallback small{font-size:11px;color:#bbd0bd}
+@media(min-width:761px){
+ .ride-studio-panel{padding:clamp(21px,2vw,36px)}
+ .ride-studio-panel-heading h2{font-size:clamp(35px,3vw,58px);margin:12px 0 8px}
+ .ride-studio-panel-meta{margin-top:13px}
+ .ride-studio-switch{margin:16px 0 11px}
+ .ride-studio-detail-button{padding:15px 18px}
+ .ride-studio-preview-copy{padding:17px 0 7px}
+ .ride-studio-preview-copy p{margin:10px 0;line-height:1.55;font-size:12px}
+ .ride-studio-panel-bottom{padding-top:13px}
+ .ride-studio-panel-bottom p{margin:0 0 9px;font-size:9px}
+ .ride-studio-quote{padding:15px 17px}
+}

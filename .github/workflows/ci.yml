@@ -20,5 +20,43 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: CRM API tests
+        run: npm run test:api
+
+      - name: Check local media installers and server launcher
+        run: |
+          node --check scripts/dev.mjs
+          node --check scripts/verify-local-fleet.mjs
+          node --check scripts/audit-360-pack.mjs
+          node --check scripts/install-complete-media.mjs
+          node --check scripts/install-fleet-media.mjs
+          node --check scripts/install-scorpio-media.mjs
       - name: Type check and production build
         run: npm run build
+
+      - name: Install browser for UI smoke tests
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Audit real-media pack validation (synthetic test frames only)
+        run: node scripts/audit-360-pack-smoke.mjs
+
+      - name: Chromium interaction smoke
+        run: node scripts/hero-ui-smoke.mjs
+
+      - name: WebKit Safari-engine studio smoke
+        run: node scripts/webkit-studio-smoke.mjs
+
+      - name: Genuine turntable interaction mechanics (test-only frames)
+        run: node scripts/turntable-interaction-smoke.mjs
+
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-visual-qa
+          path: artifacts/visual-evidence/
+          if-no-files-found: ignore
+          retention-days: 7

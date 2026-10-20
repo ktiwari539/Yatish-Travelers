@@ -1,0 +1,110 @@
+/* V13 — operator-controlled fleet ordering, final cinematic chapter and
+   clear, premium admin ordering controls. No unreviewed plate-bearing fallbacks. */
+.fleet-final-intro{
+  max-width:1180px;
+  margin:clamp(70px,8vw,120px) auto 12px;
+  padding:0 clamp(24px,5.1vw,74px);
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+}
+.fleet-final-intro .kicker{
+  color:#a4784b;
+  font-size:11px;
+  letter-spacing:.19em;
+  font-weight:900;
+}
+.fleet-final-intro h2{
+  max-width:970px;
+  font-size:clamp(39px,5.2vw,81px);
+  line-height:1.03;
+  letter-spacing:-.055em;
+  color:#163c2e;
+  margin:0;
+}
+.fleet-final-intro h2 em{
+  color:#ab8253;
+  font-weight:450;
+  font-family:Georgia,'Times New Roman',serif;
+}
+.fleet-final-intro>p{
+  font-size:clamp(13px,1.35vw,17px);
+  line-height:1.7;
+  max-width:760px;
+  color:#627166;
+  margin:0;
+}
+.fleet-admin .fleet-order-help{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 18px;
+  margin:18px 0 22px;
+  border:1px solid #cbd8ca;
+  background:#eef5ed;
+  border-radius:15px;
+  color:#1d4b36;
+  font-size:12px;
+  line-height:1.5;
+}
+.fleet-order-help>span:nth-child(2){flex:1}
+.fleet-unsaved{
+  font-weight:850;color:#986329;background:#fff0d4;
+  border-radius:999px;padding:7px 11px;white-space:nowrap;
+}
+.fleet-order-controls{
+  display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+  padding:10px 0 13px;
+  margin-bottom:9px;
+  border-bottom:1px solid rgba(23,70,50,.15);
+}
+.fleet-order-number{
+  font-size:16px;
+  font-weight:900;color:#184d37;
+  letter-spacing:-.02em;
+  margin-right:auto;
+  display:flex;flex-direction:column;
+}
+.fleet-order-number small{
+  font-size:8px;letter-spacing:.13em;color:#738373;
+}
+.fleet-order-controls button{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  border:1px solid #cadacb;
+  padding:9px 11px;border-radius:10px;
+  background:#fffefa;color:#20513a;
+  font-size:11px;font-weight:800;cursor:pointer;
+  transition:background .2s,border-color .2s;
+}
+.fleet-order-controls button:hover:not(:disabled),
+.fleet-order-controls button:focus-visible{
+  background:#e8f3e8;border-color:#648b6d;
+}
+.fleet-order-controls button:disabled{opacity:.35;cursor:not-allowed}
+.fleet-photo-media-warning{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 18px;
+  max-width:1480px;
+  margin:20px auto;
+  border:1px solid #e2d4ba;
+  border-radius:13px;
+  background:#fff7e9;
+  color:#614f34;font-size:12px;line-height:1.5;
+}
+.fleet-photo-media-warning strong{color:#513d26}
+.fleet-photo-media-warning a{color:#21543b;text-decoration:underline;text-underline-offset:2px}
+.fleet-photo-media-warning svg{flex-shrink:0}
+.fleet-road-stage .fleet-editorial-picture:has(.fleet-model-image-missing){
+  background:radial-gradient(circle at 58% 33%,#edf2e7,#b8cdb9 75%,#809c8a);
+}
+@media(max-width:760px){
+ .fleet-final-intro{margin:66px auto 12px;gap:12px;padding:0 22px}
+ .fleet-final-intro h2{font-size:clamp(36px,9vw,51px)}
+ .fleet-final-intro>p{font-size:12px}
+ .fleet-order-controls{gap:4px}
+ .fleet-order-controls button{padding:9px 7px;font-size:10px}
+ .fleet-admin .fleet-order-help{align-items:flex-start;flex-wrap:wrap}
+ .fleet-photo-media-warning{margin:12px 16px}
+}

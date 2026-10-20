@@ -1,0 +1,271 @@
+
+/* V18 — cinematic garage concept / no invented vehicle meshes.
+   Real model-reference photos appear in animated camera bays; the HUD,
+   runway and lighting are atmospheric, not claims of true 360° capture. */
+.fleet-studio-launch.fleet-studio-launch-v18{
+ min-height:clamp(440px,39vw,635px);
+ grid-template-columns:1.05fr .95fr;
+ background:linear-gradient(135deg,#0b1918 0%,#152c26 45%,#09231c 100%);
+ border:1px solid #446357;
+ box-shadow:0 30px 110px rgba(6,32,26,.25),inset 0 0 0 1px rgba(223,191,133,.11);
+}
+.fleet-studio-launch-v18:before{
+ content:'GARAGE 01';left:auto;right:-5%;top:-2%;
+ font:900 clamp(85px,13vw,210px)/1 system-ui;
+ color:rgba(241,217,169,.043);letter-spacing:-.09em;
+ transform:rotate(-6deg);
+}
+.fleet-studio-launch-v18:after{
+ content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+ background:repeating-linear-gradient(0deg,transparent 0,transparent 4px,rgba(255,255,255,.008) 5px),
+ linear-gradient(110deg,transparent 30%,rgba(239,198,119,.07) 47%,transparent 60%);
+}
+.fleet-launch-scanlines{
+ position:absolute;inset:-100% 0;z-index:0;pointer-events:none;
+ background:linear-gradient(180deg,transparent 42%,rgba(204,230,199,.11) 50%,transparent 58%);
+ animation:mtLaunchScanner 5.5s linear infinite;
+}
+.fleet-launch-rays{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.fleet-launch-rays i{position:absolute;height:220%;width:70px;left:25%;top:-40%;transform:rotate(27deg);
+ background:linear-gradient(90deg,transparent,rgba(254,232,165,.10),transparent);filter:blur(18px);
+ animation:mtGarageRay 7s ease-in-out infinite alternate;}
+.fleet-launch-rays i:nth-child(2){left:68%;animation-delay:-2.4s;opacity:.7}
+.fleet-launch-rays i:nth-child(3){left:84%;animation-delay:-4.1s;opacity:.35}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy{padding:clamp(35px,5vw,82px);max-width:850px}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy>span{
+ font-size:11px;letter-spacing:.18em;color:#f5ca80;
+}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy h3{
+ font-size:clamp(53px,6vw,100px);max-width:680px;
+ margin:24px 0;line-height:.95;letter-spacing:-.075em;
+ text-shadow:0 16px 40px rgba(0,0,0,.23);
+}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy h3 em{
+ display:block;color:#f8c86f;font-style:italic;white-space:nowrap;
+}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy p{font-size:clamp(13px,1.15vw,17px);max-width:515px;color:#ccdcd0;line-height:1.75}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy button{
+ background:linear-gradient(140deg,#ffe6ad,#d9a85a);color:#163126;
+ padding:21px 29px;border-radius:11px;
+ font-size:15px;font-weight:950;letter-spacing:.01em;
+ box-shadow:0 0 25px rgba(255,191,81,.28),inset 0 1px rgba(255,255,255,.6);
+ animation:mtLaunchButtonPulse 3s ease-in-out infinite;
+}
+.fleet-studio-launch-v18 .fleet-studio-launch-copy button:hover{
+ transform:translateY(-3px) scale(1.035);
+ box-shadow:0 0 45px rgba(255,191,81,.52);
+}
+.fleet-studio-launch-v18 .fleet-studio-launch-note{
+ margin-top:24px;display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+ font-weight:800;letter-spacing:.09em;font-size:9px;color:#bed5c8;
+}
+.fleet-launch-live-dot{display:inline-block!important;width:8px;height:8px;background:#7cf0b3;border-radius:50%;box-shadow:0 0 13px #7cf0b3;animation:mtLaunchButtonPulse 2s infinite}
+.fleet-studio-launch-v18 .fleet-studio-launch-visual{min-height:400px;align-self:stretch;
+ background:radial-gradient(ellipse at 51% 50%,rgba(107,159,119,.24),transparent 65%)}
+.fleet-studio-launch-v18 .fleet-studio-launch-visual:before{opacity:.0}
+.fleet-launch-portal{position:absolute;inset:0;display:grid;place-items:center;perspective:650px;pointer-events:none}
+.fleet-launch-portal i{position:absolute;aspect-ratio:1;width:66%;border-radius:50%;
+ border:2px solid rgba(241,195,116,.37);box-shadow:0 0 45px rgba(244,186,79,.16),inset 0 0 55px rgba(244,186,79,.07);
+ transform:rotateX(63deg);animation:mtGarageRing 5.2s ease-in-out infinite alternate}
+.fleet-launch-portal i:nth-child(2){width:90%;opacity:.5;animation-delay:-1.4s}
+.fleet-launch-portal i:nth-child(3){width:112%;opacity:.25;animation-delay:-2.8s}
+.fleet-studio-launch-v18 .fleet-studio-launch-visual>img{
+ z-index:3;width:112%;height:90%;max-height:560px;object-fit:cover;object-position:center;
+ border:1px solid rgba(233,209,155,.13);border-radius:8px;
+ mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 88%,transparent);
+ box-shadow:0 20px 55px rgba(0,0,0,.4);
+ animation:mtGarageCarEntry 2.2s cubic-bezier(.2,.7,.2,1) both,mtGarageCarHover 5s 2.2s ease-in-out infinite alternate;
+}
+.fleet-studio-launch-v18 .fleet-launch-chapter{z-index:5;bottom:20px;right:30px;
+ display:flex;align-items:center;gap:9px;background:rgba(4,26,20,.8);
+ padding:11px 15px;border:1px solid rgba(247,203,125,.25);border-radius:5px}
+@keyframes mtLaunchScanner{0%{transform:translateY(-25%)}100%{transform:translateY(30%)}}
+@keyframes mtGarageRay{from{transform:translateX(-50px) rotate(27deg)}to{transform:translateX(105px) rotate(27deg)}}
+@keyframes mtGarageRing{from{transform:rotateX(63deg) rotateZ(-8deg) scale(.93)}to{transform:rotateX(63deg) rotateZ(8deg) scale(1.09)}}
+@keyframes mtGarageCarEntry{from{opacity:0;transform:translate3d(26%,6%,0) scale(.68);filter:blur(13px)}
+ 75%{opacity:1;filter:blur(0)}to{opacity:1;transform:translate3d(0,0,0) scale(1);filter:blur(0)}}
+@keyframes mtGarageCarHover{from{transform:translate3d(-.5%,1.2%,0) scale(.99)}to{transform:translate3d(.6%,-1.2%,0) scale(1.02)}}
+@keyframes mtLaunchButtonPulse{50%{box-shadow:0 0 31px rgba(255,191,81,.54)}}
+@media(min-width:761px){
+ .fleet-studio-launch-v18 .fleet-studio-launch-visual>img{object-fit:cover;clip-path:polygon(3% 4%,100% 3%,100% 98%,3% 95%)}
+}
+
+/* The nine public cards are no longer a second full photo gallery. They
+   become concise model-comparison rows with studio entry and fare actions. */
+.fleet-compare-heading{margin-top:12px;margin-bottom:14px;display:flex;align-items:baseline;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.fleet-compare-heading strong{font-size:12px;letter-spacing:.12em;color:#204b39}
+.fleet-compare-heading span{font-size:12px;color:#718274}
+.fleet-grid.fleet-compare-list{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:13px!important;align-items:stretch;
+}
+.fleet-compare-list .premium-catalog-card{
+ display:grid!important;grid-template-columns:clamp(138px,12vw,188px) minmax(0,1fr);
+ min-width:0!important;min-height:172px!important;overflow:hidden;
+ box-shadow:0 7px 20px rgba(30,55,36,.045)!important;
+ border-radius:15px!important;border:1px solid #e1e3d7!important;
+ background:#fffefa;
+}
+.fleet-compare-list .premium-catalog-visual{
+ position:relative!important;width:100%;height:100%!important;min-height:170px!important;
+ border-radius:0!important;overflow:hidden;
+}
+.fleet-compare-list .premium-catalog-visual>img{width:100%!important;height:100%!important;object-fit:cover!important;display:block}
+.fleet-compare-list .fleet-number{top:9px;left:9px}
+.fleet-compare-list .fleet-type{font-size:9px;padding:5px 8px;top:9px;right:9px}
+.fleet-compare-list .catalog-angle-button{right:6px;bottom:8px;top:auto;scale:.78;transform-origin:right bottom}
+.fleet-compare-list .fleet-showroom-card-cta{bottom:7px;left:7px;font-size:9px;padding:7px 9px;white-space:nowrap}
+.fleet-compare-list .fleet-meta{
+ display:flex!important;flex-direction:column;justify-content:space-between;
+ padding:17px 17px 14px!important;gap:4px!important;min-width:0!important;
+}
+.fleet-compare-list .fleet-meta>span{font-size:9px;letter-spacing:.12em;line-height:1.35}
+.fleet-compare-list .fleet-meta h3{font-size:clamp(19px,1.5vw,25px)!important;line-height:1.13;margin:0!important}
+.fleet-compare-list .rate{display:flex!important;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0!important}
+.fleet-compare-list .rate strong{font-size:19px!important;line-height:1.2}
+.fleet-compare-list .rate small{font-size:9px!important}
+.fleet-compare-list .fleet-bottom{margin:5px 0 0!important;padding:10px 0 0!important;align-items:center!important;gap:8px!important}
+.fleet-compare-list .fleet-bottom>span{font-size:10px!important}
+.fleet-compare-list .fleet-bottom button{font-size:10px!important;padding:5px!important;gap:5px!important;white-space:nowrap}
+
+/* Precisely 20% smaller than the v17 large reel specification. */
+.fleet-editorial .fleet-reel-group .fleet-editorial-tile{
+ flex:0 0 clamp(272px,27.2vw,472px)!important;
+ width:clamp(272px,27.2vw,472px)!important;
+}
+.fleet-editorial .fleet-editorial-tile-photo{height:clamp(192px,20vw,300px)!important}
+.fleet-editorial .fleet-editorial-tile-foot{padding:17px 19px!important}
+.fleet-editorial .fleet-editorial-tile-foot>strong{font-size:clamp(14px,1.06vw,18px)!important}
+
+/* Game-inspired, photo-grounded showroom HUD and reveal animations. */
+.ride-studio-stage-v18{background:
+ radial-gradient(ellipse at 50% 47%,rgba(49,89,70,.67) 0,rgba(17,46,38,.67) 42%,#030e0e 100%);}
+.ride-studio-garage{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.ride-studio-garage:before,.ride-studio-garage:after{content:'';
+ position:absolute;z-index:0;inset:0;
+ background:linear-gradient(90deg,rgba(0,0,0,.54),transparent 16%,transparent 84%,rgba(0,0,0,.55));}
+.ride-studio-garage:after{background:repeating-linear-gradient(90deg,transparent 0,transparent 13.5%,rgba(230,207,151,.045) 13.55%,transparent 13.7%);opacity:.7}
+.ride-studio-light{position:absolute;z-index:2;top:-18%;width:46%;height:95%;
+ background:linear-gradient(180deg,rgba(214,235,200,.19),rgba(214,235,200,.06) 53%,transparent);
+ filter:blur(35px);transform-origin:top center;animation:rideGarageLight 7s ease-in-out infinite alternate;}
+.ride-studio-light.light-left{left:-6%;transform:rotate(27deg)}
+.ride-studio-light.light-right{right:-6%;transform:rotate(-27deg);animation-delay:-3.2s}
+.ride-studio-horizon{position:absolute;inset:37% 0 auto;height:2px;background:linear-gradient(90deg,transparent,#d5b97c55,transparent);box-shadow:0 0 38px #eeae6570}
+.ride-studio-floor{position:absolute;top:48%;left:-25%;width:150%;height:100%;
+ background:linear-gradient(0deg,#050c0c,#0c221e 67%,#112f26);
+ transform:perspective(610px) rotateX(69deg);transform-origin:top center;border-top:2px solid #6e6243aa;
+ box-shadow:0 -34px 70px #ebc77912;}
+.ride-studio-grid{position:absolute;top:44%;left:-60%;width:220%;height:100%;
+ background:repeating-linear-gradient(90deg,transparent 0 7.4%,rgba(214,182,119,.18) 7.5%,transparent 7.6%),
+ repeating-linear-gradient(0deg,transparent 0 11%,rgba(214,182,119,.13) 11.15%,transparent 11.3%);
+ transform:perspective(460px) rotateX(70deg);transform-origin:top;opacity:.52;
+ animation:rideGarageFloor 6s linear infinite;}
+.ride-studio-runway{position:absolute;left:12%;right:12%;bottom:13%;height:2px;background:linear-gradient(90deg,transparent,#efcc84,transparent);
+ box-shadow:0 0 38px 4px rgba(234,179,86,.3)}
+.ride-studio-stage-v18 .ride-studio-orbit{opacity:.8;animation:rideGarageOrb 7s ease-in-out infinite alternate}
+.ride-studio-stage-v18 .ride-studio-orbit i{border-color:rgba(246,202,117,.31);box-shadow:0 0 0 40px rgba(239,207,151,.035),0 0 60px rgba(241,189,92,.14)}
+.ride-studio-stage-head{font-size:11px}
+.ride-studio-stage-head .ride-studio-eyebrow{display:flex;align-items:center;gap:10px;color:#f2c979}
+.ride-studio-scanner{position:absolute;top:67px;left:clamp(18px,3vw,54px);z-index:5;display:flex;gap:9px;align-items:center;color:#97e1bc;
+ font-size:9px;font-weight:850;letter-spacing:.13em;}
+.ride-studio-scanner i{display:inline-block;height:6px;width:6px;border-radius:50%;background:#86f0b2;box-shadow:0 0 13px #86f0b2}
+.ride-studio-garage-ticks{position:absolute;z-index:5;top:30%;bottom:28%;right:21px;display:flex;flex-direction:column;
+ align-items:center;justify-content:space-between;color:#d9b677;font-size:9px;font-weight:850;pointer-events:none;}
+.ride-studio-garage-ticks i{width:9px;height:1px;background:#c2b18588;display:block}
+.ride-studio-stage-v18 .ride-studio-image-action{inset:14% 6% 17%;overflow:visible}
+.ride-studio-vehicle-frame{
+ position:relative;z-index:2;width:min(100%,1100px);height:min(100%,610px);display:flex;justify-content:center;align-items:center;
+ border:1px solid rgba(235,202,143,.4);border-radius:9px;overflow:hidden;
+ background:rgba(4,21,18,.48);box-shadow:0 35px 75px rgba(0,0,0,.38),0 0 0 5px rgba(255,255,255,.018);
+ animation:rideGarageVehicleEntry 1.15s cubic-bezier(.18,.77,.2,1) both;
+ transform-style:preserve-3d;
+}
+.ride-studio-frame-glow{position:absolute;inset:0;background:
+ linear-gradient(135deg,rgba(233,203,140,.1),transparent 38%,rgba(4,15,13,.3));pointer-events:none;z-index:3;}
+.ride-studio-stage-v18 .ride-studio-car-image{
+ height:100%;width:100%;object-fit:contain;object-position:center;
+ filter:saturate(.86) contrast(1.08) brightness(.9);
+ animation:rideGaragePhotoZoom 4.8s cubic-bezier(.25,.4,.15,1) both;
+}
+.ride-studio-frame-sweep{position:absolute;z-index:4;inset:0;pointer-events:none;
+ background:linear-gradient(105deg,transparent 24%,rgba(233,231,197,.13) 45%,transparent 56%);
+ transform:translateX(-175%);animation:rideGaragePhotoSweep 2.4s .45s ease-in-out both;
+}
+.ride-studio-reveal{position:absolute;inset:0;z-index:8;pointer-events:none;
+ display:grid;place-content:center;text-align:center;gap:12px;
+ background:radial-gradient(ellipse at center,#183f32 0,#040d10 65%);
+ animation:rideGarageCurtain 1.55s ease-in-out both;}
+.ride-studio-reveal strong{color:#f4d69e;font-size:clamp(30px,4vw,60px);letter-spacing:.11em;font-weight:950;
+ text-shadow:0 0 38px rgba(252,196,110,.38)}
+.ride-studio-reveal small{color:#a4d4bb;font-size:11px;letter-spacing:.28em}
+.ride-studio-reveal-gate{width:110px;height:3px;margin:auto;background:linear-gradient(90deg,transparent,#ffcf7a,transparent);box-shadow:0 0 35px #ffc165}
+.ride-studio-reveal>i{position:absolute;top:0;bottom:0;width:30%;left:10%;
+ background:linear-gradient(90deg,transparent,rgba(244,216,144,.09),transparent);transform:skewX(-28deg);
+ animation:rideGarageGateRush 1.3s ease-out both;}
+.ride-studio-reveal>i:nth-last-child(2){left:48%;animation-delay:.14s}
+.ride-studio-reveal>i:last-child{left:75%;animation-delay:.24s}
+.ride-studio-panel-heading .ride-studio-energy{display:flex;gap:4px;margin:16px 0 12px}
+.ride-studio-energy i{height:5px;width:29px;background:linear-gradient(100deg,#6ee3aa,#d4c481);transform:skewX(-22deg);box-shadow:0 0 11px #83c98d33}
+.ride-studio-energy i:nth-child(n+6){background:#43695a;box-shadow:none}
+.ride-studio-stage-v18 .ride-studio-stage-footer>div:first-child strong{display:flex;align-items:center;gap:8px}
+.ride-studio-cinematic-toggle{margin-top:12px;display:inline-flex;align-items:center;gap:8px;border:1px solid #5a7562;
+ background:rgba(0,0,0,.13);padding:9px 12px;color:#e0bc87;border-radius:6px;font-size:10px;cursor:pointer}
+.ride-studio-stage-v18.no-cinematic .ride-studio-light,
+.ride-studio-stage-v18.no-cinematic .ride-studio-grid,
+.ride-studio-stage-v18.no-cinematic .ride-studio-orbit,
+.ride-studio-stage-v18.no-cinematic .ride-studio-frame-sweep,
+.ride-studio-stage-v18.no-cinematic .ride-studio-reveal{animation:none!important;opacity:0}
+.ride-studio-stage-v18.no-cinematic .ride-studio-vehicle-frame,
+.ride-studio-stage-v18.no-cinematic .ride-studio-car-image{animation:none!important;transform:none!important}
+@keyframes rideGarageLight{from{opacity:.22}to{opacity:.75}}
+@keyframes rideGarageFloor{to{background-position:0 400px,0 450px}}
+@keyframes rideGarageOrb{from{transform:rotateZ(-4deg) scale(.92)}to{transform:rotateZ(4deg) scale(1.08)}}
+@keyframes rideGarageVehicleEntry{0%{opacity:0;transform:translate3d(42%,5%,0) rotateY(24deg) scale(.62);filter:blur(14px)}
+ 63%{opacity:1;filter:blur(0)}85%{transform:translate3d(-2%,0,0) rotateY(-3deg) scale(1.06)}
+ 100%{opacity:1;transform:translate3d(0,0,0) rotateY(0) scale(1);filter:blur(0)}}
+@keyframes rideGaragePhotoZoom{from{transform:scale(1.17);filter:brightness(.55) blur(5px)}40%{filter:brightness(.9) blur(0)}
+ to{transform:scale(1);filter:brightness(.9) blur(0)}}
+@keyframes rideGaragePhotoSweep{to{transform:translateX(175%)}}
+@keyframes rideGarageCurtain{0%,36%{opacity:1;visibility:visible}75%{opacity:.94}100%{opacity:0;visibility:hidden}}
+@keyframes rideGarageGateRush{from{transform:translateX(-150%) skewX(-28deg)}to{transform:translateX(240%) skewX(-28deg)}}
+@media(max-width:950px){
+ .fleet-grid.fleet-compare-list{grid-template-columns:1fr!important}
+ .fleet-studio-launch-v18 .fleet-studio-launch-copy h3{font-size:clamp(50px,6.3vw,80px)}
+}
+@media(max-width:760px){
+ .fleet-studio-launch.fleet-studio-launch-v18{grid-template-columns:1fr;min-height:auto}
+ .fleet-studio-launch-v18 .fleet-studio-launch-copy{padding:30px 26px 10px}
+ .fleet-studio-launch-v18 .fleet-studio-launch-copy h3{font-size:clamp(48px,11vw,68px)}
+ .fleet-studio-launch-v18 .fleet-studio-launch-visual{min-height:310px;max-height:360px}
+ .fleet-studio-launch-v18 .fleet-studio-launch-visual>img{height:90%;width:103%;object-fit:cover}
+ .fleet-grid.fleet-compare-list{grid-template-columns:1fr!important}
+ .fleet-compare-list .premium-catalog-card{grid-template-columns:120px minmax(0,1fr);min-height:150px!important}
+ .fleet-compare-list .premium-catalog-visual{min-height:160px!important}
+ .fleet-compare-list .fleet-meta{padding:13px!important}
+ .fleet-compare-list .fleet-meta h3{font-size:19px!important}
+ .fleet-compare-list .rate strong{font-size:16px!important}
+ .fleet-compare-list .fleet-bottom{flex-wrap:wrap}
+ .fleet-editorial .fleet-reel-group .fleet-editorial-tile{
+  flex:0 0 clamp(240px,67.2vw,320px)!important;
+  width:clamp(240px,67.2vw,320px)!important;
+ }
+ .fleet-editorial .fleet-editorial-tile-photo{height:clamp(180px,49.6vw,240px)!important}
+ .ride-studio-stage-v18 .ride-studio-image-action{inset:19% 5% 29%}
+ .ride-studio-stage-v18 .ride-studio-stage-footer{bottom:14px}
+ .ride-studio-stage-v18 .ride-studio-zoom-hint{bottom:5%;font-size:8px}
+ .ride-studio-stage-v18 .ride-studio-vehicle-frame{max-height:100%}
+ .ride-studio-vehicle-frame{height:100%;max-width:100%}
+ .ride-studio-scanner{display:none}
+ .ride-studio-garage-ticks{display:none}
+ .ride-studio-reveal strong{font-size:26px;letter-spacing:.05em}
+ .ride-studio-garage:after{opacity:.25}
+}
+@media(prefers-reduced-motion:reduce){
+ .fleet-studio-launch-v18 .fleet-studio-launch-visual>img,
+ .fleet-studio-launch-v18 .fleet-launch-portal i,
+ .fleet-launch-scanlines,.fleet-launch-rays i,.fleet-launch-live-dot,
+ .ride-studio-light,.ride-studio-grid,.ride-studio-orbit,
+ .ride-studio-vehicle-frame,.ride-studio-car-image,.ride-studio-frame-sweep,
+ .ride-studio-reveal{animation:none!important;transition:none!important;transform:none!important}
+ .ride-studio-reveal{opacity:0!important;visibility:hidden!important}
+}
