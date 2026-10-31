@@ -26,8 +26,10 @@ export function FleetCatalogCard({car,index,onEstimate,onExplore}:{
    data-fleet-role="selection" style={{animationDelay:`${index*70}ms`}}>
   <div className="fleet-visual premium-catalog-visual">
    {hero?<img key={hero.src} src={hero.src}
-     alt={car.name+' — model-specific signature photograph'}
-     loading="lazy" decoding="async" onError={()=>markFailed(hero.src)}/>:
+     alt={car.name+' rental vehicle reference photo — '+car.category}
+     loading="lazy" decoding="async" width={960} height={640}
+     style={{objectFit:"cover",objectPosition:"center 53%",filter:"saturate(1.08) contrast(1.045) brightness(1.025)"}}
+     onError={()=>markFailed(hero.src)}/>:
     <div className="premium-catalog-fallback" role="img"
      aria-label={'Approved photograph unavailable for '+car.name}>
      {car.name}<small>Photo review or installation pending</small>
