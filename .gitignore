@@ -6,3 +6,7 @@ dist
 
 # Local CRM customer data — never commit
 .data/
+
+.netlify/
+artifacts/
+*.backup.tar

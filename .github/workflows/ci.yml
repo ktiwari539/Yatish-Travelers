@@ -2,12 +2,16 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/mateshwari-cinematic-crm]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,7 +22,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: CRM API tests
         run: npm run test:api
@@ -41,6 +45,9 @@ jobs:
 
       - name: Type check and production build
         run: npm run build
+
+      - name: Production routing and SEO fixture build
+        run: VITE_PUBLIC_SITE_ORIGIN=https://fixture.example MT_CRM_API_ORIGIN=https://api.fixture.example npm run build:netlify
 
       - name: Install browser for UI smoke tests
         run: |

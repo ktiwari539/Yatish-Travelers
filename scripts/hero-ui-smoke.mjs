@@ -423,8 +423,10 @@ async function smoke(){
    await route.fulfill({status:url.pathname==='/api/admin/images'?201:200,
      contentType:'application/json',body:JSON.stringify(response)});
  });
- await page.addInitScript(()=>sessionStorage.setItem('mt-crm-token','smoke-test-local-only'));
  await page.goto('http://127.0.0.1:'+port+'/admin',{waitUntil:'domcontentloaded'});
+ await page.getByLabel('Admin token').fill('smoke-test-local-only');
+ await page.getByRole('button',{name:'Open dashboard',exact:true}).click();
+ ensure(await page.evaluate(()=>sessionStorage.getItem('mt-crm-token'))===null,'Admin bearer token is never persisted in browser storage');
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  // Frontend cannot silently claim the user's ZIP is installed. Staff must
  // actively upload and confirm it before the server receives photo bytes.
@@ -472,6 +474,8 @@ async function smoke(){
  ensure(await page.locator('.fleet-order-number').first().innerText().then(x=>x.includes('#01')),
    'First priority is visibly labeled #01');
  await page.reload({waitUntil:'domcontentloaded'});
+ await page.getByLabel('Admin token').fill('smoke-test-local-only');
+ await page.getByRole('button',{name:'Open dashboard',exact:true}).click();
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  await page.waitForFunction(()=>document.querySelector('.fleet-editor-fields input')?.value==='Maruti Ertiga');
  ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',

@@ -1,12 +1,14 @@
+import { validateRuntime } from './runtime.mjs';
 import http from 'node:http';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readCatalog, writeCatalog, validateVehicle } from './catalog.mjs';
-import { importReviewedFleetZip, inspectReviewedFleetMedia } from './fleet-photo-import.mjs';
+import { MEDIA_FILES, importReviewedFleetZip, inspectReviewedFleetMedia } from './fleet-photo-import.mjs';
 import { notifications, notificationConfig, notifyNewEnquiry, prepareQuote } from './notifications.mjs';
 
-const port = Number(process.env.CRM_PORT || 8787);
+const runtime = validateRuntime();
+const port = Number(process.env.CRM_PORT || process.env.PORT || 8787);
 const dataPath = resolve(process.env.CRM_DATA_FILE || '.data/enquiries.jsonl');
 const secret = process.env.CRM_ADMIN_TOKEN || '';
 const eventsPath=resolve(process.env.CRM_EVENTS_FILE || '.data/events.jsonl');
@@ -16,13 +18,15 @@ const ALLOWED_EVENTS=new Set(['quote_open','callback_open','corporate_open','wha
 const VALID_STATUS = new Set(['new','contacted','quoted','confirmed','closed']);
 const rate = new Map();
 const eventRate=new Map();
+const authRate=new Map();
+const cleanup=setInterval(()=>{const cutoff=Date.now()-60000;for(const map of [rate,eventRate,authRate])for(const [key,values] of map){const recent=values.filter(t=>t>cutoff);if(recent.length)map.set(key,recent);else map.delete(key);}},60000);cleanup.unref();
 const compareToken=(given)=>{
   if (!secret || typeof given !== 'string') return false;
   const a=Buffer.from(given),b=Buffer.from(secret);
   return a.length===b.length && timingSafeEqual(a,b);
 };
 const session=(raw)=>typeof raw==='string'&&/^[a-z0-9-]{8,80}$/i.test(raw)?raw:'';
-const logEvent=(item)=>{mkdirSync(dirname(eventsPath),{recursive:true,mode:0o700});appendFileSync(eventsPath,JSON.stringify(item)+'\n',{encoding:'utf8',mode:0o600});};
+const logEvent=(item)=>{mkdirSync(dirname(eventsPath),{recursive:true,mode:0o700});appendFileSync(eventsPath,JSON.stringify(item)+'\n',{encoding:'utf8',mode:0o600,flush:true});};
 function engagement(){
   if(!existsSync(eventsPath)) return {total:0,counts:{},recent:[],sessions:0};
   const entries=readFileSync(eventsPath,'utf8').split('\n').filter(Boolean).flatMap(line=>{try{return [JSON.parse(line)];}catch{return []}});
@@ -34,6 +38,7 @@ function reply(res, status, body) {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
+    'X-Robots-Tag': 'noindex, nofollow',
   });
   res.end(JSON.stringify(body));
 }
@@ -57,22 +62,32 @@ function records() {
 }
 function writeEvent(event) {
   mkdirSync(dirname(dataPath), { recursive:true, mode:0o700 });
-  appendFileSync(dataPath,JSON.stringify(event)+'\n',{encoding:'utf8',mode:0o600});
+  appendFileSync(dataPath,JSON.stringify(event)+'\n',{encoding:'utf8',mode:0o600,flush:true});
 }
 async function readBody(req,limit=8192) {
-  let body = '';
+  const chunks=[];let size=0;
   for await (const chunk of req) {
-    body += chunk;
-    if (body.length > limit) throw new Error('Request too large.');
+    size+=chunk.length;
+    if(size>limit)throw new Error('Request too large.');
+    chunks.push(chunk);
   }
-  return JSON.parse(body || '{}');
+  const value=JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new SyntaxError('Expected JSON object.');
+  return value;
 }
 const trim = (v,max=300)=>typeof v==='string'?v.trim().slice(0,max):'';
 
 const server = http.createServer(async (req,res)=>{
   try {
     const url = new URL(req.url || '/', 'http://localhost');
-    if (url.pathname === '/api/health' && req.method === 'GET') return reply(res,200,{ok:true,storage:'local',adminConfigured:Boolean(secret)});
+    if (url.pathname === '/api/health' && req.method === 'GET') return reply(res,200,{ok:true,storage:runtime.storage,adminConfigured:Boolean(secret)});
+    if(url.pathname.startsWith('/api/reviewed-media/') && req.method==='GET') {
+      const name=url.pathname.slice('/api/reviewed-media/'.length);
+      const path='public/media/'+name;
+      if(!Object.hasOwn(MEDIA_FILES,path)||!existsSync(path))return reply(res,404,{error:'Reviewed media unavailable.'});
+      res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+      return res.end(readFileSync(path));
+    }
     const uploadMatch=url.pathname.match(/^\/api\/uploads\/([a-f0-9-]{36})\.(jpg|png|webp)$/);
     if(uploadMatch && req.method==='GET') {
       const file=resolve(uploadsPath,uploadMatch[1]+'.'+uploadMatch[2]);
@@ -111,11 +126,13 @@ const server = http.createServer(async (req,res)=>{
       recent.push(now);rate.set(address,recent);
       if (!String(req.headers['content-type']||'').includes('application/json')) return reply(res,415,{error:'Use JSON content type.'});
       const incoming = await readBody(req);
+      if(!incoming || typeof incoming!=='object' || Array.isArray(incoming)) return reply(res,400,{error:'Expected a JSON object.'});
+      if(['passengers','days','distanceKm'].some(k=>incoming[k]!==undefined && !Number.isFinite(Number(incoming[k])))) return reply(res,400,{error:'Invalid numeric value.'});
       const name=trim(incoming.name,100),phone=trim(incoming.phone,24);
       if(name.length<2 || !/^\+?[0-9 ()-]{8,24}$/.test(phone)) return reply(res,400,{error:'Enter a valid name and phone number.'});
       const mode=['quote','callback','corporate'].includes(incoming.mode)?incoming.mode:'quote';
       const tripDate=trim(incoming.tripDate,10);
-      if (tripDate && !/^\d{4}-\d{2}-\d{2}$/.test(tripDate)) return reply(res,400,{error:'Invalid travel date.'});
+      if (tripDate && (!/^\d{4}-\d{2}-\d{2}$/.test(tripDate) || !Number.isFinite(Date.parse(tripDate)) || new Date(tripDate).toISOString().slice(0,10)!==tripDate)) return reply(res,400,{error:'Invalid travel date.'});
       const date=new Date().toISOString();
       const record={
         id:randomUUID(), createdAt:date, updatedAt:date, status:'new', mode,
@@ -126,8 +143,8 @@ const server = http.createServer(async (req,res)=>{
         days:Math.max(1,Math.min(90,Number(incoming.days)||1)),
         nightStay:incoming.nightStay===true,
         distanceKm:Math.max(0,Math.min(100000,Number(incoming.distanceKm)||0)),
-        estimatedMin:Math.max(0,Number(incoming.estimatedMin)||0),
-        estimatedMax:Math.max(0,Number(incoming.estimatedMax)||0),
+        estimatedMin:0,
+        estimatedMax:0,
       };
       if(mode!=='callback' && (!record.pickup || !record.destination || !record.tripDate)) {
         return reply(res,400,{error:'Pickup, destination and travel date are required.'});
@@ -147,7 +164,13 @@ const server = http.createServer(async (req,res)=>{
     if (url.pathname.startsWith('/api/admin/')) {
       if(!secret) return reply(res,503,{error:'Admin access not configured. Set CRM_ADMIN_TOKEN.'});
       const provided=req.headers.authorization?.replace(/^Bearer /,'')||'';
-      if (!compareToken(provided)) return reply(res,401,{error:'Invalid admin token.'});
+      if (!compareToken(provided)) {
+        const key=req.socket.remoteAddress||'local',now=Date.now();
+        const failures=(authRate.get(key)||[]).filter(t=>now-t<60000);
+        if(failures.length>=20)return reply(res,429,{error:'Too many sign-in attempts. Try later.'});
+        failures.push(now);authRate.set(key,failures);
+        return reply(res,401,{error:'Invalid admin token.'});
+      }
       if(url.pathname==='/api/admin/models'&&req.method==='POST'){
         const incoming=await readBody(req,11_400_000);
         const encoded=incoming.data;
@@ -261,12 +284,16 @@ const server = http.createServer(async (req,res)=>{
   } catch(error) {
     if(error instanceof SyntaxError) return reply(res,400,{error:'Invalid JSON.'});
     if(error.message==='Request too large.') return reply(res,413,{error:error.message});
-    console.error('CRM API request error:',error);
+    console.error('CRM API request failed');
     return reply(res,500,{error:'An internal error occurred.'});
   }
 });
-server.listen(port,'127.0.0.1',()=>{
-  console.log('Local CRM API listening on http://127.0.0.1:'+port);
+server.requestTimeout=30_000;
+server.headersTimeout=15_000;
+server.listen(port,process.env.CRM_HOST || '127.0.0.1',()=>{
+  console.log('CRM API listening on port '+server.address().port);
   console.log('Admin dashboard '+(secret?'enabled':'disabled (set CRM_ADMIN_TOKEN)'));
   console.log('Data stored at '+dataPath);
 });
+
+for(const signal of ['SIGTERM','SIGINT']) process.on(signal,()=>{server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),10000).unref();});

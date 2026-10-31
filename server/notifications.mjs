@@ -11,7 +11,7 @@ const safe=(s,max=200)=>String(s??'').trim().slice(0,max);
 
 function log(item){
   mkdirSync(dirname(store),{recursive:true,mode:0o700});
-  appendFileSync(store,JSON.stringify(item)+'\n',{encoding:'utf8',mode:0o600});
+  appendFileSync(store,JSON.stringify(item)+'\n',{encoding:'utf8',mode:0o600,flush:true});
 }
 export function notifications(){
   if(!existsSync(store))return [];
@@ -112,16 +112,14 @@ export async function notifyNewEnquiry(record){
   if(record.email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.email))tasks.push({
     record,channel:'email',recipient:record.email,purpose:'acknowledgement'
   });
-  const results=[];
-  for(const task of tasks)results.push(await makeJob(task));
-  return results;
+  return Promise.all(tasks.map(task=>makeJob(task)));
 }
 export async function prepareQuote(record,quote){
   const results=[];
   if(record.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.email)){
-    results.push(await makeJob({record,quote,channel:'email',recipient:record.email,purpose:'confirmed_quote'}));
+    results.push(makeJob({record,quote,channel:'email',recipient:record.email,purpose:'confirmed_quote'}));
   }
-  results.push(await makeJob({record,quote,channel:'email',recipient:adminEmail,purpose:'confirmed_quote'}));
-  results.push(await makeJob({record,quote,channel:'whatsapp',recipient:adminWhatsApp,purpose:'confirmed_quote'}));
-  return results;
+  results.push(makeJob({record,quote,channel:'email',recipient:adminEmail,purpose:'confirmed_quote'}));
+  results.push(makeJob({record,quote,channel:'whatsapp',recipient:adminWhatsApp,purpose:'confirmed_quote'}));
+  return Promise.all(results);
 }

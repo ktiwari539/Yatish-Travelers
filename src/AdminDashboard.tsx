@@ -10,7 +10,7 @@ type Enquiry={
 };
 const statuses=['new','contacted','quoted','confirmed','closed'];
 export function AdminDashboard() {
-  const [token,setToken]=useState(()=>sessionStorage.getItem('mt-crm-token')||'');
+  const [token,setToken]=useState('');
   const [entered,setEntered]=useState('');
   const [items,setItems]=useState<Enquiry[]>([]);
   const [error,setError]=useState('');
@@ -41,11 +41,11 @@ export function AdminDashboard() {
     }catch(e){setError(e instanceof Error?e.message:'Network error');}
     finally{setLoading(false);}
   },[token]);
+  useEffect(()=>{sessionStorage.removeItem('mt-crm-token');},[]);
   useEffect(()=>{void load();},[load]);
   const login=(event:React.FormEvent)=>{
     event.preventDefault();
     const value=entered.trim();
-    sessionStorage.setItem('mt-crm-token',value);
     setToken(value);setEntered('');
   };
   const logout=()=>{sessionStorage.removeItem('mt-crm-token');setToken('');setItems([]);setError('');setEngagement({total:0,counts:{},sessions:0,recent:[]});setDelivery(null);};
@@ -94,13 +94,13 @@ export function AdminDashboard() {
   ));
   return <main className="crm-page">
     <header className="crm-header"><a href="/"><ArrowLeft size={17}/> <strong>MATESHWARI <span>TRAVELLERS</span></strong></a>
-      <div><span>LOCAL CRM / STAFF ACCESS</span>{token&&<button onClick={logout} type="button"><LogOut size={15}/> Sign out</button>}</div>
+      <div><span>CRM / STAFF ACCESS</span>{token&&<button onClick={logout} type="button"><LogOut size={15}/> Sign out</button>}</div>
     </header>
     {!token?<section className="crm-sign-in">
       <div className="crm-sign-icon"><Users size={28}/></div>
       <span className="crm-eyebrow">Operations workspace</span>
       <h1>Bookings deserve a better workflow.</h1>
-      <p>Sign in with your locally configured CRM admin token to review enquiries and keep follow-ups organized.</p>
+      <p>Sign in with your configured CRM admin token to review enquiries and keep follow-ups organized.</p>
       <form onSubmit={login}><label>Admin token<input type="password" autoComplete="off" value={entered} onChange={e=>setEntered(e.target.value)} required placeholder="CRM_ADMIN_TOKEN"/></label><button type="submit"><LogIn size={17}/> Open dashboard</button></form>
       <small>This local-preview CRM is not yet a production staff authentication system.</small>
     </section>:

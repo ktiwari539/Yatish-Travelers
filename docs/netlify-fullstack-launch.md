@@ -1,5 +1,7 @@
 # Mateshwari Travellers — Safe Netlify architecture and launch checklist
 
+Updated evidence and runnable durable-volume configuration: [1 November report](launch-readiness-2026-11-01.md) and [production runbook](production-runbook.md). Those documents supersede the unresolved architecture notes below.
+
 ## Current architecture (verified in source)
 - **Storefront:** React 19 + Vite. Netlify serves the built `dist/` static frontend.
 - **CRM:** `server/crm.mjs` is a **persistent Node HTTP server**, bound to `127.0.0.1:8787` by default. It currently writes enquiries, engagement events, media and catalog updates to local filesystem paths under `.data/`.

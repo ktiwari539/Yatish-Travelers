@@ -433,11 +433,22 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
   useEffect(() => {
     if (!quoteOpen) return;
+    const previous=document.activeElement as HTMLElement|null;
+    const dialog=document.querySelector<HTMLElement>('.quote-modal');
+    const focusable=()=>Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]')||[]).filter(el=>el.getClientRects().length>0);
+    const timer=requestAnimationFrame(()=>focusable()[0]?.focus());
+    const overflow=document.body.style.overflow;
+    document.body.style.overflow='hidden';
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setQuoteOpen(false);
+      if(event.key==='Tab'){
+        const nodes=focusable(),first=nodes[0],last=nodes.at(-1);
+        if(event.shiftKey && document.activeElement===first){event.preventDefault();last?.focus();}
+        else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}
+      }
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => {cancelAnimationFrame(timer);window.removeEventListener('keydown', onKeyDown);document.body.style.overflow=overflow;previous?.focus();};
   }, [quoteOpen]);
 
   const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
@@ -853,7 +864,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                     setQuoteDelivery(result.delivery||[]);
                     setQuoteSubmitted(true);
                   } catch (error) {
-                    setQuoteError(error instanceof Error ? error.message : 'Unable to save your request. Check that the local CRM API is running.');
+                    setQuoteError(error instanceof Error ? error.message : 'Unable to save your request. Please try again or contact us directly.');
                   } finally {
                     setQuoteSubmitting(false);
                   }
@@ -893,7 +904,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                     <button className="secondary" type="button" onClick={copyQuoteSummary}>{copied ? <CheckCircle2 size={16}/> : <Copy size={16}/>} {copied ? 'Copied' : 'Copy Trip Summary'}</button>
                   </div>
                   <div className="quote-contact-options"><WhatsappLink source="quote-dialog" label="Or message us on WhatsApp"/><a href={contactEmail}>Email us directly</a></div>
-                  <small className="quote-disclaimer">Requests are saved to your local CRM during testing. No external notifications are sent. WhatsApp opens your messaging app separately.</small>
+                  <small className="quote-disclaimer">Your enquiry is saved before a reference is shown. Travel is confirmed only after availability and fare are agreed. WhatsApp opens your messaging app separately.</small>
                 </form>
               </>
             ) : (
@@ -901,7 +912,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                 <CheckCircle2 size={42}/>
                 <span className="kicker">Request Saved</span>
                 <h2>Your enquiry has been recorded.</h2>
-                <p>Reference: {quoteId.slice(0, 8).toUpperCase()}. The request is stored in the local CRM for staff review. No email or WhatsApp message was sent.</p>
+                <p>Reference: {quoteId.slice(0, 8).toUpperCase()}. Your enquiry has been saved for staff review. This is not a confirmed booking.</p>
                 <div className="quote-actions">
                   <button className="primary" type="button" onClick={copyQuoteSummary}>{copied ? 'Summary Copied' : 'Copy Trip Summary'} <Copy size={16}/></button>
                   <button className="secondary" type="button" onClick={() => setQuoteOpen(false)}>Close</button>

@@ -121,7 +121,7 @@ export function writeCatalog(vehicles){
   const next={catalogVersion:2,vehicles:withDisplayOrder(vehicles),updatedAt:new Date().toISOString()};
   mkdirSync(dirname(catalogPath),{recursive:true,mode:0o700});
   const tmp=catalogPath+'.'+randomUUID()+'.tmp';
-  writeFileSync(tmp,JSON.stringify(next,null,2),{mode:0o600});
+  writeFileSync(tmp,JSON.stringify(next,null,2),{mode:0o600,flush:true});
   renameSync(tmp,catalogPath);
   return next;
 }

@@ -1,5 +1,6 @@
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
+import {MEDIA_FILES} from '../server/fleet-photo-import.mjs';
 
 const site=(process.env.VITE_PUBLIC_SITE_ORIGIN||'').trim().replace(/\/$/,'');
 const backend=(process.env.MT_CRM_API_ORIGIN||'').trim().replace(/\/$/,'');
@@ -21,11 +22,16 @@ try{
  if(!existsSync(resolve(folder,'sitemap.xml'))||!existsSync(robots))throw Error('SEO sitemap/robots missing; check the public origin.');
  // Preserve API paths ahead of the SPA rewrite. Netlify's proxy does not
  // convert the existing file-based Node server into a durable service.
- const redirects='/api/*  '+api+'/api/:splat  200\n'+
-                  '/admin  /index.html  200\n'+
-                  '/stories  /index.html  200\n'+
-                  '/journeys/*  /index.html  200\n'+
-                  '/*  /index.html  200\n';
+ const redirects='/api/*  '+api+'/api/:splat  200!\n'+
+   Object.keys(MEDIA_FILES).map(p=>'/'+p.replace(/^public\//,'')+'  '+api+'/api/reviewed-media/'+p.split('/').at(-1)+'  200!\n').join('')+
+   '/admin  /admin/index.html  200\n'+
+   '/*  /404.html  404\n';
+ // Public pages have their own generated index.html; do not rewrite them to
+ // homepage HTML. Unknown URLs must return 404 rather than a soft-404 homepage.
+ if(process.env.CONTEXT && process.env.CONTEXT!=='production') {
+   writeFileSync(resolve(folder,'robots.txt'),'User-agent: *\nDisallow: /\n');
+   writeFileSync(resolve(folder,'_headers'),'/*\n  X-Robots-Tag: noindex, nofollow\n');
+ }
  writeFileSync(resolve(folder,'_redirects'),redirects);
  console.log('[netlify] Gated static build prepared for '+website);
  console.log('[netlify] External CRM proxy configured. Verify backend authentication, persistent storage and CORS on the actual deployment.');

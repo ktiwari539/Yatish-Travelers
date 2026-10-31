@@ -22,7 +22,7 @@ const localStudioReview={
 
 export default defineConfig({
   plugins: [react(),localStudioReview],
-  server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
+  server: { allowedHosts: ['terminal.local'], proxy: { '/api': 'http://127.0.0.1:8787' } },
   build: {
     target: 'es2022',
   },

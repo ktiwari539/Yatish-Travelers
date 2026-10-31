@@ -1,5 +1,7 @@
 # Mateshwari Travellers — local review
 
+Current launch evidence: [release report](docs/launch-readiness-2026-11-01.md) and [deployment/recovery runbook](docs/production-runbook.md). Public launch remains gated; existing design is preserved.
+
 This work remains on the draft PR branch `feature/mateshwari-cinematic-crm`. It is **not deployed or merged into main**.
 
 ## Start the full local website + CRM
@@ -11,7 +13,7 @@ cd ~/Projects/Yatish-Travelers
 git fetch origin
 git checkout feature/mateshwari-cinematic-crm
 git pull origin feature/mateshwari-cinematic-crm
-npm install
+npm ci
 npm run test:api
 npm run build
 CRM_ADMIN_TOKEN="YOUR_OWN_LONG_PRIVATE_TOKEN" npm run dev:full

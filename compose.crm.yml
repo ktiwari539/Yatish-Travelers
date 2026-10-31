@@ -1,0 +1,23 @@
+# Run only behind a TLS reverse proxy on the same host. Exactly one replica.
+services:
+  crm:
+    build:
+      context: .
+      dockerfile: Dockerfile.crm
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      CRM_ADMIN_TOKEN: ${CRM_ADMIN_TOKEN:?Set in the host secret manager}
+    volumes:
+      - crm-data:/data
+      # Existing media importer must also survive container replacement.
+      - crm-reviewed-media:/app/public/media
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    mem_limit: 512m
+volumes:
+  crm-data:
+  crm-reviewed-media:
