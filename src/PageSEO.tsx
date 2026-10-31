@@ -13,7 +13,7 @@ const setMeta=(key:'name'|'property',value:string,content:string)=>{
  if(!node){node=document.createElement('meta');node.setAttribute(key,value);document.head.appendChild(node);}
  node.content=content;
 };
-const publicOrigin=(import.meta.env.VITE_PUBLIC_SITE_ORIGIN||'').trim().replace(/\/$/,'');
+const publicOrigin=((import.meta as ImportMeta & {env?:Record<string,string>}).env?.VITE_PUBLIC_SITE_ORIGIN||'').trim().replace(/\/$/,'');
 export function PageSEO(){
  useEffect(()=>{
   const path=window.location.pathname.replace(/\/+$/,'')||'/';
