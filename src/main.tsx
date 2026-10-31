@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { PageSEO } from './PageSEO';
 import './styles.css';
 import './experience.css';
 import './premium-v3.css';
@@ -15,6 +16,7 @@ import './cinematic-refinement.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    <PageSEO />
     <App />
   </React.StrictMode>,
 );
