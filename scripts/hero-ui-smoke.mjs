@@ -592,6 +592,30 @@ async function smoke(){
  ensure(posts===1&&posted?.vehicle==='Maruti Ertiga'&&posted?.pickup==='Bhopal',
    'Fixture received one correctly selected vehicle enquiry');
  await enquiryPage.close();
+ // Explicit server-failure path: an unsuccessful isolated save must not show success.
+ const failurePage=await browser.newPage({viewport:{width:1280,height:800}});
+ await failurePage.route('**/api/enquiries',route=>route.fulfill({
+  status:503,contentType:'application/json',body:JSON.stringify({error:'Booking service temporarily unavailable'})
+ }));
+ await failurePage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ const failureIntro=failurePage.locator('.cinema-arrival-skip');
+ if(await failureIntro.count())await failureIntro.click();
+ await failurePage.locator('.premium-catalog-card[data-model="Maruti Ertiga"]')
+   .getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).click();
+ await failurePage.getByRole('button',{name:'Request Maruti Ertiga quotation'}).click();
+ const failureForm=failurePage.locator('.quote-form');
+ await failureForm.locator('[name="name"]').fill('Test Customer');
+ await failureForm.locator('[name="phone"]').fill('9876543210');
+ await failureForm.locator('[name="pickup"]').fill('Bhopal');
+ await failureForm.locator('[name="destination"]').fill('Jabalpur');
+ await failureForm.locator('[name="date"]').fill('2026-11-20');
+ await failureForm.locator('button[type="submit"]').click();
+ await failurePage.locator('.quote-api-error').waitFor({state:'visible'});
+ ensure((await failurePage.locator('.quote-api-error').innerText()).includes('temporarily unavailable'),
+  'A failed isolated CRM write displays an actionable error');
+ ensure(await failurePage.locator('.quote-success').count()===0,
+  'Failed booking cannot display a false success receipt');
+ await failurePage.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: single fleet gallery, genuine 360 gating, opt-in photo slideshow, three adventures, ten cars, quotes, mobile and Admin');
 }
