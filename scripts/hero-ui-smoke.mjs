@@ -566,6 +566,32 @@ async function smoke(){
  ensure(await tourDialog.getByRole('button',{name:'Enable automatic photo slideshow'}).isDisabled(),
   'Reduced-motion visitors cannot enable automatic photographic changes');
  await tourTest.close();
+ // Synthetic quotation acceptance, intercepted before the local CRM API.
+ const enquiryPage=await browser.newPage({viewport:{width:1280,height:800}});
+ let posts=0,posted=null;
+ await enquiryPage.route('**/api/enquiries',async route=>{
+   posts+=1;posted=route.request().postDataJSON();
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'QA-LOCAL-1',delivery:[]})});
+ });
+ await enquiryPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ const introQA=enquiryPage.locator('.cinema-arrival-skip');
+ if(await introQA.count())await introQA.click();
+ const cardQA=enquiryPage.locator('.premium-catalog-card[data-model="Maruti Ertiga"]');
+ await cardQA.getByRole('button',{name:'Open full-screen car studio for Maruti Ertiga'}).click();
+ await enquiryPage.getByRole('button',{name:'Request Maruti Ertiga quotation'}).click();
+ const formQA=enquiryPage.locator('.quote-form');
+ await formQA.locator('button[type="submit"]').click();
+ ensure(posts===0,'Required fields block empty enquiry submission');
+ await formQA.locator('[name="name"]').fill('Test Customer');
+ await formQA.locator('[name="phone"]').fill('9876543210');
+ await formQA.locator('[name="pickup"]').fill('Bhopal');
+ await formQA.locator('[name="destination"]').fill('Jabalpur');
+ await formQA.locator('[name="date"]').fill('2026-11-20');
+ await formQA.locator('button[type="submit"]').click();
+ await enquiryPage.locator('.quote-success').waitFor({state:'visible'});
+ ensure(posts===1&&posted?.vehicle==='Maruti Ertiga'&&posted?.pickup==='Bhopal',
+   'Fixture received one correctly selected vehicle enquiry');
+ await enquiryPage.close();
  ensure(failures.length===0,'No unhandled browser errors: '+failures.join('; '));
  console.log('PASS: single fleet gallery, genuine 360 gating, opt-in photo slideshow, three adventures, ten cars, quotes, mobile and Admin');
 }
