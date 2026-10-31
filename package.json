@@ -18,7 +18,8 @@
     "verify:fleet": "node scripts/verify-local-fleet.mjs",
     "studio:install": "node scripts/install-studio-review.mjs",
     "audit:fleet:browser": "node scripts/inspect-fleet-preview.mjs",
-    "seo:generate": "node scripts/generate-seo.mjs"
+    "seo:generate": "node scripts/generate-seo.mjs",
+    "build:netlify": "npm run build && node scripts/prepare-netlify.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.545.0",
