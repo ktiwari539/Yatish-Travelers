@@ -8,7 +8,7 @@
     "dev:full": "node scripts/dev.mjs",
     "api": "node server/crm.mjs",
     "test:api": "node --test server/*.test.mjs",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/generate-seo.mjs",
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "visuals:install": "node scripts/install-visuals.mjs",
@@ -17,7 +17,8 @@
     "media:install": "node scripts/install-complete-media.mjs",
     "verify:fleet": "node scripts/verify-local-fleet.mjs",
     "studio:install": "node scripts/install-studio-review.mjs",
-    "audit:fleet:browser": "node scripts/inspect-fleet-preview.mjs"
+    "audit:fleet:browser": "node scripts/inspect-fleet-preview.mjs",
+    "seo:generate": "node scripts/generate-seo.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.545.0",
