@@ -7,7 +7,7 @@ import { needsFleetPlateReview } from './mediaSafety';
 import { studioEditorialFor } from './studioPhotography';
 
 export type GalleryCar={
- name:string;image:string;gallery?:string[];
+ name:string;image:string;gallery?:string[];imageSource?:string;imageCredit?:string;license?:string;
 };
 export type GalleryPhoto={src:string;label:string;credit?:string;license?:string;page?:string;reviewPending:boolean};
 
@@ -68,6 +68,8 @@ export function buildFleetGallery(car:GalleryCar):GalleryPhoto[]{
    page:'https://commons.wikimedia.org/wiki/File:Suzuki_Ertiga_GX_1.5_-_Indonesia_International_Motor_Show_2018_-_Rear_view_-_April_26_2018.jpg'
   }:{};
   add({src,label:results.length===0?'Main view':'Alternate angle',
+   ...(src===car.image&&car.imageSource&&car.imageCredit&&car.license
+     ?{page:car.imageSource,credit:car.imageCredit,license:car.license}:{}),
    ...rearCredit,
    ...(editorial&&src===editorial.src?{credit:editorial.credit,license:editorial.license,page:editorial.page}:{}),
    reviewPending:Boolean((editorial&&src===editorial.src)||(ertigaRear&&isLocal()))});
