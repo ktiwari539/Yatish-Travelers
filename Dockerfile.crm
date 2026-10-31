@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends unzip ca-certif
 WORKDIR /app
 COPY --chown=node:node server ./server
 COPY --chown=node:node public ./public
-RUN mkdir -p /data && chown node:node /data /app/public/media
+RUN mkdir -p /data /app/public/media && chown node:node /data /app/public/media
 ENV NODE_ENV=production CRM_HOST=0.0.0.0 CRM_PORT=8787 CRM_STORAGE_ROOT=/data \
     CRM_DATA_FILE=/data/enquiries.jsonl CRM_EVENTS_FILE=/data/events.jsonl \
     CRM_NOTIFICATIONS_FILE=/data/notification-events.jsonl CRM_CATALOG_FILE=/data/catalog.json \
