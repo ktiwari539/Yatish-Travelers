@@ -53,3 +53,17 @@ https://docs.netlify.com/build/functions/overview/
 5. Do not enable Blaze billing or Firebase Storage/Cloud Functions for this free-only experiment. Firestore's managed backup and restore also require billing, so a separately tested data export/recovery process is essential.
 
 There is currently no real Firebase connectivity test or deployed Netlify Function. The POC's mock-based tests must not be presented as such.
+
+## Initial Admin identity configuration (2026-11-01)
+- Firebase Auth user exists: `mateshwaritravellers@gmail.com`.
+- Authorized initial UID for experimental server allowlist: `ejz9iejTasZMZSEc5nKnh7npNk72`.
+- `firebase-admin-auth.mjs` verifies an injected Firebase ID-token verifier **with revocation check**, enforces the UID allowlist and password provider, and requires a verified email address. All failures deny access. **It does not itself install the Firebase Admin SDK, deploy a Netlify Function, or configure the user in Firebase.**
+- The business email account's Google two-factor authentication is independent of Firebase Email/Password; do not assert Firebase Admin sign-in has MFA until explicitly implemented and tested.
+- To permit the first login in this prototype, arrange Firebase Authentication email verification for the user. Keep the Firestore rules at `allow read, write: if false` for direct clients.
+- Never put Firebase Admin private keys or privileged SDK objects into a React/Vite client bundle. Prefer secured server-side runtime environment and restrict actual UID in server-only configuration.
+
+## Next engineering work
+- Wire an actual Firebase Web SDK Auth sign-in view in a separate preview (no production route change).
+- Implement Netlify Functions with server-side token verification plus Firestore Admin SDK using a restricted service identity, and test with the Firebase Auth emulator / Firestore emulator or an isolated staging database; keep Cloud Firestore Spark quota in view.
+- Achieve feature parity for catalog, quotes, statuses, uploads, and backups before switching the real `/api/*` traffic.
+- Run full live-database end-to-end tests with only synthetic records, then review CI and private Netlify preview. This branch currently has only injected-contract tests, not real Firebase integration evidence.
