@@ -1,4 +1,4 @@
-name: Isolated Firebase POC
+name: Firebase CRM offline verification
 on:
   push:
     branches: [experiment/netlify-firebase-free-poc]

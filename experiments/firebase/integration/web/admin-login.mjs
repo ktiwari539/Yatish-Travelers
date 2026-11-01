@@ -22,7 +22,7 @@ export function createAdminLogin({auth,sdk,authorize,onChange=()=>{},now=()=>Dat
    message=approved===true?'Verified email and server authorization confirmed.':'Email verified. Admin CRM remains locked: this session was not authorized by the server.';
   }catch{
    if(!stillCurrent(version,user))return;
-   phase='denied';message='Admin CRM remains locked. The server could not authorize this session; retry when staging is configured.';
+   phase='denied';message='Admin CRM remains locked. The server could not authorize this session; retry when the server is configured.';
   }
   if(stillCurrent(version,user))publish();
  }
@@ -32,7 +32,7 @@ export function createAdminLogin({auth,sdk,authorize,onChange=()=>{},now=()=>Dat
   async signIn(email,password){
    if(busy)return;busy=true;phase='checking';message='';publish();
    try{const credential=await sdk.signInWithEmailAndPassword(auth,email,password);await check(credential.user);}
-   catch{phase='signed-out';message='Sign-in failed. Check your credentials and staging configuration.';}
+   catch{phase='signed-out';message='Sign-in failed. Check your credentials and server configuration.';}
    finally{busy=false;publish();}
   },
   async sendVerification(){
@@ -53,7 +53,7 @@ export function createAdminLogin({auth,sdk,authorize,onChange=()=>{},now=()=>Dat
   async adminToken(){
    const user=auth.currentUser,version=epoch;
    if(phase!=='authorized'||!user||user.emailVerified!==true)throw lockedError();
-   const token=await user.getIdToken(true);
+   const token=await user.getIdToken();
    if(!stillCurrent(version,user)||phase!=='authorized')throw lockedError();return token;
   }
  };
