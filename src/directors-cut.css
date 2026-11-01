@@ -1,0 +1,390 @@
+
+/* Signature journeys — director's cut
+   One integrated, layered, interactive scene instead of a rectangular poster.
+   All scenery is illustrative. Selected vehicle remains explicitly separate.
+*/
+.hero.cinematic-landing{
+  display:block;
+  position:relative;
+  isolation:isolate;
+  width:100%;
+  padding:0;
+  margin:0;
+  min-height:760px;
+  height:clamp(760px,94svh,990px);
+  background:#f7f3ea;
+  overflow:hidden;
+}
+.hero.cinematic-landing:before,
+.hero.cinematic-landing:after{display:none!important}
+.cinematic-landing .fleet-hero-slot{
+  position:absolute;
+  inset:clamp(8px,1vw,17px);
+  width:auto;height:auto;min-height:0;
+  margin:0;padding:0;
+  perspective:none;
+  transform:none!important;
+}
+.cinema-director{
+  --cinema-x:0px;--cinema-y:0px;--cinema-scroll-y:0px;
+  position:absolute;inset:0;
+  border-radius:clamp(19px,2.6vw,38px);
+  color:#fff8ed;
+  isolation:isolate;
+  overflow:hidden;
+  background:radial-gradient(circle at 70% 45%,#537767,#122b25 75%);
+  border:1px solid rgba(244,230,203,.2);
+  box-shadow:0 25px 65px rgba(22,52,34,.18);
+}
+.cinema-director-scenes{position:absolute;inset:0;overflow:hidden;background:#274a3d}
+.cinema-director-scene{
+  position:absolute;inset:-2%;overflow:hidden;
+  opacity:0;visibility:hidden;
+  transition:opacity 1.05s cubic-bezier(.22,.63,.2,1),visibility 1.05s;
+  will-change:opacity;
+  transform:translate3d(0,var(--cinema-scroll-y),0);
+}
+.cinema-director-scene.is-active{opacity:1;visibility:visible;z-index:1}
+.cinema-director-backdrop,.cinema-director-foreground{position:absolute;inset:0;overflow:hidden}
+.cinema-director-backdrop{animation:cinema-wide-breath 18s ease-in-out infinite alternate}
+.cinema-director-backdrop img{
+  position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center 50%;
+  transform:translate3d(var(--cinema-x),var(--cinema-y),0) scale(1.08);
+  transition:transform .23s ease-out;
+  filter:contrast(1.06) saturate(.93);
+}
+.cinema-director-foreground{
+  z-index:2;
+  opacity:.26;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.13) 62%,#000 100%);
+  mask-image:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.13) 62%,#000 100%);
+  transform:translate3d(0,13px,0) scale(1.055);
+  animation:cinema-foreground-drift 16s ease-in-out infinite alternate;
+  pointer-events:none
+}
+.cinema-director-foreground img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 50%;
+  filter:brightness(.74) saturate(.76);
+}
+.cinema-director-haze{
+  position:absolute;z-index:3;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 70% 31%,rgba(233,190,127,.19),transparent 37%),
+    radial-gradient(ellipse at 36% 82%,rgba(155,206,183,.12),transparent 46%);
+  animation:cinema-haze-glide 17s ease-in-out infinite alternate;
+  mix-blend-mode:screen;
+}
+.cinema-director-atmosphere{position:absolute;z-index:4;inset:0;pointer-events:none;overflow:hidden}
+.cinema-director-atmosphere span:first-child{
+  position:absolute;width:110%;height:31%;top:22%;left:-5%;opacity:.15;
+  background:linear-gradient(180deg,transparent 0%,rgba(244,224,184,.22) 50%,transparent 100%);
+  filter:blur(24px);
+  transform:rotate(-10deg);
+  animation:cinema-atmosphere-flow 13s ease-in-out infinite alternate;
+}
+.cinema-director-atmosphere span:nth-child(2){
+  position:absolute;z-index:1;left:-10%;top:-40%;width:39%;height:185%;opacity:.22;
+  background:linear-gradient(100deg,transparent 20%,rgba(241,216,164,.17) 49%,transparent 64%);
+  transform:rotate(10deg) translateX(-42%);
+  animation:cinema-light-pass 17s ease-in-out infinite;
+  filter:blur(24px);
+}
+.cinema-director-atmosphere span:nth-child(3){
+  position:absolute;inset:0;opacity:.1;
+  background-image:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,245,220,.08) 3.2px,transparent 3.5px);
+  background-size:100% 12px;
+  mix-blend-mode:overlay;
+}
+.cinema-director-scrim{
+  position:absolute;z-index:5;inset:0;pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(8,30,23,.84) 0%,rgba(8,30,23,.65) 30%,rgba(11,36,28,.17) 67%,rgba(10,34,25,.27) 100%),
+    linear-gradient(0deg,rgba(5,25,18,.95) 0%,rgba(7,28,20,.54) 19%,transparent 58%,rgba(7,24,20,.28) 100%);
+}
+.cinema-director-top{
+  position:absolute;z-index:9;
+  top:clamp(24px,3.6vw,55px);left:5.4%;right:5.4%;
+  display:flex;align-items:center;justify-content:space-between;gap:25px;
+  pointer-events:none
+}
+.cinema-director-eyebrow,.cinema-director-chapter{
+  display:flex;gap:9px;align-items:center;
+  font-size:10px;letter-spacing:.19em;font-weight:900;color:#f7ebd3;
+}
+.cinema-director-eyebrow i{
+  width:7px;height:7px;display:inline-block;flex:0 0 7px;
+  background:#f3cd8e;border-radius:50%;
+  box-shadow:0 0 17px rgba(241,205,145,.7)
+}
+.cinema-director-chapter{color:#e3e3d4}
+.cinema-director-chapter strong{margin-left:15px;color:#e2bf8d;font-size:11px}
+.cinema-director-caption{
+  position:absolute;z-index:8;
+  right:5.4%;top:27%;width:min(285px,24%);
+  text-align:right;pointer-events:none;
+}
+.cinema-director-vertical{
+  color:#ead4b3;font-size:9px;letter-spacing:.17em;font-weight:850;
+  display:block;padding-bottom:16px;border-bottom:1px solid rgba(243,230,195,.4)
+}
+.cinema-director-subtitle{display:block;margin-top:15px;font-size:16px;line-height:1.6;color:#f6f2e3;animation:cinema-caption-in .9s both}
+.cinema-director-bottom{
+  position:absolute;z-index:11;
+  bottom:150px;right:5.4%;
+  display:flex;align-items:center;justify-content:flex-end;gap:25px;
+  max-width:670px;
+}
+.cinema-director-vehicle{display:grid;gap:6px;text-align:right}
+.cinema-director-vehicle>span{font-size:9px;letter-spacing:.17em;color:#f0ce99;font-weight:900}
+.cinema-director-vehicle>strong{font-size:clamp(23px,2.4vw,37px);font-weight:800;line-height:1.02;letter-spacing:-.05em}
+.cinema-director-vehicle>small{color:#e2e7db;font-size:10px;line-height:1.5}
+.cinema-director-vehicle>small i{display:inline-block;width:3px;height:3px;border-radius:50%;background:#e9bc80;margin:0 5px 2px}
+.cinema-director-quote{
+  border:1px solid #f1e1c8;border-radius:99px;
+  background:#f6e8d2;color:#184131;
+  padding:14px 20px;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-weight:900;font-size:11px;white-space:nowrap;
+  transition:transform .25s,background .25s,box-shadow .25s;
+}
+.cinema-director-quote:hover{transform:translateY(-3px);background:#fff7ec;box-shadow:0 11px 24px rgba(0,0,0,.13)}
+.cinema-director-controls{
+  position:absolute;z-index:11;
+  left:5.4%;right:5.4%;bottom:76px;
+  display:grid;grid-template-columns:auto 1fr;align-items:center;gap:32px;
+  padding-top:15px;border-top:1px solid rgba(255,255,255,.29)
+}
+.cinema-director-scene-buttons{display:flex;align-items:center;gap:9px}
+.cinema-director-scene-buttons button{
+  width:36px;height:36px;display:grid;place-items:center;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.34);border-radius:50%;
+  color:#fffaf0;transition:background .2s
+}
+.cinema-director-scene-buttons button:hover{background:rgba(255,255,255,.18)}
+.cinema-director-scene-buttons button:disabled{opacity:.4;cursor:not-allowed}
+.cinema-director-scene-buttons span{display:flex;align-items:center;gap:7px;margin:0 4px;color:#f4e5c9;font-size:10px;font-weight:850;letter-spacing:.1em}
+.cinema-director-scene-buttons span i{height:1px;width:22px;background:rgba(240,226,192,.55)}
+.cinema-director-vehicle-tabs{
+  display:flex;align-items:center;justify-content:flex-end;gap:clamp(10px,1.6vw,24px);
+  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
+}
+.cinema-director-vehicle-tabs::-webkit-scrollbar{display:none}
+.cinema-director-vehicle-tabs button{
+  position:relative;flex:0 0 auto;
+  padding:10px 0 15px;border:0;border-radius:0;
+  background:none;color:rgba(238,239,223,.7);
+  font-size:11px;font-weight:780;
+  white-space:nowrap;transition:color .3s;
+}
+.cinema-director-vehicle-tabs button:after{
+  content:'';position:absolute;left:0;right:100%;height:2px;bottom:5px;background:#e9c18c;transition:right .35s ease
+}
+.cinema-director-vehicle-tabs button.active{color:#fffaf0;font-weight:900}
+.cinema-director-vehicle-tabs button.active:after{right:0}
+.cinema-director-vehicle-tabs button:hover{color:#fff}
+.cinema-director-playback{
+  position:absolute;z-index:13;left:5.4%;right:5.4%;bottom:47px;height:2px;
+  background:rgba(244,239,216,.19);overflow:hidden;pointer-events:none
+}
+.cinema-director-progress{
+  display:block;height:100%;width:100%;background:linear-gradient(90deg,#e2b97f,#fff1cd);
+  transform-origin:left;animation:cinema-progress var(--cinema-duration,4800ms) linear both
+}
+.cinema-director.is-paused .cinema-director-progress,
+.cinema-director.is-paused .cinema-director-backdrop,
+.cinema-director.is-paused .cinema-director-foreground,
+.cinema-director.is-paused .cinema-director-atmosphere span,
+.cinema-director.is-paused .cinema-director-haze{animation-play-state:paused}
+.cinema-director-legal{
+  position:absolute;z-index:11;left:5.4%;right:5.4%;bottom:16px;margin:0;
+  font-size:8px;font-weight:700;letter-spacing:.08em;color:#d0d7cb;
+  pointer-events:none;
+}
+.cinematic-landing .hero-copy.cinematic-landing-copy{
+  position:absolute;z-index:10;
+  top:48%;left:7%;
+  transform:translateY(-49%);
+  padding:0;
+  width:min(620px,46%);
+  max-width:620px;
+  margin:0;
+  display:block;
+  background:none;
+  color:#fffaf0;
+}
+.hero.cinematic-landing .hero-copy .eyebrow{
+  color:#efcc98;font-size:10px;letter-spacing:.19em;font-weight:900;
+}
+.hero.cinematic-landing .hero-copy h1{
+  color:#fffaf0;
+  font-size:clamp(59px,6.4vw,111px);
+  letter-spacing:-.078em;
+  line-height:.99;
+  margin:22px 0 24px;
+  max-width:680px;
+  font-weight:800;
+  text-shadow:0 3px 22px rgba(0,0,0,.12);
+}
+.hero.cinematic-landing .hero-copy h1 em{
+  font-family:Georgia,serif;
+  font-weight:500;color:#efd4a7;
+  letter-spacing:-.055em;
+}
+.hero.cinematic-landing .hero-copy>p{
+  font-size:clamp(12px,1.02vw,15px);
+  color:#f1efe2;line-height:1.8;max-width:500px;
+  margin:0 0 28px;
+}
+.hero.cinematic-landing .hero-actions{
+  margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+}
+.hero.cinematic-landing .hero-actions .primary{
+  border:1px solid #f4e8d2;
+  border-radius:99px;
+  padding:15px 23px;
+  background:#f4e5cf;
+  color:#194332;font-size:11px;font-weight:900;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 12px 26px rgba(4,30,18,.16);
+  transition:transform .25s,background .25s;
+}
+.hero.cinematic-landing .hero-actions .primary:hover{transform:translateY(-3px);background:#fff6e6}
+.hero.cinematic-landing .hero-whatsapp{
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.47);border-radius:99px;
+  padding:14px 19px;
+  background:rgba(16,58,38,.24);
+  color:#fff8e8;font-weight:800;font-size:11px;
+  backdrop-filter:blur(9px)
+}
+.hero.cinematic-landing .hero-whatsapp:hover{background:rgba(255,255,255,.12)}
+.hero.cinematic-landing .hero-fleet-link{
+  color:#f1e6d1;font-weight:850;font-size:11px;
+  display:inline-flex;gap:6px;align-items:center;padding:12px 7px
+}
+.hero.cinematic-landing .hero-fleet-link:hover{color:#fff}
+.cinematic-landing .cinematic-landing-email{
+  display:inline-flex;align-items:center;gap:8px;margin-top:23px;
+  color:#e9dcc5;font-size:11px;font-weight:680;
+  text-underline-offset:4px
+}
+.cinematic-landing .cinematic-landing-email:hover{color:#fff8e9;text-decoration:underline}
+.cinematic-landing-scroll{
+  position:absolute;z-index:10;bottom:112px;left:7%;
+  display:flex;align-items:center;gap:14px;
+  pointer-events:none;color:#e6d8b9;font-size:9px;letter-spacing:.17em;font-weight:800;
+}
+.cinematic-landing-scroll i{height:1px;width:48px;background:#edc88e}
+@keyframes cinema-wide-breath{from{transform:scale(1.02)}to{transform:scale(1.12)}}
+@keyframes cinema-foreground-drift{from{transform:translate3d(-5px,12px,0) scale(1.05)}to{transform:translate3d(8px,30px,0) scale(1.11)}}
+@keyframes cinema-haze-glide{from{transform:translateX(-1%);opacity:.5}to{transform:translateX(3%);opacity:.89}}
+@keyframes cinema-atmosphere-flow{from{transform:rotate(-10deg) translateX(-12%)}to{transform:rotate(-10deg) translateX(22%)}}
+@keyframes cinema-light-pass{0%,15%{transform:rotate(10deg) translateX(-42%);opacity:0}43%{opacity:.2}58%,100%{transform:rotate(10deg) translateX(255%);opacity:0}}
+@keyframes cinema-caption-in{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:none}}
+@keyframes cinema-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* Tablet: keep the scene visually dominant and all controls accessible. */
+@media(min-width:761px) and (max-width:1180px){
+  .hero.cinematic-landing{min-height:760px;height:880px;padding:0}
+  .cinematic-landing .hero-copy.cinematic-landing-copy{top:43%;left:7%;width:59%}
+  .hero.cinematic-landing .hero-copy h1{font-size:clamp(63px,8vw,99px)}
+  .cinema-director-scrim{background:linear-gradient(90deg,rgba(7,29,23,.88),rgba(8,33,25,.57) 55%,rgba(11,38,27,.15)),linear-gradient(0deg,rgba(4,24,17,.94),transparent 55%)}
+  .cinema-director-caption{top:24%;right:5%;width:21%}
+  .cinema-director-bottom{right:5%;bottom:173px}
+  .cinema-director-controls{grid-template-columns:1fr;gap:5px;bottom:67px}
+  .cinema-director-scene-buttons{justify-content:flex-end}
+  .cinema-director-vehicle-tabs{justify-content:flex-start;gap:23px}
+  .cinema-director-playback{bottom:42px}
+  .cinema-director-legal{bottom:15px}
+  .cinematic-landing-scroll{bottom:175px}
+}
+/* Phone: cinematic image remains full-bleed, but no automatic image movement or cramped fixed widgets. */
+@media(max-width:760px){
+  .hero.cinematic-landing{height:820px;min-height:820px;padding:0;overflow:hidden}
+  .cinematic-landing .fleet-hero-slot{inset:5px}
+  .cinema-director{border-radius:21px}
+  .cinema-director-backdrop img{object-position:60% center;transform:scale(1.035)!important}
+  .cinema-director-foreground{display:none}
+  .cinema-director-haze{opacity:.55}
+  .cinema-director-scrim{
+    background:linear-gradient(180deg,rgba(5,26,18,.52),rgba(7,28,20,.7) 43%,rgba(5,24,17,.93) 87%,rgba(4,20,15,.98)),
+    linear-gradient(90deg,rgba(5,25,18,.34),transparent 90%);
+  }
+  .cinema-director-top{top:22px;left:6%;right:6%}
+  .cinema-director-eyebrow{font-size:8px;letter-spacing:.12em}
+  .cinema-director-chapter{display:none}
+  .cinema-director-caption{top:53%;left:6%;right:6%;width:auto;text-align:left}
+  .cinema-director-vertical{display:none}
+  .cinema-director-subtitle{font-size:11px;opacity:.83}
+  .cinematic-landing .hero-copy.cinematic-landing-copy{
+    position:absolute;top:30%;left:7%;right:7%;width:auto;max-width:none;
+    transform:translateY(-22%)
+  }
+  .hero.cinematic-landing .hero-copy .eyebrow{font-size:8px;letter-spacing:.12em}
+  .hero.cinematic-landing .hero-copy h1{
+    font-size:clamp(51px,12vw,72px);line-height:.98;margin:14px 0 18px;max-width:460px
+  }
+  .hero.cinematic-landing .hero-copy>p{font-size:12px;line-height:1.55;max-width:380px;margin-bottom:21px}
+  .hero.cinematic-landing .hero-actions{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:9px}
+  .hero.cinematic-landing .hero-actions .primary,
+  .hero.cinematic-landing .hero-whatsapp{padding:13px 10px;font-size:10px;white-space:nowrap;min-width:0}
+  .hero.cinematic-landing .hero-fleet-link{grid-column:1/-1;justify-content:start;padding:8px 3px;font-size:11px}
+  .cinematic-landing .cinematic-landing-email{font-size:10px;margin-top:10px}
+  .cinema-director-bottom{
+    left:6%;right:6%;bottom:161px;
+    align-items:center;justify-content:space-between;gap:12px;
+  }
+  .cinema-director-vehicle{text-align:left;gap:3px}
+  .cinema-director-vehicle>span{font-size:8px}
+  .cinema-director-vehicle>strong{font-size:23px}
+  .cinema-director-vehicle>small{font-size:9px}
+  .cinema-director-quote{padding:11px 12px;font-size:9px;gap:4px;max-width:143px}
+  .cinema-director-controls{
+    left:6%;right:6%;bottom:60px;
+    display:flex;flex-direction:column-reverse;align-items:stretch;gap:7px;
+    padding-top:8px;
+  }
+  .cinema-director-scene-buttons{justify-content:flex-end;gap:7px}
+  .cinema-director-scene-buttons button{width:31px;height:31px}
+  .cinema-director-vehicle-tabs{justify-content:flex-start;gap:19px}
+  .cinema-director-vehicle-tabs button{font-size:10px;padding:8px 0 11px}
+  .cinema-director-playback{left:6%;right:6%;bottom:38px}
+  .cinema-director-legal{left:6%;right:6%;bottom:13px;font-size:7px;letter-spacing:0;line-height:1.3}
+  .cinematic-landing-scroll{display:none}
+}
+@media(max-width:390px){
+  .hero.cinematic-landing{height:790px;min-height:790px}
+  .hero.cinematic-landing .hero-copy h1{font-size:46px}
+  .hero.cinematic-landing .hero-copy>p{font-size:11px}
+  .cinema-director-bottom{bottom:153px}
+  .cinema-director-vehicle>strong{font-size:20px}
+  .cinema-director-quote{font-size:8px;padding:10px}
+}
+/* Reduced motion means genuinely static backgrounds and scenes, not constant zoom. */
+@media(prefers-reduced-motion:reduce){
+  .cinema-director-scene,.cinema-director-backdrop,.cinema-director-foreground,
+  .cinema-director-atmosphere span,.cinema-director-haze,.cinema-director-progress,
+  .cinema-director-subtitle{animation:none!important;transition:none!important;transform:none!important}
+  .cinema-director-backdrop img{transform:none!important;transition:none!important}
+  .cinema-director-progress{transform:scaleX(1)}
+}
+
+/* Quick transitions are controlled, not abrupt. Reduced contrast keeps labels readable. */
+.cinema-director-legal{font-size:9px;line-height:1.4;letter-spacing:.045em;opacity:.85;white-space:nowrap}
+@media(max-width:760px){.cinema-director-legal{font-size:8px;white-space:normal;max-width:87%}}
+
+/* October 2026 polish: keep signature label clear of the fixed pill navigation. */
+@media(min-width:1181px){
+  .cinema-director-top{top:113px}
+}
+@media(min-width:761px) and (max-width:1180px){
+  .cinema-director-top{top:105px}
+}
+@media(max-width:760px){
+  .cinema-director-top{top:83px}
+  .cinema-director-backdrop,
+  .cinema-director-foreground,
+  .cinema-director-atmosphere span,
+  .cinema-director-haze{animation:none!important}
+}
+.cinematic-landing-scroll{display:none!important}

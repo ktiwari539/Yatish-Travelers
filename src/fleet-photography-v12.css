@@ -1,0 +1,93 @@
+/* Reviewed user-supplied vehicle photographs; studio-grade presentation without
+   replacing the real model with CGI or another manufacturer's vehicle. */
+.fleet-editorial-rail {
+ display:flex!important;
+ flex-wrap:nowrap!important;
+ overflow-x:auto;
+ overflow-y:hidden;
+ scroll-snap-type:x mandatory;
+ scroll-padding-inline:12px;
+ overscroll-behavior-x:contain;
+ gap:15px;
+ padding:5px 4px 19px;
+ -webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;
+ scrollbar-color:#a88b66 #e3e5dc;
+}
+.fleet-editorial-tile {
+ position:relative;
+ flex:0 0 clamp(205px,19vw,256px)!important;
+ min-width:0;
+ scroll-snap-align:start;
+ scroll-snap-stop:normal;
+}
+.fleet-editorial-tile:focus-visible {
+ outline:3px solid #b58c55;
+ outline-offset:3px;
+}
+.fleet-rail-browse{display:flex;align-items:center;gap:8px;}
+.fleet-rail-browse span{font-size:10px;color:#9c7a50;font-weight:850;letter-spacing:.08em;margin-right:7px;}
+.fleet-rail-browse button{
+ display:grid;place-items:center;
+ width:36px;height:36px;border:1px solid #d1d6c9;
+ border-radius:50%;background:#fffef9;
+ color:#1b4b36;cursor:pointer;
+ transition:transform .2s,background .2s,border-color .2s;
+}
+.fleet-rail-browse button:hover,.fleet-rail-browse button:focus-visible{
+ background:#e9efe5;border-color:#95ac97;transform:translateY(-1px)
+}
+.fleet-editorial-tile-photo[data-vehicle="Mahindra Thar"],
+.fleet-card[data-model="Mahindra Thar"] .premium-catalog-visual{
+ background:radial-gradient(circle at 57% 38%,#edf1e6 0,#c8d7c6 62%,#9cad9e 100%);
+}
+.fleet-editorial-tile-photo[data-vehicle="Mahindra Thar"]>img,
+.fleet-card[data-model="Mahindra Thar"] .premium-catalog-visual>img{
+ object-fit:contain!important;
+ object-position:center!important;
+ filter:none!important;
+ padding:5px 10px!important;
+ box-sizing:border-box;
+}
+.fleet-road-stage[data-model="Mahindra Thar"] .fleet-editorial-picture{
+ background:radial-gradient(circle at 56% 40%,#f3f1df 0%,#c8d5c2 60%,#8ea990 100%);
+}
+.fleet-road-stage[data-model="Mahindra Thar"] .fleet-editorial-picture>img{
+ object-fit:contain!important;
+ object-position:center!important;
+ box-sizing:border-box;
+ padding:clamp(20px,3vw,46px)!important;
+ filter:none!important;
+ transform:translate3d(calc(var(--road-car-offset) * .22),0,0) scale(1.035)!important;
+}
+.fleet-road-stage[data-model="Mahindra Thar"] .fleet-editorial-gradient{
+ background:linear-gradient(0deg,rgba(9,29,23,.75),transparent 27%)!important;
+}
+.fleet-road-stage[data-model="Mahindra XUV700"] .fleet-editorial-picture>img {
+ object-position:center 55%!important;
+ filter:saturate(1.04) contrast(1.04) brightness(1.07)!important;
+}
+.fleet-road-stage[data-model="Tempo Traveller"] .fleet-editorial-picture>img {
+ object-position:center!important;
+ filter:saturate(.95) contrast(1.07) brightness(1.09)!important;
+}
+.fleet-card[data-model="Mahindra XUV700"] .premium-catalog-visual>img{
+ object-position:center 52%;
+}
+.fleet-editorial-picture:has(.fleet-model-image-missing) .fleet-editorial-gradient{
+ background:none!important;
+}
+@media(max-width:760px){
+ .fleet-editorial-rail{gap:12px;padding-bottom:16px}
+ .fleet-editorial-tile{flex-basis:clamp(190px,63vw,240px)!important}
+ .fleet-rail-browse span{display:none}
+ .fleet-rail-browse button{height:32px;width:32px}
+ .fleet-road-stage[data-model="Mahindra Thar"] .fleet-editorial-picture>img{
+  transform:none!important;
+  padding:15px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .fleet-editorial-rail{scroll-behavior:auto}
+ .fleet-road-stage[data-model="Mahindra Thar"] .fleet-editorial-picture>img{transform:none!important;}
+}

@@ -1,0 +1,74 @@
+/* V21 — visible, paced vehicle switching and premium editorial framing. */
+.garage-luxe-v19 .ride-studio-stage.is-switching .ride-studio-image-action,
+.garage-luxe-v19 .ride-studio-stage.is-switching .ride-studio-interactive-3d{
+ animation:mtGarageOldCarOut .31s cubic-bezier(.45,0,.78,.45) forwards!important;
+ pointer-events:none;
+}
+.garage-luxe-v19 .ride-studio-stage.is-switching .ride-studio-stage-footer,
+.garage-luxe-v19 .ride-studio-panel.is-switching .ride-studio-panel-heading{
+ animation:mtGarageOldTextOut .25s ease-in forwards;
+}
+.garage-luxe-v19 .ride-studio-image-action{will-change:transform,opacity;animation:mtGarageNewCarIn .65s cubic-bezier(.13,.62,.14,1) both;}
+.garage-luxe-v19 .ride-studio-interactive-3d{will-change:transform,opacity;animation:mtGarageNewCarIn .75s cubic-bezier(.13,.62,.14,1) both;}
+.garage-luxe-v19 .ride-studio-panel-heading{animation:mtGarageTextIn .6s .06s ease both;}
+.garage-luxe-v19 .ride-studio-reveal{
+ animation:mtGarageRevealFlash 1.15s cubic-bezier(.1,.55,.2,1) both;
+ pointer-events:none;
+}
+.garage-luxe-v19 .ride-studio-vehicle-frame.is-editorial{
+ width:min(92%,1050px)!important;
+ height:min(92%,585px)!important;
+ background:linear-gradient(145deg,#101c2a,#273950)!important;
+ box-shadow:0 30px 95px rgba(0,0,0,.35)!important;
+ border-radius:18px!important;overflow:hidden;
+}
+.garage-luxe-v19 .ride-studio-vehicle-frame.is-editorial .ride-studio-car-image{
+ object-fit:contain!important;object-position:center!important;
+ max-width:100%;max-height:100%;
+ filter:none!important;
+}
+.garage-luxe-v19 .ride-studio-photo-credit{
+ color:#a5bed8;
+ font-size:9px;line-height:1.55;
+ margin:6px 0 10px;
+}
+.garage-luxe-v19 .ride-studio-photo-credit a{
+ color:#bbdcff;text-decoration:underline;text-underline-offset:3px;
+}
+.garage-luxe-v19 .ride-studio-mode-switch button:focus-visible{
+ outline:3px solid #fff;outline-offset:3px;
+}
+@keyframes mtGarageOldCarOut{
+ 0%{transform:perspective(1100px) rotateY(0) translate3d(0,0,0) scale(1);opacity:1;filter:blur(0)}
+ 60%{transform:perspective(1100px) rotateY(-11deg) translate3d(-9%,1%,0) scale(.91);opacity:.78;filter:blur(2px)}
+ 100%{transform:perspective(1100px) rotateY(-18deg) translate3d(-28%,5%,0) scale(.76);opacity:0;filter:blur(10px)}
+}
+@keyframes mtGarageOldTextOut{to{opacity:0;transform:translateY(-10px)}}
+@keyframes mtGarageNewCarIn{
+ from{opacity:0;transform:perspective(1100px) rotateY(15deg) translate3d(22%,2%,0) scale(.80);filter:blur(8px)}
+ 63%{opacity:1;filter:blur(0)}
+ to{opacity:1;transform:perspective(1100px) rotateY(0deg) translate3d(0,0,0) scale(1);filter:blur(0)}
+}
+@keyframes mtGarageTextIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mtGarageRevealFlash{
+ 0%,18%{opacity:.92;visibility:visible}
+ 47%{opacity:.54}
+ 90%,100%{opacity:0;visibility:hidden}
+}
+@media(max-width:760px){
+ .garage-luxe-v19 .ride-studio-vehicle-frame.is-editorial{
+  width:100%!important;height:100%!important;
+ }
+ .garage-luxe-v19 .ride-studio-photo-credit{font-size:9px;}
+}
+@media(prefers-reduced-motion:reduce){
+ .garage-luxe-v19 .ride-studio-stage.is-switching .ride-studio-image-action,
+ .garage-luxe-v19 .ride-studio-stage.is-switching .ride-studio-interactive-3d,
+ .garage-luxe-v19 .ride-studio-stage.is-switching .ride-studio-stage-footer,
+ .garage-luxe-v19 .ride-studio-panel.is-switching .ride-studio-panel-heading,
+ .garage-luxe-v19 .ride-studio-image-action,
+ .garage-luxe-v19 .ride-studio-interactive-3d,
+ .garage-luxe-v19 .ride-studio-panel-heading,
+ .garage-luxe-v19 .ride-studio-reveal{animation:none!important;transform:none!important;filter:none!important;opacity:1}
+ .garage-luxe-v19 .ride-studio-reveal{visibility:hidden!important;opacity:0!important}
+}

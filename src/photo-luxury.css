@@ -1,0 +1,237 @@
+/* Mateshwari Travellers / premium photographic direction
+   Photos of actual vehicle models lead. 3D viewer is reserved for uploaded accurate GLB files. */
+:root{--gallery-ink:#152c24;--gallery-ivory:#f8f3e9;--gallery-gold:#bf8e55}
+.hero{background:radial-gradient(ellipse at 92% 5%,rgba(200,157,98,.16),transparent 40%),linear-gradient(123deg,#fefcf6 0%,#f8f1e5 58%,#e6e9e0 100%)}
+.hero h1{font-weight:800;letter-spacing:-.068em;color:#1c392c}
+.hero h1 em{color:#936c40}
+.hero-copy>p{color:#53695a}
+.car-stage{min-height:565px;perspective:1200px}
+.car-stage .road-lines{display:none}
+.hero-poster.luxury-hero-photo{
+  position:absolute;right:0;top:8%;width:100%;height:478px;padding:0;
+  background:#c6cfc2;overflow:hidden;isolation:isolate;
+  border-radius:26px;border:1px solid rgba(36,62,44,.10);
+  box-shadow:0 30px 80px rgba(27,54,36,.19),0 8px 20px rgba(34,52,33,.11);
+  transform:none!important;animation:none!important;
+  transition:box-shadow .45s ease,transform .45s cubic-bezier(.2,.8,.2,1)!important
+}
+.hero-poster.luxury-hero-photo:before,.hero-poster.luxury-hero-photo:after{display:none}
+.hero-poster.luxury-hero-photo:hover{box-shadow:0 40px 96px rgba(27,54,36,.26)}
+.luxury-hero-photo-layer{position:absolute;inset:0;overflow:hidden;animation:luxuryPhotoArrive .8s both}
+.luxury-hero-photo-layer .hero-car-image{
+ position:absolute;inset:0;width:100%;height:100%;
+ object-fit:cover;object-position:center 46%;
+ transform:scale(calc(1.025 + var(--photo-y,0)*.023)) translate3d(calc(var(--photo-x,0)*-10px),calc(var(--photo-y,0)*-8px),0);
+ filter:saturate(.91) brightness(.98) contrast(1.04);
+ border-radius:0!important;
+ transition:transform .22s linear;
+}
+.luxury-hero-photo-wash{
+ position:absolute;inset:0;z-index:2;pointer-events:none;
+ background:linear-gradient(180deg,rgba(12,32,25,.30) 0%,transparent 34%,rgba(8,31,21,.10) 48%,rgba(7,24,17,.86) 100%),
+  linear-gradient(115deg,rgba(30,40,28,.07),transparent 58%);
+}
+.luxury-hero-corner{
+ position:absolute;z-index:4;left:25px;top:24px;
+ color:#fff7e6;letter-spacing:.13em;font-size:10px;font-weight:850;
+ display:inline-flex;align-items:center;gap:9px;padding:12px 15px;border-radius:99px;
+ border:1px solid rgba(255,255,255,.28);
+ background:rgba(19,49,36,.47);backdrop-filter:blur(13px)
+}
+.luxury-light-dot{width:7px;height:7px;border-radius:50%;background:#ebc688;box-shadow:0 0 14px #ebc688}
+.luxury-hero-photo-caption{
+ position:absolute;z-index:4;left:30px;right:30px;bottom:25px;
+ display:flex;justify-content:space-between;align-items:end;gap:20px;color:#fff7e9
+}
+.luxury-hero-photo-caption>div>span{font-size:9px;font-weight:850;letter-spacing:.18em;color:#e6bd83}
+.luxury-hero-photo-caption h2{color:#fffdf4;font-size:clamp(30px,3vw,48px);letter-spacing:-.06em;line-height:1.03;margin:8px 0}
+.luxury-hero-photo-caption p{display:flex;gap:10px;align-items:center;margin:0;color:#e6e7de;font-size:11px}
+.luxury-hero-photo-caption i{height:3px;width:3px;background:#cfb386;border-radius:50%}
+.luxury-gallery-indicator{color:#efe6d7;font-size:11px;font-weight:800;letter-spacing:.14em}
+.luxury-hero-edition{position:absolute;z-index:5;right:23px;top:27px;color:#eae9df;letter-spacing:.15em;font-size:8px;font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+.car-stage .floating-card{
+ right:0;bottom:3%;z-index:11;padding:16px 19px;background:rgba(255,253,247,.97);
+ border:1px solid rgba(33,62,42,.14);border-radius:17px;box-shadow:0 15px 30px rgba(16,47,27,.16)
+}
+.car-stage .floating-card strong{color:#9e7449;font-size:23px}
+.car-stage .motion-pill{left:0;bottom:1%;background:rgba(255,252,245,.96);box-shadow:0 8px 22px rgba(20,50,31,.08)}
+.car-stage .hero-vehicle-picker{bottom:-52px;left:0;right:0;justify-content:center}
+.hero-vehicle-option{box-shadow:0 10px 30px rgba(11,37,22,.08)}
+@keyframes luxuryPhotoArrive{from{opacity:.4;transform:scale(1.025) translateY(15px)}to{opacity:1;transform:none}}
+/* Photographic collection — soft cinematic museum composition */
+.luxury-showroom{height:220vh;position:relative;background:#12271f;color:#f9f6eb;isolation:isolate;scroll-margin-top:0}
+.luxury-showroom-sticky{
+ position:sticky;top:0;display:flex;flex-direction:column;justify-content:space-between;
+ height:100svh;min-height:640px;overflow:hidden;padding:28px 5.4vw 20px;
+ background:
+ radial-gradient(ellipse at 76% 52%,rgba(187,142,93,.17),transparent 51%),
+ radial-gradient(ellipse at 10% 92%,rgba(92,137,107,.10),transparent 36%),
+ linear-gradient(120deg,#11271f 0%,#254437 74%,#1e3b2d 100%);
+}
+.luxury-showroom-sticky:before{
+ content:'MATESHWARI';position:absolute;right:-1%;top:14%;white-space:nowrap;
+ font-weight:900;font-size:clamp(130px,18vw,310px);letter-spacing:-.1em;
+ opacity:.025;pointer-events:none
+}
+.luxury-showroom-top{display:flex;align-items:center;justify-content:space-between;gap:15px;position:relative;z-index:4;
+ border-bottom:1px solid rgba(255,255,255,.18);padding:0 0 14px;font-size:9px;letter-spacing:.17em;font-weight:800;color:#dae4d2}
+.luxury-showroom-top span{display:inline-flex;align-items:center;gap:9px}
+.luxury-showroom-top span:first-child{color:#e6be86}
+.luxury-showroom-heading{display:flex;position:relative;z-index:3;justify-content:space-between;gap:28px;align-items:end;margin:15px 0 3px}
+.luxury-showroom-heading>div>span{color:#d6b17f;font-size:9px;font-weight:900;letter-spacing:.18em}
+.luxury-showroom-heading h2{font-weight:800;letter-spacing:-.065em;font-size:clamp(38px,4.8vw,76px);margin:5px 0;line-height:1.04}
+.luxury-showroom-heading h2 em{color:#edc694;font-family:Georgia,serif;font-weight:500}
+.luxury-showroom-heading>p{color:#c1d0c2;font-size:12px;line-height:1.7;max-width:320px;margin:0 0 7px}
+.luxury-showroom-main{flex:1;display:grid;grid-template-columns:31% 69%;align-items:center;min-height:0;gap:0;position:relative;z-index:5}
+.luxury-showroom-copy{padding:20px 8px 24px 0;position:relative;z-index:8;min-width:0}
+.luxury-showroom-index{font-size:14px;letter-spacing:.12em;color:#c0c7b8}
+.luxury-showroom-index span{font-family:Georgia,serif;color:#e9c38e;font-size:clamp(55px,7vw,110px);line-height:1.04;font-weight:400;letter-spacing:-.075em}
+.luxury-showroom-kicker{display:block;color:#d6b188;font-size:10px;font-weight:800;letter-spacing:.13em;margin-top:18px}
+.luxury-showroom-copy h3{font-size:clamp(30px,3vw,50px);letter-spacing:-.05em;line-height:1.07;margin:10px 0;color:#fffaf0;animation:luxuryCopyIn .5s ease both}
+.luxury-showroom-copy>p{font-size:12px;color:#d1d6cb;display:flex;align-items:center;gap:8px;flex-wrap:wrap;line-height:1.5}
+.luxury-showroom-copy>p i{width:4px;height:4px;background:#e0b883;border-radius:50%}
+.luxury-showroom-rule{height:1px;background:linear-gradient(90deg,rgba(255,255,255,.25),transparent);margin:20px 0}
+.luxury-showroom-note{display:block;color:#bac5b7;font-size:11px;line-height:1.7;max-width:280px}
+.luxury-showroom-cta{margin:23px 0 18px;background:#f6e5cb;color:#193d2d;border:0;border-radius:100px;
+ display:inline-flex;align-items:center;gap:12px;padding:15px 21px;font-size:12px;font-weight:850;
+ transition:transform .24s,background .24s;box-shadow:0 12px 25px rgba(0,0,0,.1)}
+.luxury-showroom-cta:hover{transform:translateY(-4px);background:#fff4df}
+.luxury-showroom-nav{display:flex;align-items:center;gap:12px}
+.luxury-showroom-nav button{width:37px;height:37px;display:grid;place-items:center;border-radius:50%;
+ color:#f5e9d7;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.04)}
+.luxury-showroom-nav button:hover{background:rgba(255,255,255,.2)}
+.luxury-showroom-nav>span{font-size:9px;letter-spacing:.11em;color:#bfc9ba;font-weight:750}
+.luxury-showroom-visual{position:relative;min-height:360px;height:min(54vh,575px);perspective:1200px;isolation:isolate;--tilt-x:0;--tilt-y:0}
+.luxury-showroom-halo{position:absolute;inset:2% 9% 0 11%;border:1px solid rgba(236,214,173,.15);border-radius:42%;
+ background:radial-gradient(ellipse at 53% 52%,rgba(226,197,145,.16),transparent 65%);
+ transform:translate3d(calc(var(--tilt-x)*-20px),calc(var(--tilt-y)*-16px),0)}
+.luxury-showroom-halo:after{content:'';position:absolute;inset:14%;border:1px solid rgba(230,207,170,.14);border-radius:50%}
+.luxury-showroom-photo{
+ position:absolute;inset:5% 7% 5% 8%;z-index:4;border-radius:23px;
+ overflow:hidden;background:#a3b0a5;border:1px solid rgba(255,255,255,.25);
+ box-shadow:0 33px 74px rgba(0,0,0,.34),0 0 0 7px rgba(255,255,255,.04);
+ transform:translate3d(calc(var(--tilt-x)*-17px),calc(var(--tilt-y)*-12px),0)
+   rotateY(calc(var(--tilt-x)*-4deg)) rotateX(calc(var(--tilt-y)*4deg));
+ transition:box-shadow .3s;
+ animation:luxuryVisualEnter .7s ease both;
+}
+.luxury-showroom-photo:hover{box-shadow:0 40px 88px rgba(0,0,0,.42)}
+.luxury-showroom-photo img{height:100%;width:100%;display:block;object-fit:cover;object-position:center center;filter:saturate(.92) contrast(1.05) brightness(.96)}
+.luxury-showroom-photo .vehicle-webgl{height:100%;width:100%}
+.luxury-showroom-photo-shade{position:absolute;pointer-events:none;inset:0;background:linear-gradient(180deg,rgba(4,19,13,.10),transparent 62%,rgba(6,24,17,.72) 100%)}
+.luxury-showroom-photo-label{position:absolute;left:22px;bottom:20px;right:20px;z-index:5;display:flex;align-items:center;gap:9px;color:#fffaee;font-size:10px;letter-spacing:.12em;font-weight:900}
+.luxury-showroom-side{position:absolute;top:36%;width:135px;height:145px;display:grid;grid-template-rows:1fr auto;padding:6px;
+ border-radius:15px;background:rgba(230,217,184,.9);border:1px solid rgba(255,255,255,.7);
+ z-index:3;box-shadow:0 20px 40px rgba(0,0,0,.28);transition:transform .3s ease}
+.luxury-showroom-side:hover{z-index:6}
+.luxury-showroom-side img{width:100%;height:108px;object-fit:cover;border-radius:9px;filter:saturate(.8)}
+.luxury-showroom-side span{display:block;color:#234332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;font-size:9px;letter-spacing:-.02em;padding:7px 5px 3px}
+.luxury-showroom-side-left{left:-1%;transform:translateY(9%) rotate(-10deg) scale(.82)}
+.luxury-showroom-side-right{right:-2%;transform:translateY(-7%) rotate(9deg) scale(.82)}
+.luxury-showroom-side-left:hover{transform:translateY(8%) rotate(-3deg) scale(.96)}
+.luxury-showroom-side-right:hover{transform:translateY(-9%) rotate(3deg) scale(.96)}
+.luxury-angle-button{position:absolute;right:11%;bottom:10%;z-index:8;
+ display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.3);
+ background:rgba(15,46,34,.78);color:#f7e9d0;backdrop-filter:blur(14px);
+ padding:11px 15px;border-radius:99px;font-size:10px;font-weight:850;transition:background .2s}
+.luxury-angle-button:hover{background:#2a5c45}
+.luxury-angle-button span{color:#e8c08a}
+.luxury-3d-hint{position:absolute;left:17%;bottom:13%;z-index:8;font-size:9px;display:flex;align-items:center;gap:7px;color:#f6e0c0;letter-spacing:.12em}
+.luxury-showroom-bottom{position:relative;z-index:6;display:flex;gap:20px;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.17);padding:15px 0 2px}
+.luxury-showroom-options{display:flex;align-items:center;gap:3px;max-width:80%;overflow-x:auto;scrollbar-width:thin}
+.luxury-showroom-options button{flex:0 0 auto;border:0;background:none;padding:9px 11px;border-radius:50px;
+ color:#c7d2c6;font-size:10px;white-space:nowrap;transition:background .2s,color .2s}
+.luxury-showroom-options button span{font-size:9px;color:#cca77b;margin-right:7px}
+.luxury-showroom-options button.selected{background:#f1e4cf;color:#244334;font-weight:800}
+.luxury-showroom-options button.selected span{color:#8d6941}
+.luxury-showroom-scroll{display:grid;gap:7px;flex:0 0 148px;color:#cbd2c4;font-size:9px;letter-spacing:.1em;font-weight:750}
+.luxury-showroom-scroll:after{content:'';background:rgba(255,255,255,.15);height:3px;border-radius:20px;grid-row:2;grid-column:1}
+.luxury-showroom-scroll i{grid-row:2;grid-column:1;position:relative;z-index:2;max-width:100%;background:#eac08b;height:3px;border-radius:20px;display:block;transition:width .3s}
+@keyframes luxuryVisualEnter{from{opacity:.35;scale:.975;filter:blur(3px)}to{opacity:1;scale:1;filter:blur(0)}}
+@keyframes luxuryCopyIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* Fleet list feels like a coordinated automotive catalogue rather than dark thumbnail cards */
+#fleet{background:linear-gradient(135deg,#fcfaf3,#f4ede3)}
+#fleet .fleet-card{border-radius:20px;background:#fffdf8;border:1px solid rgba(43,73,48,.10);box-shadow:0 15px 35px rgba(32,51,36,.08);overflow:hidden}
+#fleet .fleet-card:hover{transform:translateY(-7px);box-shadow:0 25px 55px rgba(31,51,35,.14)}
+#fleet .fleet-visual{height:265px;background:#d6d9cb}
+#fleet .fleet-visual img{filter:saturate(.9) contrast(1.03) brightness(1.01);transform:scale(1);object-position:center}
+#fleet .fleet-card:hover .fleet-visual img{filter:saturate(1.01) contrast(1.06) brightness(1.01);transform:scale(1.045)}
+#fleet .fleet-shade{background:linear-gradient(180deg,rgba(12,31,22,.05),transparent 50%,rgba(8,27,16,.44))}
+#fleet .fleet-meta{color:#213e2e;background:#fffdf8}
+#fleet .fleet-meta h3{color:#1a372a}
+#fleet .fleet-meta>span,#fleet .rate small,#fleet .fleet-bottom{color:#667c68}
+#fleet .rate strong{color:#aa7646}
+#fleet .fleet-bottom{border-color:rgba(48,76,55,.13)}
+#fleet .fleet-bottom button{color:#1c4a35;font-weight:800}
+#fleet .fleet-type{background:#fffaf0;color:#254e39;border-color:#fff}
+#fleet .fleet-number{color:#fff;font-weight:800}
+/* Reels: vivid real photographs rather than overly dim images */
+.fleet-reel-section{background:linear-gradient(130deg,#183d31 0%,#102c23 70%);border-color:rgba(226,213,186,.12)}
+.fleet-reel-heading h2{color:#f4e9d9}
+.fleet-reel-heading p{color:#c9d5c7}
+.reel-card{box-shadow:0 17px 45px rgba(0,0,0,.24);border-radius:19px}
+.reel-card img{filter:saturate(.94) contrast(1.03) brightness(.96)}
+.reel-card:hover img{filter:saturate(1.05) contrast(1.06) brightness(1.03)}
+@media(max-width:1100px){
+ .luxury-showroom-sticky{padding:20px 4vw}
+ .luxury-showroom-main{grid-template-columns:34% 66%}
+ .luxury-showroom-heading h2{font-size:clamp(38px,4.5vw,60px)}
+ .luxury-showroom-heading>p{font-size:11px}
+ .luxury-showroom-copy h3{font-size:clamp(28px,3vw,42px)}
+}
+@media(max-width:760px){
+ .hero-poster.luxury-hero-photo{height:355px;top:0;border-radius:19px}
+ .car-stage{min-height:445px}
+ .car-stage .floating-card{bottom:1%;right:0;padding:12px 14px}
+ .car-stage .floating-card strong{font-size:19px}
+ .car-stage .motion-pill{bottom:0;left:0;font-size:9px}
+ .car-stage .hero-vehicle-picker{bottom:-18px;left:0;right:0}
+ .luxury-hero-corner{left:15px;top:15px;padding:9px 11px;font-size:8px}
+ .luxury-hero-edition{right:13px;top:18px;font-size:7px}
+ .luxury-hero-photo-caption{left:20px;right:20px;bottom:22px}
+ .luxury-hero-photo-caption h2{font-size:31px}
+ .luxury-hero-photo-caption p{font-size:9px;flex-wrap:wrap}
+ .luxury-showroom{height:190vh}
+ .luxury-showroom-sticky{padding:18px 5vw;min-height:0}
+ .luxury-showroom-top{font-size:8px;padding-bottom:10px}
+ .luxury-showroom-top span:last-child{display:none}
+ .luxury-showroom-heading{display:block;margin:9px 0 0}
+ .luxury-showroom-heading h2{font-size:clamp(39px,8vw,53px);margin:2px 0}
+ .luxury-showroom-heading>p{display:none}
+ .luxury-showroom-main{display:flex;flex-direction:column;min-height:0;gap:0;justify-content:center}
+ .luxury-showroom-visual{order:-1;width:100%;height:36vh;min-height:205px;max-height:310px}
+ .luxury-showroom-photo{inset:4% 6%;border-radius:14px}
+ .luxury-showroom-side{display:none}
+ .luxury-showroom-copy{width:100%;padding:12px 0}
+ .luxury-showroom-index{font-size:10px}
+ .luxury-showroom-index span{font-size:43px}
+ .luxury-showroom-kicker{font-size:8px;margin-top:7px}
+ .luxury-showroom-copy h3{font-size:clamp(26px,7vw,36px);margin:4px 0}
+ .luxury-showroom-copy>p{font-size:10px;margin:4px 0}
+ .luxury-showroom-rule{margin:9px 0}
+ .luxury-showroom-note{font-size:9px;line-height:1.4;max-width:100%}
+ .luxury-showroom-cta{margin:12px 0 9px;padding:11px 15px;font-size:10px}
+ .luxury-showroom-nav button{width:32px;height:32px}
+ .luxury-showroom-nav>span{font-size:8px}
+ .luxury-angle-button{right:11%;bottom:10%;font-size:9px;padding:8px 11px}
+ .luxury-showroom-bottom{padding:10px 0 0}
+ .luxury-showroom-options{max-width:100%}
+ .luxury-showroom-scroll{display:none}
+ .luxury-showroom-options button{font-size:9px}
+}
+@media(max-height:750px) and (min-width:760px){
+ .luxury-showroom-sticky{padding-top:16px}
+ .luxury-showroom-heading{margin:6px 0}
+ .luxury-showroom-heading h2{font-size:clamp(35px,4vw,60px)}
+ .luxury-showroom-main{min-height:0}
+ .luxury-showroom-copy h3{font-size:34px}
+ .luxury-showroom-visual{height:47vh;min-height:290px}
+ .luxury-showroom-note{line-height:1.4;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .luxury-hero-photo-layer,.luxury-showroom-photo,.luxury-showroom-copy h3{animation:none!important}
+ .luxury-hero-photo-layer .hero-car-image{transform:none!important;transition:none!important}
+ .luxury-showroom{height:auto}
+ .luxury-showroom-sticky{position:relative;height:auto;min-height:850px}
+ .luxury-showroom-photo,.luxury-showroom-halo{transform:none!important}
+}

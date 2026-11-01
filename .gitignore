@@ -3,3 +3,10 @@ dist
 .env
 .env.*
 .DS_Store
+
+# Local CRM customer data — never commit
+.data/
+
+.netlify/
+artifacts/
+*.backup.tar

@@ -2,12 +2,16 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/mateshwari-cinematic-crm]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,7 +22,56 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: CRM API tests
+        run: npm run test:api
+
+      - name: Check local media installers and server launcher
+        run: |
+          node --check scripts/dev.mjs
+          node --check scripts/verify-local-fleet.mjs
+          node --check scripts/audit-360-pack.mjs
+          node --check scripts/install-complete-media.mjs
+          node --check scripts/install-fleet-media.mjs
+          node --check scripts/install-scorpio-media.mjs
+      - name: Validate guarded Netlify deployment script
+        run: |
+          node --check scripts/prepare-netlify.mjs
+          if node scripts/prepare-netlify.mjs; then
+            echo 'ERROR: Netlify guard unexpectedly allowed missing CRM/site origins'
+            exit 1
+          fi
 
       - name: Type check and production build
         run: npm run build
+
+      - name: Production routing and SEO fixture build
+        run: VITE_PUBLIC_SITE_ORIGIN=https://fixture.example MT_CRM_API_ORIGIN=https://api.fixture.example npm run build:netlify
+
+      - name: Install browser for UI smoke tests
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Audit real-media pack validation (synthetic test frames only)
+        run: node scripts/audit-360-pack-smoke.mjs
+
+      - name: Chromium interaction smoke
+        run: node scripts/hero-ui-smoke.mjs
+
+      - name: WebKit Safari-engine studio smoke
+        run: node scripts/webkit-studio-smoke.mjs
+
+      - name: Genuine turntable interaction mechanics (test-only frames)
+        run: node scripts/turntable-interaction-smoke.mjs
+
+      - name: Upload visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-visual-qa
+          path: artifacts/visual-evidence/
+          if-no-files-found: ignore
+          retention-days: 7

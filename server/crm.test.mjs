@@ -1,0 +1,188 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import net from 'node:net';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+
+async function openPort(){
+  const server=net.createServer();
+  await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
+  const port=server.address().port;
+  await new Promise(resolve=>server.close(resolve));
+  return port;
+}
+test('CRM saves enquiries and protects staff operations',async(t)=>{
+  const port=await openPort();
+  const directory=mkdtempSync(join(tmpdir(),'mt-crm-test-'));
+  const secret='local-admin-test-token';
+  const child=spawn(process.execPath,[resolve('server/crm.mjs')],{
+    env:{...process.env,CRM_PORT:String(port),CRM_DATA_FILE:join(directory,'records.jsonl'),CRM_EVENTS_FILE:join(directory,'events.jsonl'),CRM_NOTIFICATIONS_FILE:join(directory,'notifications.jsonl'),CRM_NOTIFICATIONS_MODE:'preview',CRM_CATALOG_FILE:join(directory,'catalog.json'),CRM_UPLOADS_DIR:join(directory,'uploads'),CRM_MODELS_DIR:join(directory,'models'),CRM_ADMIN_TOKEN:secret},
+    stdio:'ignore'
+  });
+  t.after(()=>{child.kill('SIGTERM');rmSync(directory,{recursive:true,force:true});});
+  const root='http://127.0.0.1:'+port;
+  let healthy=false;
+  for(let i=0;i<40;i++){
+    try{const r=await fetch(root+'/api/health');healthy=r.ok;if(healthy)break;}catch{}
+    await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  assert.equal(healthy,true,'CRM server should start');
+  const unauth=await fetch(root+'/api/admin/enquiries');
+  assert.equal(unauth.status,401);
+  const invalid=await fetch(root+'/api/enquiries',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'A',phone:'??'})});
+  assert.equal(invalid.status,400);
+  const request=await fetch(root+'/api/enquiries',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:'Example Guest',phone:'9876543210',mode:'quote',
+      pickup:'Jaipur',destination:'Udaipur',tripDate:'2026-12-02',vehicle:'Toyota Innova',
+      passengers:4,days:2,distanceKm:410,estimatedMin:6150,estimatedMax:10250
+    })});
+  assert.equal(request.status,201);
+  const {id}=await request.json();
+  assert.match(id,/^[0-9a-f-]{36}$/);
+  const headers={Authorization:'Bearer '+secret,'Content-Type':'application/json'};
+  const list=await fetch(root+'/api/admin/enquiries',{headers});
+  assert.equal(list.status,200);
+  const before=await list.json();
+  assert.equal(before.items.length,1);
+  assert.equal(before.items[0].status,'new');
+  assert.equal(before.items[0].pickup,'Jaipur');
+  const initialOutboxResponse=await fetch(root+'/api/admin/notifications',{headers});
+  assert.equal(initialOutboxResponse.status,200);
+  const initialOutbox=await initialOutboxResponse.json();
+  assert.equal(initialOutbox.config.mode,'preview');
+  assert.equal(initialOutbox.items.length,2,'Business email and WhatsApp are prepared even without provider credentials');
+  assert.ok(initialOutbox.items.every(m=>m.status==='preview'));
+  assert.ok(initialOutbox.items.some(m=>m.channel==='email'&&m.recipient==='ktiwari539@gmail.com'));
+  assert.ok(initialOutbox.items.some(m=>m.channel==='whatsapp'&&m.recipient==='919340098177'));
+  assert.equal((await fetch(root+'/api/admin/notifications')).status,401);
+  const quoteDraft=await fetch(root+'/api/admin/enquiries/'+id+'/quotation',{method:'POST',headers,body:JSON.stringify({amount:12900,notes:'Includes 1 driver night stay. GST extra.'})});
+  assert.equal(quoteDraft.status,201);
+  const prepared=await quoteDraft.json();
+  assert.equal(prepared.quote.amount,12900);
+  assert.ok(prepared.delivery.every(m=>m.status==='preview'));
+  const savedQuote=(await (await fetch(root+'/api/admin/enquiries',{headers})).json()).items[0];
+  assert.equal(savedQuote.quote.amount,12900);
+  assert.equal(savedQuote.status,'quoted');
+  assert.equal((await fetch(root+'/api/admin/enquiries/'+id+'/quotation',{method:'POST',headers,body:JSON.stringify({amount:-5})})).status,400);
+  assert.equal((await fetch(root+'/api/admin/enquiries/'+id+'/quotation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:13000})})).status,401);
+  const patch=await fetch(root+'/api/admin/enquiries/'+id,{method:'PATCH',headers,body:JSON.stringify({status:'quoted'})});
+  assert.equal(patch.status,200);
+  const refreshed=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
+  assert.equal(refreshed.items[0].status,'quoted');
+  const summary=await (await fetch(root+'/api/admin/summary',{headers})).json();
+  assert.equal(summary.total,1);
+  assert.equal(summary.byStatus.quoted,1);
+  const publicCatalog=await fetch(root+'/api/catalog');
+  assert.equal(publicCatalog.status,200);
+  const catalog=await publicCatalog.json();
+  assert.equal(catalog.vehicles.length,10);
+  for(const name of ['Mahindra Scorpio-N','Mahindra Thar','Mahindra XUV700','Kia Carens']){
+    assert.ok(catalog.vehicles.find(v=>v.name===name),'Missing model: '+name);
+  }
+  assert.ok(catalog.vehicles.find(v=>v.name==='Mahindra Bolero')?.image.includes('Gen%203'),'Bolero has distinct black vehicle photo');
+  assert.equal(catalog.vehicles.find(v=>v.name==='Toyota Innova').rateMin,15);
+
+  const forbidden=await fetch(root+'/api/admin/catalog',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({vehicles:[]})});
+  assert.equal(forbidden.status,401);
+
+  const modified=catalog.vehicles.map(v=>v.name==='Toyota Innova'?{...v,rateMin:21,rateMax:34}:v);
+  modified.push({name:'New Premium Example',seats:'4+1',capacity:4,tag:'On request',category:'Premium',image:'https://example.org/vehicle.jpg',rateMin:40,rateMax:60,enabled:true});
+  const saved=await fetch(root+'/api/admin/catalog',{method:'PUT',headers,body:JSON.stringify({vehicles:modified})});
+  assert.equal(saved.status,200);
+  const reloaded=await (await fetch(root+'/api/catalog')).json();
+  assert.equal(reloaded.vehicles.length,11);
+  assert.equal(reloaded.vehicles.find(v=>v.name==='Toyota Innova').rateMin,21);
+  
+  const event=await fetch(root+'/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({event:'quote_open',sessionId:'f5e4a111-2222-4444-8888-1234567890ab',vehicle:'Toyota Innova',source:'hero'})});
+  assert.equal(event.status,202);
+  const metrics=await (await fetch(root+'/api/admin/engagement',{headers})).json();
+  assert.equal(metrics.counts.quote_open,1);
+  assert.ok(metrics.counts.quote_submit>=1);
+
+  const second=await fetch(root+'/api/enquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:'Second Guest',phone:'9340098177',mode:'quote',pickup:'Jaipur',destination:'Ajmer',tripDate:'2026-12-05',
+      vehicle:'Toyota Innova',passengers:3,days:1,nightStay:true,distanceKm:250,estimatedMin:1,estimatedMax:2
+    })});
+  assert.equal(second.status,201);
+  const newList=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
+  const entry=newList.items.find(x=>x.name==='Second Guest');
+  assert.equal(entry.estimatedMin,250*21+500);
+  assert.equal(entry.estimatedMax,250*34+500);
+
+  const manualDenied=await fetch(root+'/api/admin/enquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Walk-in Guest',phone:'9340098177'})});
+  assert.equal(manualDenied.status,401);
+  const manuallyAdded=await fetch(root+'/api/admin/enquiries',{method:'POST',headers,body:JSON.stringify({name:'Manual WhatsApp Guest',phone:'9340098177',source:'staff-whatsapp',notes:'Enquired via WhatsApp'})});
+  assert.equal(manuallyAdded.status,201);
+  const afterManual=await (await fetch(root+'/api/admin/enquiries',{headers})).json();
+  assert.equal(afterManual.items.find(i=>i.name==='Manual WhatsApp Guest').source,'staff-whatsapp');
+  
+  const makeGlb=(meta)=>{
+    const json=Buffer.from(JSON.stringify(meta),'utf8');
+    const padding=(4-json.length%4)%4;
+    const contents=Buffer.concat([json,Buffer.alloc(padding,0x20)]);
+    const buf=Buffer.alloc(20+contents.length);
+    buf.write('glTF',0);buf.writeUInt32LE(2,4);buf.writeUInt32LE(buf.length,8);
+    buf.writeUInt32LE(contents.length,12);buf.write('JSON',16);
+    contents.copy(buf,20);return buf;
+  };
+  const model=makeGlb({asset:{version:'2.0'},meshes:[{primitives:[{attributes:{POSITION:0}}]}]});
+  assert.equal((await fetch(root+'/api/admin/models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:model.toString('base64')})})).status,401);
+  const modelUpload=await fetch(root+'/api/admin/models',{method:'POST',headers,body:JSON.stringify({data:model.toString('base64')})});
+  assert.equal(modelUpload.status,201);
+  const uploadedModel=await modelUpload.json();
+  assert.match(uploadedModel.url,/^\/api\/models\/[0-9a-f-]{36}\.glb$/);
+  const modelResponse=await fetch(root+uploadedModel.url);
+  assert.equal(modelResponse.status,200);
+  assert.equal(modelResponse.headers.get('content-type'),'model/gltf-binary');
+  const invalidRemote=makeGlb({asset:{version:'2.0'},meshes:[{}],buffers:[{uri:'https://example.org/remote.bin',byteLength:0}]});
+  const remoteResp=await fetch(root+'/api/admin/models',{method:'POST',headers,body:JSON.stringify({data:invalidRemote.toString('base64')})});
+  assert.equal(remoteResp.status,400);
+  const catalogWithModel=reloaded.vehicles.map((v,i)=>i===0?{...v,modelUrl:uploadedModel.url}:v);
+  const saveModel=await fetch(root+'/api/admin/catalog',{method:'PUT',headers,body:JSON.stringify({vehicles:catalogWithModel})});
+  assert.equal(saveModel.status,200);
+  const reloadModel=(await (await fetch(root+'/api/catalog')).json()).vehicles;
+  assert.equal(reloadModel[0].modelUrl,uploadedModel.url);
+    const image=Buffer.concat([Buffer.from([255,216,255,224]),Buffer.alloc(300,7)]);
+  const upload=await fetch(root+'/api/admin/images',{method:'POST',headers,body:JSON.stringify({mime:'image/jpeg',data:image.toString('base64')})});
+  assert.equal(upload.status,201);
+  const uploadBody=await upload.json();
+  assert.match(uploadBody.url,/^\/api\/uploads\/[0-9a-f-]{36}\.jpg$/);
+  const picture=await fetch(root+uploadBody.url);
+  assert.equal(picture.status,200);
+  assert.equal(picture.headers.get('content-type'),'image/jpeg');
+  const updatedWithPhoto=reloaded.vehicles.map((v,i)=>i===0?{...v,image:uploadBody.url}:v);
+  const catalogWithPhoto=await fetch(root+'/api/admin/catalog',{method:'PUT',headers,body:JSON.stringify({vehicles:updatedWithPhoto})});
+  assert.equal(catalogWithPhoto.status,200);
+
+  // Real authenticated API + disk regression for First / Up / Down save semantics.
+  const currentCatalog=(await (await fetch(root+'/api/admin/catalog',{headers})).json()).vehicles;
+  const traveller=currentCatalog.find(car=>car.name==='Tempo Traveller');
+  const rearranged=[{...traveller},...currentCatalog.filter(car=>car.id!==traveller.id).map(car=>
+    car.name==='Mahindra Bolero'?{...car,enabled:false}:car)];
+  const updateOrder=await fetch(root+'/api/admin/catalog',{
+    method:'PUT',headers,body:JSON.stringify({vehicles:rearranged})
+  });
+  assert.equal(updateOrder.status,200);
+  const savedOrder=(await updateOrder.json()).vehicles;
+  assert.equal(savedOrder[0].name,'Tempo Traveller');
+  assert.deepEqual(savedOrder.map(car=>car.displayOrder),savedOrder.map((_,i)=>i+1));
+  const afterReload=(await (await fetch(root+'/api/admin/catalog',{headers})).json()).vehicles;
+  assert.deepEqual(afterReload.map(car=>car.name),rearranged.map(car=>car.name));
+  const persisted=JSON.parse(readFileSync(join(directory,'catalog.json'),'utf8'));
+  assert.deepEqual(persisted.vehicles.map(car=>car.name),rearranged.map(car=>car.name));
+  const publicOrder=(await (await fetch(root+'/api/catalog')).json()).vehicles;
+  assert.deepEqual(publicOrder.map(car=>car.name),rearranged.filter(car=>car.enabled).map(car=>car.name));
+  assert.equal(publicOrder.some(car=>car.name==='Mahindra Bolero'),false);
+  assert.equal(afterReload.find(car=>car.name==='Toyota Innova').rateMin,21,'Reordering preserves saved rates');
+  const integrity=(await (await fetch(root+'/api/admin/fleet-media/status',{headers})).json());
+  assert.equal(integrity.total,7);
+  assert.ok(Array.isArray(integrity.missing));
+  assert.ok(Array.isArray(integrity.invalid));
+  assert.equal(typeof integrity.catalogApplied,'boolean');
+  assert.equal(typeof integrity.persistedCatalogApplied,'boolean');
+
+});
