@@ -539,6 +539,11 @@ async function smoke(){
   'Full-screen studio labels unavailable thumbnails instead of hiding them');
  await offlinePhotos.close();
 
+ // Backup and migration controls remain opt-in; this UI fixture never invokes them.
+ await page.getByRole('button',{name:'Backup & recovery',exact:true}).click();
+ ensure(await page.getByRole('button',{name:'Create encrypted backup',exact:true}).isDisabled(),'Recovery operations require explicit review confirmation');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-recovery-locked.png',animations:'disabled'});
+
  // Independent deterministic test for the requested idle behaviour. The SVG
  // below is a TEST-ONLY delivery fixture, never a displayed fleet photograph.
  const tourTest=await browser.newPage({viewport:{width:1440,height:900}});

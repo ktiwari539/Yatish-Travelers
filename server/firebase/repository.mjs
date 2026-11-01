@@ -447,11 +447,10 @@ export function createCrmRepository(
       };
     },
     async maintenance(enabled) {
-      await stateRef.set({
-        kind: "control",
-        maintenance: enabled,
-        updatedAt: stamp(),
-      });
+      await stateRef.set(
+        { kind: "control", maintenance: enabled, updatedAt: stamp() },
+        { merge: true },
+      );
     },
     async cleanup() {
       const s = await docs

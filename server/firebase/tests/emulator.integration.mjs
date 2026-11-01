@@ -160,6 +160,16 @@ test("complete CRM network contracts with actual Auth/Firestore emulators and lo
     conflict.documents[0].data.name = "Different";
     assert.equal((await call("admin/migration", "POST", conflict)).status, 409);
     assert.equal((await r.get(legacyId)).quote.id, "legacy-quote");
+    assert.equal(
+      (await call("admin/migration/complete", "POST", {})).status,
+      200,
+    );
+    await r.maintenance(false);
+    await r.maintenance(true);
+    assert.equal(
+      (await call("admin/migration", "POST", migration)).status,
+      403,
+    );
     await r.maintenance(false);
     delete rt.env.CRM_MIGRATION_APPROVAL;
 

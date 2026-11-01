@@ -157,8 +157,9 @@ export async function importLegacyBatch(runtime, input) {
       throw new ApiError("INVALID_MIGRATION_DOCUMENT");
   const state = runtime.repository.docs.doc("control");
   await runtime.db.runTransaction(async (tx) => {
-    if (!(await tx.get(state)).data()?.maintenance)
-      throw new ApiError("MAINTENANCE_REQUIRED", 409);
+    const control = (await tx.get(state)).data();
+    if (control?.migrationClosed) throw new ApiError("MIGRATION_CLOSED", 403);
+    if (!control?.maintenance) throw new ApiError("MAINTENANCE_REQUIRED", 409);
     const refs = input.documents.map((row) =>
         runtime.repository.docs.doc(row.id),
       ),

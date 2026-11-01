@@ -75,7 +75,7 @@ export function RecoveryPanel({ token }: { token: string }) {
         I have reviewed the release/recovery checklist and intend to perform the
         selected operation.
       </label>
-      <fieldset disabled={busy || !confirmed}>
+      <fieldset className="crm-recovery-controls" disabled={busy || !confirmed}>
         <button
           type="button"
           onClick={() =>
@@ -125,6 +125,19 @@ export function RecoveryPanel({ token }: { token: string }) {
             placeholder="backup-…json"
           />
         </label>
+        <button
+          type="button"
+          onClick={() =>
+            void action(async () => {
+              await request("migration/complete", {});
+              setMessage(
+                "Migration access is closed in durable control state. No redeployment is needed.",
+              );
+            })
+          }
+        >
+          Close migration access after reconciliation
+        </button>
         <button
           type="button"
           disabled={!/^backup-[\w-]+\.json$/.test(backupId)}

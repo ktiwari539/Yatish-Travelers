@@ -163,10 +163,19 @@ export function createCrmHandler(runtime) {
           }
           return json(result);
         }
+        if (p === "/api/admin/migration/complete" && m === "POST") {
+          await r.docs
+            .doc("control")
+            .set({ kind: "control", migrationClosed: true }, { merge: true });
+          return json({ migrationClosed: true });
+        }
         if (p === "/api/admin/migration/model" && m === "POST") {
           if (runtime.env.CRM_MIGRATION_APPROVAL !== "owner-approved")
             throw new ApiError("MIGRATION_APPROVAL_REQUIRED", 403);
-          if (!(await r.docs.doc("control").get()).data()?.maintenance)
+          const control = (await r.docs.doc("control").get()).data();
+          if (control?.migrationClosed)
+            throw new ApiError("MIGRATION_CLOSED", 403);
+          if (!control?.maintenance)
             throw new ApiError("MAINTENANCE_REQUIRED", 409);
           return json(
             await runtime.media.model(await body(req), "owner", {
