@@ -4,8 +4,14 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  CRM_BACKEND = "firestore"
 
-# Fail closed unless the separately hosted, persistent CRM API is configured.
+# Release stays blocked until offline review and explicit owner deployment approval.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["firebase-admin", "sharp"]
+
 # Never commit secrets, CRM tokens, or customer data in Netlify config.
 [[headers]]
   for = "/*"

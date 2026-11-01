@@ -1,17 +1,19 @@
+import {RecoveryPanel} from './RecoveryPanel';
+import {FirebaseAdminLogin} from './FirebaseAdminLogin';
+import {adminFetch,readAllPages} from './crmApi';
 import { FleetManager } from './FleetManager';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, LogIn, LogOut, RefreshCw, Search, Users, Plus, Mail, Send, MessageCircle, FileText } from 'lucide-react';
 
 type Enquiry={
-  id:string;createdAt:string;updatedAt:string;status:string;mode:string;
+  id:string;version:number;createdAt:string;updatedAt:string;status:string;mode:string;
   name:string;phone:string;pickup:string;destination:string;tripDate:string;
   tripType:string;notes:string;vehicle:string;passengers:number;days:number;
   distanceKm:number;estimatedMin:number;estimatedMax:number;email?:string;source?:string;sessionId?:string;quote?:{id:string;amount:number;notes:string;createdAt:string};
 };
 const statuses=['new','contacted','quoted','confirmed','closed'];
-export function AdminDashboard() {
-  const [token,setToken]=useState('');
-  const [entered,setEntered]=useState('');
+export function AdminDashboard(){return <FirebaseAdminLogin>{(token,logout)=><AdminWorkspace token={token} logout={logout}/>}</FirebaseAdminLogin>;}
+function AdminWorkspace({token,logout}:{token:string;logout:()=>void}) {
   const [items,setItems]=useState<Enquiry[]>([]);
   const [error,setError]=useState('');
   const [loading,setLoading]=useState(false);
@@ -20,42 +22,36 @@ export function AdminDashboard() {
   const [saving,setSaving]=useState<string|null>(null);
   const [manualOpen,setManualOpen]=useState(false);
   const [manualSaving,setManualSaving]=useState(false);
-  const [tab,setTab]=useState<'bookings'|'fleet'|'engagement'|'notifications'>('bookings');
+  const [tab,setTab]=useState<'bookings'|'fleet'|'engagement'|'notifications'|'recovery'>('bookings');
   const [delivery,setDelivery]=useState<{config:{mode:string;emailReady:boolean;whatsappReady:boolean;businessEmail:string;businessWhatsApp:string};items:Array<{id:string;createdAt:string;enquiryId:string;channel:string;purpose:string;recipient:string;status:string;detail:string}>}|null>(null);
   const [quoteEditing,setQuoteEditing]=useState<string|null>(null);
   const [quoteSaving,setQuoteSaving]=useState(false);
   const [quoteFeedback,setQuoteFeedback]=useState('');
-  const [engagement,setEngagement]=useState<{total:number;counts:Record<string,number>;sessions:number;recent:Array<{event:string;vehicle:string;source:string;createdAt:string}>}>({total:0,counts:{},sessions:0,recent:[]});
+  const [engagement,setEngagement]=useState<{total:number;counts:Record<string,number>;sessions:number|null;recent:Array<{event:string;vehicle:string;source:string;createdAt:string}>}>({total:0,counts:{},sessions:0,recent:[]});
   const load=useCallback(async()=>{
     if(!token)return;
     setLoading(true);setError('');
     try{
-      const response=await fetch('/api/admin/enquiries',{headers:{Authorization:'Bearer '+token}});
+      const response=await adminFetch('/api/admin/enquiries',{headers:{Authorization:'Bearer '+token}});
       const body=await response.json();
       if(!response.ok) throw new Error(body.error||'Unable to load enquiries');
-      setItems(body.items||[]);
-      const eventsResponse=await fetch('/api/admin/engagement',{headers:{Authorization:'Bearer '+token}});
+      setItems(await readAllPages('/api/admin/enquiries',token,body));
+      const eventsResponse=await adminFetch('/api/admin/engagement',{headers:{Authorization:'Bearer '+token}});
       if(eventsResponse.ok) setEngagement(await eventsResponse.json());
-      const deliveriesResponse=await fetch('/api/admin/notifications',{headers:{Authorization:'Bearer '+token}});
-      if(deliveriesResponse.ok)setDelivery(await deliveriesResponse.json());
+      const deliveriesResponse=await adminFetch('/api/admin/notifications',{headers:{Authorization:'Bearer '+token}});
+      if(deliveriesResponse.ok){const initial=await deliveriesResponse.json();setDelivery({...initial,items:await readAllPages('/api/admin/notifications',token,initial)});}
     }catch(e){setError(e instanceof Error?e.message:'Network error');}
     finally{setLoading(false);}
   },[token]);
   useEffect(()=>{sessionStorage.removeItem('mt-crm-token');},[]);
   useEffect(()=>{void load();},[load]);
-  const login=(event:React.FormEvent)=>{
-    event.preventDefault();
-    const value=entered.trim();
-    setToken(value);setEntered('');
-  };
-  const logout=()=>{sessionStorage.removeItem('mt-crm-token');setToken('');setItems([]);setError('');setEngagement({total:0,counts:{},sessions:0,recent:[]});setDelivery(null);};
   const update=async(id:string,status:string)=>{
     setSaving(id);setError('');
     try{
-      const response=await fetch('/api/admin/enquiries/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status})});
+      const response=await adminFetch('/api/admin/enquiries/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({status,expectedVersion:items.find(x=>x.id===id)?.version})});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||'Unable to update');
-      setItems(existing=>existing.map(item=>item.id===id?{...item,status}:item));
+      setItems(existing=>existing.map(item=>item.id===id?{...item,status,version:data.version}:item));
     }catch(e){setError(e instanceof Error?e.message:'Update failed');}
     finally{setSaving(null);}
   };
@@ -64,7 +60,7 @@ export function AdminDashboard() {
     const data=new FormData(event.currentTarget);
     setManualSaving(true);setError('');
     try{
-      const response=await fetch('/api/admin/enquiries',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(data.entries()))});
+      const response=await adminFetch('/api/admin/enquiries',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify(Object.fromEntries(data.entries()))});
       const result=await response.json();
       if(!response.ok)throw new Error(result.error||'Unable to save manual lead.');
       setManualOpen(false);void load();
@@ -77,9 +73,9 @@ export function AdminDashboard() {
     const amount=Number(fields.get('amount')),notes=String(fields.get('notes')||'');
     setQuoteSaving(true);setQuoteFeedback('');
     try{
-      const response=await fetch('/api/admin/enquiries/'+id+'/quotation',{method:'POST',
+      const response=await adminFetch('/api/admin/enquiries/'+id+'/quotation',{method:'POST',
         headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-        body:JSON.stringify({amount,notes})});
+        body:JSON.stringify({amount,notes,expectedVersion:items.find(x=>x.id===id)?.version})});
       const body=await response.json();
       if(!response.ok)throw new Error(body.error||'Unable to prepare quotation.');
       const preview=body.delivery?.map((d:{channel:string;status:string})=>d.channel+': '+d.status).join(' • ')||'';
@@ -96,28 +92,21 @@ export function AdminDashboard() {
     <header className="crm-header"><a href="/"><ArrowLeft size={17}/> <strong>MATESHWARI <span>TRAVELLERS</span></strong></a>
       <div><span>CRM / STAFF ACCESS</span>{token&&<button onClick={logout} type="button"><LogOut size={15}/> Sign out</button>}</div>
     </header>
-    {!token?<section className="crm-sign-in">
-      <div className="crm-sign-icon"><Users size={28}/></div>
-      <span className="crm-eyebrow">Operations workspace</span>
-      <h1>Bookings deserve a better workflow.</h1>
-      <p>Sign in with your configured CRM admin token to review enquiries and keep follow-ups organized.</p>
-      <form onSubmit={login}><label>Admin token<input type="password" autoComplete="off" value={entered} onChange={e=>setEntered(e.target.value)} required placeholder="CRM_ADMIN_TOKEN"/></label><button type="submit"><LogIn size={17}/> Open dashboard</button></form>
-      <small>This local-preview CRM is not yet a production staff authentication system.</small>
-    </section>:
     <section className="crm-main">
       <div className="crm-tabs" role="group" aria-label="Dashboard section">
         <button type="button" className={tab==='bookings'?'active':''} onClick={()=>setTab('bookings')}>Enquiries & follow-ups</button>
         <button type="button" className={tab==='engagement'?'active':''} onClick={()=>setTab('engagement')}>Visitor activity</button>
         <button type="button" className={tab==='fleet'?'active':''} onClick={()=>setTab('fleet')}>Cars & pricing</button>
         <button type="button" className={tab==='notifications'?'active':''} onClick={()=>setTab('notifications')}>Email & WhatsApp outbox</button>
+        <button type="button" className={tab==='recovery'?'active':''} onClick={()=>setTab('recovery')}>Backup & recovery</button>
       </div>
-      {tab==='fleet' ? <FleetManager token={token}/> : tab==='notifications' ? (
+      {tab==='recovery'?<RecoveryPanel token={token}/>:tab==='fleet' ? <FleetManager token={token}/> : tab==='notifications' ? (
         <div className="crm-notifications">
           <div className="crm-heading"><div><span className="crm-eyebrow">Messaging / Test Mode</span><h1>Email & WhatsApp outbox.</h1><p>See every email and WhatsApp notification prepared by the backend, with accurate delivery states.</p></div><button className="crm-refresh" type="button" onClick={()=>void load()}><RefreshCw size={16}/> Refresh</button></div>
           <div className="crm-delivery-config">
             <div><Mail size={20}/><strong>Business email</strong><span>{delivery?.config.businessEmail||'Not configured'}</span><small>{delivery?.config.emailReady?'Provider configured':'Provider credentials not connected'}</small></div>
             <div><MessageCircle size={20}/><strong>WhatsApp Business API</strong><span>+{delivery?.config.businessWhatsApp||'919340098177'}</span><small>{delivery?.config.whatsappReady?'Provider configured':'Provider credentials and approved template required'}</small></div>
-            <div><FileText size={20}/><strong>Delivery mode</strong><span>{delivery?.config.mode||'preview'}</span><small>Preview mode never sends messages outside the local computer</small></div>
+            <div><FileText size={20}/><strong>Delivery mode</strong><span>{delivery?.config.mode||'preview'}</span><small>Preview mode saves notifications without external delivery</small></div>
           </div>
           <div className="crm-outbox">
             {(delivery?.items||[]).length===0?<div className="crm-empty">No messages prepared yet. Submit a test enquiry or prepare a quotation.</div>:
@@ -130,7 +119,7 @@ export function AdminDashboard() {
         </div>
       ) : tab==='engagement' ? (
         <div className="crm-activity">
-          <div className="crm-heading"><div><span className="crm-eyebrow">Visitor activity</span><h1>Understand the enquiry journey.</h1><p>Anonymous interactions recorded locally. Customer identity appears only after form submission.</p></div><button className="crm-refresh" type="button" onClick={()=>void load()}><RefreshCw size={16}/> Refresh</button></div>
+          <div className="crm-heading"><div><span className="crm-eyebrow">Visitor activity</span><h1>Understand the enquiry journey.</h1><p>Anonymous interactions recorded by the backend. Customer identity appears only after form submission.</p></div><button className="crm-refresh" type="button" onClick={()=>void load()}><RefreshCw size={16}/> Refresh</button></div>
           <div className="crm-metrics crm-activity-metrics">
             {[
               ['All interactions',engagement.total],
@@ -138,7 +127,7 @@ export function AdminDashboard() {
               ['Callback opens',engagement.counts.callback_open||0],
               ['WhatsApp clicks',engagement.counts.whatsapp_click||0],
               ['Submitted',engagement.counts.quote_submit||0],
-              ['Unique sessions',engagement.sessions],
+              ['Unique sessions',engagement.sessions??'Not measured'],
             ].map(([label,value])=><article key={label}><span>{label}</span><strong>{value}</strong></article>)}
           </div>
           <div className="crm-activity-list">
@@ -189,7 +178,7 @@ export function AdminDashboard() {
         {quoteEditing===item.id&&<form className="crm-quotation-editor" onSubmit={e=>void sendQuotation(e,item.id)}>
           <div><label>Final quoted price (₹)<input name="amount" type="number" step=".01" min="1" max="10000000" defaultValue={item.quote?.amount||item.estimatedMax||''} required/></label>
             <label>Quotation notes & conditions<textarea name="notes" rows={3} defaultValue={item.quote?.notes||''} placeholder="Duration, tolls, GST, driver stay, vehicle details..."/></label></div>
-          <p>{item.email?'Customer email: '+item.email:'No customer email collected. This will prepare a business copy only.'} Business email and WhatsApp copies are included in the local outbox. Actual sending stays disabled until providers are configured and live mode is explicitly enabled.</p>
+          <p>{item.email?'Customer email: '+item.email:'No customer email collected. This will prepare a business copy only.'} Business email and WhatsApp copies are saved in the outbox. Actual sending stays disabled until providers are configured and live mode is explicitly enabled.</p>
           <button className="fleet-save" type="submit" disabled={quoteSaving}><Send size={15}/>{quoteSaving?'Preparing...':'Save quotation & prepare notifications'}</button>
         </form>}
                 {item.notes&&<p className="crm-card-notes">{item.notes}</p>}
@@ -197,6 +186,6 @@ export function AdminDashboard() {
       </article>)}</div>
       </div>
       )}
-    </section>}
+    </section>
   </main>;
 }

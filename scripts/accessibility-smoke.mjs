@@ -1,0 +1,119 @@
+import { spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
+import { chromium } from "playwright";
+import AxeBuilder from "@axe-core/playwright";
+import { installSyntheticImages } from "./synthetic-browser-images.mjs";
+const port = 5178,
+  server = spawn(
+    process.execPath,
+    [
+      "node_modules/vite/bin/vite.js",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(port),
+      "--strictPort",
+    ],
+    { stdio: "ignore", env: { ...process.env } },
+  );
+let browser;
+try {
+  for (let n = 0; n < 80; n++) {
+    try {
+      if ((await fetch("http://127.0.0.1:" + port)).ok) break;
+    } catch {}
+    await new Promise((ok) => setTimeout(ok, 150));
+  }
+  browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    reducedMotion: "reduce",
+  });
+  const page = await context.newPage();
+  await installSyntheticImages(page);
+  await page.addInitScript(() => {
+    window.__layoutShift = 0;
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries())
+        if (!entry.hadRecentInput) window.__layoutShift += entry.value;
+    }).observe({ type: "layout-shift", buffered: true });
+  });
+  const results = [];
+  await mkdir("artifacts/visual-evidence", { recursive: true });
+  for (const path of ["/", "/admin"]) {
+    await page.goto("http://127.0.0.1:" + port + path, {
+      waitUntil: "networkidle",
+    });
+    const skip = page.locator(".cinema-arrival-skip");
+    if (await skip.isVisible()) await skip.click();
+    const axe = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    const metrics = await page.evaluate(() => ({
+      width: innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      layoutShift: window.__layoutShift,
+      overflow: Array.from(document.querySelectorAll("body *"))
+        .filter(
+          (e) =>
+            e.getBoundingClientRect().right > innerWidth + 2 &&
+            getComputedStyle(e).position !== "fixed",
+        )
+        .slice(0, 18)
+        .map((e) => ({
+          tag: e.tagName,
+          class: e.className,
+          right: e.getBoundingClientRect().right,
+        })),
+      navigation: performance.getEntriesByType("navigation")[0].toJSON(),
+    }));
+    results.push({
+      path,
+      metrics,
+      violations: axe.violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        nodes: v.nodes.map((n) => ({
+          target: n.target,
+          failureSummary: n.failureSummary,
+        })),
+      })),
+    });
+    await page.screenshot({
+      path:
+        "artifacts/visual-evidence/" +
+        (path === "/" ? "mobile-home" : "mobile-firebase-login") +
+        ".png",
+      fullPage: false,
+    });
+  }
+  await writeFile(
+    "artifacts/visual-evidence/accessibility-lab.json",
+    JSON.stringify(
+      {
+        notice:
+          "Synthetic image fixtures; local Chromium mobile viewport; not real-device or field performance QA",
+        results,
+      },
+      null,
+      2,
+    ),
+  );
+  const severe = results.flatMap((r) =>
+    r.violations
+      .filter((v) => ["serious", "critical"].includes(v.impact))
+      .map((v) => ({ path: r.path, ...v })),
+  );
+  if (severe.length) throw Error(JSON.stringify(severe));
+  if (results.some((r) => r.metrics.scrollWidth > r.metrics.width))
+    throw Error(
+      "Mobile page overflows viewport: " +
+        JSON.stringify(results.map((r) => r.metrics.overflow)),
+    );
+  console.log(
+    "PASS: mobile homepage and locked Firebase Admin WCAG automated checks, viewport fit, screenshots and local timing capture",
+  );
+} finally {
+  await browser?.close();
+  server.kill("SIGTERM");
+}

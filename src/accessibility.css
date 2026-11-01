@@ -1,0 +1,26 @@
+/* Contrast corrections for existing small text; layout, typography and imagery stay unchanged. */
+.signature-strip>div>span,.selected-vehicle>div>span,.selected-vehicle>div>small{color:#68665f}
+.signature-strip>div>small,.confidence-num,.confidence-foot,.confidence-intro .kicker,#services .section-heading .kicker,.route-playground-head>span,.route-playground-kicker,.route-experience-info>span:nth-child(2),.corporate-panel-head>span,.corporate-index{color:#80582e}
+.premium-catalog-card .fleet-meta>span{color:#7b5e39}
+.premium-catalog-card .rate>small,.premium-catalog-card .fleet-bottom>span,.premium-catalog-card .fleet-card-photo-credit,.confidence-intro>p,.confidence-ribbon>span,.route-playground-head>p,.route-playground-tabs button:not(.chosen){color:#53654f}
+.route-playground-tabs button:not(.chosen)>span{color:#80582e}
+#contact p,#contact a,#contact .footer-action{color:#b9b7aa}
+#contact>div>span,#contact .image-credits>span,.coverage-label{color:#d3ad79}
+#coverage>p{color:#d4d8c9}
+#contact .image-credits a{color:#bebbb0}
+#fleet .photo-rich-fleet-card .fleet-meta>span{color:#7b5e39}
+#fleet .photo-rich-fleet-card .rate small,#fleet .photo-rich-fleet-card .fleet-card-photo-credit{color:#53654f}
+#fleet .photo-rich-fleet-card .fleet-bottom>span{color:#53654f!important}
+.coverage-label{color:#80582e}
+#coverage>p{color:#53654f}
+/* Decorative orbit transforms must not create a horizontally scrollable mobile canvas. */
+html{overflow-x:clip}
+@media(max-width:600px){.hero-copy .eyebrow{max-width:100%;white-space:normal;flex-wrap:wrap}}
+
+.crm-recovery-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px;border:0;padding:20px 0}
+.crm-recovery-controls label{display:grid;gap:8px;min-width:0}
+.crm-recovery-controls input{max-width:100%;box-sizing:border-box}
+.crm-recovery-controls button{border:1px solid #214638;border-radius:12px;padding:12px 16px;background:#214638;color:#fffaf1;font:inherit;cursor:pointer}
+.crm-recovery-controls button:disabled{opacity:.55;cursor:not-allowed}
+.crm-recovery-controls :focus-visible{outline:3px solid #a87638;outline-offset:3px}
+.route-playground-note{color:#53654f}

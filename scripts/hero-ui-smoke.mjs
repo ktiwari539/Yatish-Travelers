@@ -4,6 +4,7 @@ import { strict as assert } from 'node:assert';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { chromium } from 'playwright';
+import {installSyntheticImages} from './synthetic-browser-images.mjs';
 import { defaultCatalog } from '../server/catalog.mjs';
 
 const testVideo='public/media/mt-scorpio-arrival.mp4';
@@ -21,7 +22,7 @@ if(fixtureCreated){
 }
 const port=5173;
 const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{
- stdio:['ignore','pipe','pipe'],env:{...process.env}
+ stdio:['ignore','pipe','pipe'],env:{...process.env,VITE_FIREBASE_CONFIG:JSON.stringify({projectId:'demo-mateshwari-poc',apiKey:'synthetic-api-key',appId:'synthetic-app',authDomain:'demo-mateshwari-poc.firebaseapp.com'})}
 });
 let browser;
 let errors='';
@@ -40,6 +41,7 @@ async function smoke(){
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'no-preference'});
  page.setDefaultTimeout(10000);
+ await installSyntheticImages(page);
  const failures=[];
  page.on('pageerror',e=>failures.push(String(e)));
  await page.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded'});
@@ -399,7 +401,8 @@ async function smoke(){
  await page.route('**/api/admin/**',async route=>{
    const url=new URL(route.request().url());
    let response={};
-   if(url.pathname==='/api/admin/fleet-media/status'){
+   if(url.pathname==='/api/admin/session')response={authorized:true};
+   else if(url.pathname==='/api/admin/fleet-media/status'){
      response={ready:false,installed:0,total:7,missing:['/media/mt-thar-red-front.webp']};
    }else if(url.pathname==='/api/admin/fleet-media/import'){
      packRequest=route.request().postDataJSON();
@@ -423,9 +426,14 @@ async function smoke(){
    await route.fulfill({status:url.pathname==='/api/admin/images'?201:200,
      contentType:'application/json',body:JSON.stringify(response)});
  });
+ // UI-only Auth fixture. Real SDK verification/revocation runs separately in emulators.
+ const uid='synthetic-ui-owner',email='mateshwaritravellers@gmail.com';
+ const encode=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
+ const idToken=encode({alg:'none',typ:'JWT'})+'.'+encode({iss:'https://securetoken.google.com/demo-mateshwari-poc',aud:'demo-mateshwari-poc',sub:uid,user_id:uid,email,email_verified:true,iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600,auth_time:Math.floor(Date.now()/1000),firebase:{sign_in_provider:'password'}})+'.synthetic';
+ await page.route('http://127.0.0.1:9099/**',async route=>{const lookup=route.request().url().includes('accounts:lookup'),refresh=route.request().url().includes('securetoken');const user={localId:uid,email,emailVerified:true,passwordHash:'synthetic',providerUserInfo:[{providerId:'password',email,rawId:email}]};await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(refresh?{access_token:idToken,id_token:idToken,refresh_token:'synthetic-refresh',expires_in:'3600',user_id:uid,project_id:'demo-mateshwari-poc'}:lookup?{users:[user]}:{...user,idToken,refreshToken:'synthetic-refresh',expiresIn:'3600',registered:true})});});
  await page.goto('http://127.0.0.1:'+port+'/admin',{waitUntil:'domcontentloaded'});
- await page.getByLabel('Admin token').fill('smoke-test-local-only');
- await page.getByRole('button',{name:'Open dashboard',exact:true}).click();
+ await page.getByLabel('Password',{exact:true}).fill('Synthetic-only123!');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
  ensure(await page.evaluate(()=>sessionStorage.getItem('mt-crm-token'))===null,'Admin bearer token is never persisted in browser storage');
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  // Frontend cannot silently claim the user's ZIP is installed. Staff must
@@ -462,20 +470,20 @@ async function smoke(){
  await saveSanitized.click();
  await editor.waitFor({state:'detached'});
  ensure(imageUploads===2,'Main and alternate images uploaded separately');
- await page.locator('.fleet-admin-head .fleet-save').click();
+ {const saved=page.waitForResponse(response=>response.url().endsWith('/api/admin/catalog')&&response.request().method()==='PUT');await page.locator('.fleet-admin-head .fleet-save').click();await saved;}
  ensure(savedCatalogName==='Toyota Innova','Fleet catalog save retains identity after privacy review');
  ensure(savedGallery.startsWith('/api/uploads/'),'Alternate gallery angle saved as sanitized local image');
  await page.getByRole('button',{name:'Move Maruti Ertiga to first'}).click();
  ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
    'Admin move-to-first visibly changes the first fleet card');
- await page.locator('.fleet-admin-head .fleet-save').click();
+ {const saved=page.waitForResponse(response=>response.url().endsWith('/api/admin/catalog')&&response.request().method()==='PUT');await page.locator('.fleet-admin-head .fleet-save').click();await saved;}
  ensure(savedVehicleOrder[0]==='Maruti Ertiga'&&savedVehicleOrder[1]==='Toyota Innova',
    'Admin save posts the exact vehicle ordering to backend');
  ensure(await page.locator('.fleet-order-number').first().innerText().then(x=>x.includes('#01')),
    'First priority is visibly labeled #01');
  await page.reload({waitUntil:'domcontentloaded'});
- await page.getByLabel('Admin token').fill('smoke-test-local-only');
- await page.getByRole('button',{name:'Open dashboard',exact:true}).click();
+ await page.getByLabel('Password',{exact:true}).fill('Synthetic-only123!');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  await page.waitForFunction(()=>document.querySelector('.fleet-editor-fields input')?.value==='Maruti Ertiga');
  ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
@@ -530,6 +538,11 @@ async function smoke(){
  ensure(await offlineStudio.locator('.ride-studio-thumb-pending').count()>=2,
   'Full-screen studio labels unavailable thumbnails instead of hiding them');
  await offlinePhotos.close();
+
+ // Backup and migration controls remain opt-in; this UI fixture never invokes them.
+ await page.getByRole('button',{name:'Backup & recovery',exact:true}).click();
+ ensure(await page.getByRole('button',{name:'Create encrypted backup',exact:true}).isDisabled(),'Recovery operations require explicit review confirmation');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-recovery-locked.png',animations:'disabled'});
 
  // Independent deterministic test for the requested idle behaviour. The SVG
  // below is a TEST-ONLY delivery fixture, never a displayed fleet photograph.

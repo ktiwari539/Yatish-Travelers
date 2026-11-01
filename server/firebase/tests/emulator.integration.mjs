@@ -1,0 +1,447 @@
+import { createServer } from "node:http";
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import sharp from "sharp";
+import { BlobsServer } from "@netlify/blobs/server";
+import { getStore } from "@netlify/blobs";
+import { createRuntime } from "../runtime.mjs";
+import { createCrmHandler } from "../handler.mjs";
+import { createBackup, restoreBackup, unseal } from "../backup.mjs";
+import { createMedia } from "../media.mjs";
+import { dispatchNotification } from "../notifications.mjs";
+const env = {
+  ...process.env,
+  CRM_FIREBASE_PROJECT_ID: "demo-mateshwari-poc",
+  CRM_ADMIN_UIDS: "synthetic-owner",
+  CRM_RATE_SALT: "a".repeat(64),
+  CRM_BACKUP_KEY: "b".repeat(64),
+  CRM_EMAIL_TO: "business@example.invalid",
+  CRM_WHATSAPP_TO: "910000000000",
+};
+const input = {
+  name: "Synthetic Customer",
+  phone: "910000000001",
+  email: "customer@example.invalid",
+  pickup: "Synthetic pickup",
+  destination: "Synthetic destination",
+  tripDate: "2027-01-01",
+  vehicle: "Maruti Dzire",
+  days: 2,
+  distanceKm: 100,
+};
+test("complete CRM network contracts with actual Auth/Firestore emulators and local Netlify Blobs server", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "mt-blobs-"));
+  let server = new BlobsServer({ directory: dir, token: "synthetic-token" });
+  const address = await server.start();
+  const mediaStore = getStore({
+      name: "media",
+      siteID: "synthetic-site",
+      token: "synthetic-token",
+      apiURL: address.address,
+      consistency: "strong",
+    }),
+    backupStore = getStore({
+      name: "backups",
+      siteID: "synthetic-site",
+      token: "synthetic-token",
+      apiURL: address.address,
+      consistency: "strong",
+    });
+  const rt = createRuntime(env, {}, { mediaStore, backupStore });
+  const r = rt.repository;
+  let api;
+  try {
+    await rt.auth.createUser({
+      uid: "synthetic-owner",
+      email: "owner@example.invalid",
+      emailVerified: true,
+      password: "Synthetic123!",
+    });
+    const login = await fetch(
+      "http://" +
+        process.env.FIREBASE_AUTH_EMULATOR_HOST +
+        "/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=synthetic",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "owner@example.invalid",
+          password: "Synthetic123!",
+          returnSecureToken: true,
+        }),
+      },
+    );
+    const token = (await login.json()).idToken;
+    assert.ok(token);
+    const handler = createCrmHandler(rt);
+    api = createServer(async (req, res) => {
+      const chunks = [];
+      for await (const part of req) chunks.push(part);
+      const response = await handler(
+        new Request("http://127.0.0.1" + req.url, {
+          method: req.method,
+          headers: req.headers,
+          ...(chunks.length ? { body: Buffer.concat(chunks) } : {}),
+        }),
+        { ip: "192.0.2.1" },
+      );
+      res.writeHead(response.status, Object.fromEntries(response.headers));
+      res.end(Buffer.from(await response.arrayBuffer()));
+    });
+    await new Promise((ok) => api.listen(0, "127.0.0.1", ok));
+    const call = async (
+      path,
+      method = "GET",
+      data,
+      auth = true,
+      headers = {},
+    ) =>
+      fetch("http://127.0.0.1:" + api.address().port + "/api/" + path, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          ...(auth ? { Authorization: "Bearer " + token } : {}),
+          ...headers,
+        },
+        ...(data ? { body: JSON.stringify(data) } : {}),
+      });
+    assert.equal(
+      (await call("admin/enquiries", "GET", null, false)).status,
+      401,
+    );
+    assert.equal((await call("admin/session")).status, 200);
+    const legacyId = "11111111-2222-4333-8444-555555555555";
+    const migration = {
+      documents: [
+        {
+          id: "enquiry_" + legacyId,
+          data: {
+            kind: "enquiry",
+            id: legacyId,
+            name: "Synthetic Legacy",
+            phone: "910000000003",
+            status: "confirmed",
+            version: 2,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-02T00:00:00.000Z",
+            quote: {
+              id: "legacy-quote",
+              amount: 99,
+              notes: "Synthetic legacy quote",
+              createdAt: "2026-01-02T00:00:00.000Z",
+            },
+          },
+        },
+        {
+          id: "summary",
+          data: { kind: "summary", total: 1, byStatus: { confirmed: 1 } },
+        },
+      ],
+      media: [],
+    };
+    assert.equal(
+      (await call("admin/migration", "POST", migration)).status,
+      403,
+    );
+    rt.env.CRM_MIGRATION_APPROVAL = "owner-approved";
+    await r.maintenance(true);
+    assert.equal(
+      (await call("admin/migration", "POST", migration)).status,
+      200,
+    );
+    assert.equal(
+      (await call("admin/migration", "POST", migration)).status,
+      200,
+    );
+    const conflict = structuredClone(migration);
+    conflict.documents[0].data.name = "Different";
+    assert.equal((await call("admin/migration", "POST", conflict)).status, 409);
+    assert.equal((await r.get(legacyId)).quote.id, "legacy-quote");
+    assert.equal(
+      (await call("admin/migration/complete", "POST", {})).status,
+      200,
+    );
+    await r.maintenance(false);
+    await r.maintenance(true);
+    assert.equal(
+      (await call("admin/migration", "POST", migration)).status,
+      403,
+    );
+    await r.maintenance(false);
+    delete rt.env.CRM_MIGRATION_APPROVAL;
+
+    assert.equal((await call("enquiries", "POST", input, false)).status, 400);
+    const first = await call("enquiries", "POST", input, false, {
+      "Idempotency-Key": "synthetic-enquiry-001",
+    });
+    assert.equal(first.status, 201);
+    const created = await first.json();
+    assert.equal(created.delivery.length, 3);
+    assert.ok(created.id);
+    const replay = await call("enquiries", "POST", input, false, {
+      "Idempotency-Key": "synthetic-enquiry-001",
+    });
+    assert.equal((await replay.json()).id, created.id);
+    assert.equal(
+      (
+        await call(
+          "enquiries",
+          "POST",
+          { ...input, name: "Different" },
+          false,
+          { "Idempotency-Key": "synthetic-enquiry-001" },
+        )
+      ).status,
+      409,
+    );
+    const record = await r.get(created.id);
+    assert.equal(record.estimatedMin, 7500);
+    assert.match(record.createdAt, /^2026|^202[7-9]/);
+    const outcomes = await Promise.allSettled([
+      r.update(
+        created.id,
+        { status: "contacted", expectedVersion: 1 },
+        "status",
+      ),
+      r.update(created.id, { status: "closed", expectedVersion: 1 }, "status"),
+    ]);
+    assert.equal(outcomes.filter((x) => x.status === "fulfilled").length, 1);
+    const quote = await call(
+      "admin/enquiries/" + created.id + "/quotation",
+      "POST",
+      { expectedVersion: 2, amount: 8000, notes: "Synthetic quote" },
+    );
+    assert.equal(quote.status, 201);
+    assert.equal((await quote.json()).quote.amount, 8000);
+    assert.equal(
+      (
+        await call("admin/enquiries/" + created.id, "PATCH", {
+          expectedVersion: 3,
+          status: "confirmed",
+        })
+      ).status,
+      200,
+    );
+    assert.equal((await r.get(created.id)).status, "confirmed");
+    const c = await r.catalog();
+    const saved = await call("admin/catalog", "PUT", {
+      expectedVersion: c.version,
+      vehicles: c.vehicles,
+    });
+    assert.equal(saved.status, 200);
+    assert.equal(
+      (
+        await call("admin/catalog", "PUT", {
+          expectedVersion: 0,
+          vehicles: c.vehicles,
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (
+        await call(
+          "admin/enquiries",
+          "POST",
+          { name: "Manual Test", phone: "910000000002", source: "staff-call" },
+          true,
+          { "Idempotency-Key": "synthetic-manual-001" },
+        )
+      ).status,
+      201,
+    );
+    const pages = await r.list("enquiry", "", 1);
+    assert.equal(pages.items.length, 1);
+    assert.ok(pages.nextCursor);
+    assert.equal(
+      (await r.list("enquiry", pages.nextCursor, 1)).items.length,
+      1,
+    );
+    await call(
+      "events",
+      "POST",
+      { event: "quote_open", sessionId: "synthetic-session" },
+      false,
+    );
+    assert.equal((await r.engagement()).sessions, 1);
+    const image = await sharp({
+      create: { width: 20, height: 20, channels: 3, background: "#345678" },
+    })
+      .png()
+      .toBuffer();
+    const upload = await call("admin/images", "POST", {
+      mime: "image/png",
+      data: image.toString("base64"),
+    });
+    assert.equal(upload.status, 201);
+    const url = (await upload.json()).url;
+    const served = await handler(
+      new Request("https://synthetic.invalid" + url),
+      { ip: "192.0.2.1" },
+    );
+    assert.equal(served.status, 200);
+    assert.equal(served.headers.get("content-type"), "image/webp");
+    assert.equal(
+      (
+        await call("admin/images", "POST", {
+          mime: "image/png",
+          data: Buffer.from("not an image").toString("base64"),
+        })
+      ).status,
+      400,
+    );
+    assert.equal(
+      (await call("admin/models", "POST", { data: image.toString("base64") }))
+        .status,
+      400,
+    );
+    const meta = Buffer.from(
+        JSON.stringify({
+          asset: { version: "2.0" },
+          meshes: [{ primitives: [] }],
+        }).padEnd(128, " "),
+      ),
+      glb = Buffer.alloc(8000000);
+    glb.write("glTF");
+    glb.writeUInt32LE(2, 4);
+    glb.writeUInt32LE(glb.length, 8);
+    glb.writeUInt32LE(128, 12);
+    glb.writeUInt32LE(0x4e4f534a, 16);
+    meta.copy(glb, 20);
+    glb.writeUInt32LE(glb.length - 156, 148);
+    glb.writeUInt32LE(0x004e4942, 152);
+    const uploadId = "synthetic-model-0001",
+      total = Math.ceil(glb.length / 1500000);
+    for (let index = 0; index < total; index++)
+      assert.equal(
+        (
+          await call("admin/media/chunks", "POST", {
+            uploadId,
+            index,
+            total,
+            data: glb
+              .subarray(index * 1500000, (index + 1) * 1500000)
+              .toString("base64"),
+          })
+        ).status,
+        201,
+      );
+    const model = await call("admin/models", "POST", { uploadId, total });
+    assert.equal(model.status, 201);
+    const modelUrl = (await model.json()).url;
+    assert.equal((await rt.media.read(modelUrl.slice(5))).status, 200);
+    assert.equal(
+      (await (await rt.media.read(modelUrl.slice(5))).arrayBuffer()).byteLength,
+      8000000,
+    );
+
+    assert.equal(
+      (
+        await call("admin/fleet-media/import", "POST", {
+          confirmReplace: true,
+          zipBase64: image.toString("base64"),
+        })
+      ).status,
+      400,
+    );
+    await server.stop();
+    server = new BlobsServer({
+      directory: dir,
+      token: "synthetic-token",
+      port: address.port,
+    });
+    await server.start();
+    assert.equal((await rt.media.read(url.slice(5))).status, 200);
+    assert.equal(
+      (await call("admin/restore", "POST", { id: "backup-synthetic.json" }))
+        .status,
+      403,
+    );
+    assert.equal((await call("admin/notifications")).status, 200);
+    assert.equal((await r.list("notification")).items.length, 6);
+    await assert.rejects(
+      () => dispatchNotification(rt, "synthetic-notification"),
+      /NOTIFICATIONS_DISABLED/,
+    );
+    await r.maintenance(true);
+    assert.equal(
+      (
+        await call("enquiries", "POST", input, false, {
+          "Idempotency-Key": "synthetic-maintenance",
+        })
+      ).status,
+      503,
+    );
+    const snapshot = await createBackup(rt),
+      bytes = await backupStore.get(snapshot.id, { type: "arrayBuffer" });
+    assert.equal(unseal(Buffer.from(bytes), env.CRM_BACKUP_KEY).schema, 1);
+    assert.throws(() => unseal(Buffer.from(bytes), "c".repeat(64)));
+    const all = await r.docs.get();
+    for (const doc of all.docs)
+      if (doc.id !== "control") await doc.ref.delete();
+    const mediaKeys = await mediaStore.list();
+    for (const blob of mediaKeys.blobs) await mediaStore.delete(blob.key);
+    rt.env.CRM_RESTORE_APPROVAL = "owner-approved";
+    await backupStore.delete(snapshot.id);
+    const archive = Buffer.from(bytes),
+      recoveryId = "synthetic-recovery-0001",
+      recoveryTotal = Math.ceil(archive.length / 1500000);
+    for (let index = 0; index < recoveryTotal; index++)
+      assert.equal(
+        (
+          await call("admin/recovery/chunks", "POST", {
+            uploadId: recoveryId,
+            index,
+            data: archive
+              .subarray(index * 1500000, (index + 1) * 1500000)
+              .toString("base64"),
+          })
+        ).status,
+        201,
+      );
+    assert.equal(
+      (
+        await call("admin/restore", "POST", {
+          id: snapshot.id,
+          uploadId: recoveryId,
+          total: recoveryTotal,
+        })
+      ).status,
+      200,
+    );
+    assert.equal((await r.get(created.id)).quote.amount, 8000);
+    assert.equal((await r.get(created.id)).status, "confirmed");
+    assert.equal((await rt.media.read(url.slice(5))).status, 200);
+    assert.deepEqual(
+      Buffer.from(await (await rt.media.read(modelUrl.slice(5))).arrayBuffer()),
+      glb,
+    );
+    assert.equal((await r.get(legacyId)).quote.id, "legacy-quote");
+    await assert.rejects(
+      () => restoreBackup(rt, Buffer.from(bytes)),
+      /RESTORE_TARGET_NOT_EMPTY/,
+    );
+    await r.maintenance(false);
+    for (let i = 0; i < 8; i++) await r.guard("192.0.2.9", "test", 8);
+    await assert.rejects(() => r.guard("192.0.2.9", "test", 8), /RATE_LIMITED/);
+    assert.equal(
+      (
+        await call("admin/enquiries", "GET", null, true, {
+          Authorization: "Bearer invalid",
+        })
+      ).status,
+      401,
+    );
+    console.log(
+      "VERIFIED: synthetic enquiry → admin → quote → confirmed → encrypted backup → empty-target restore; actual Auth/Firestore emulator + local Blobs HTTP server. No provider traffic.",
+    );
+  } finally {
+    if (api) await new Promise((ok) => api.close(ok));
+    await rt.db.terminate();
+    await server.stop();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
