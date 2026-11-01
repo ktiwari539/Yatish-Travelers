@@ -8,7 +8,7 @@
     "dev:full": "node scripts/dev.mjs",
     "api": "node server/crm.mjs",
     "test:api": "node --test server/*.test.mjs",
-    "build": "node scripts/validate-public-env.mjs && tsc --noEmit && vite build && node scripts/generate-seo.mjs",
+    "build": "node scripts/validate-public-env.mjs && tsc --noEmit && vite build && node scripts/generate-seo.mjs && node scripts/check-firebase-client.mjs",
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "visuals:install": "node scripts/install-visuals.mjs",
@@ -19,20 +19,34 @@
     "studio:install": "node scripts/install-studio-review.mjs",
     "audit:fleet:browser": "node scripts/inspect-fleet-preview.mjs",
     "seo:generate": "node scripts/generate-seo.mjs",
-    "build:netlify": "npm run build && node scripts/prepare-netlify.mjs"
+    "build:netlify": "npm run build && node scripts/prepare-netlify.mjs",
+    "test:firebase": "node --test server/firebase/tests/*.test.mjs",
+    "test:firebase:emulators": "node scripts/test-firebase-crm.mjs"
   },
   "dependencies": {
+    "@netlify/blobs": "11.1.7",
+    "fflate": "0.8.3",
+    "firebase": "13.1.0",
+    "firebase-admin": "14.5.0",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "sharp": "0.35.5",
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/three": "^0.180.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "playwright": "1.56.1",
     "typescript": "^5.9.3",
-    "vite": "^7.1.9",
-    "@types/three": "^0.180.0"
+    "vite": "7.3.7"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.7",
+    "glob": "14.0.3",
+    "minimatch": "11.0.3"
   }
 }

@@ -12,9 +12,11 @@ const allowed=(value,label)=>{
  return url.origin;
 };
 try{
- if(!site||!backend)throw Error('Set VITE_PUBLIC_SITE_ORIGIN and MT_CRM_API_ORIGIN in Netlify build environment. The CRM needs separate persistent hosting.');
+ const firebase=process.env.CRM_BACKEND==='firestore';
+ if(firebase&&!process.env.VITE_FIREBASE_CONFIG)throw Error('Set public Firebase Web config in VITE_FIREBASE_CONFIG.');
+ if(!site||(!firebase&&!backend))throw Error('Set VITE_PUBLIC_SITE_ORIGIN and MT_CRM_API_ORIGIN in Netlify build environment. The CRM needs separate persistent hosting.');
  const website=allowed(site,'VITE_PUBLIC_SITE_ORIGIN');
- const api=allowed(backend,'MT_CRM_API_ORIGIN');
+ const api=firebase?null:allowed(backend,'MT_CRM_API_ORIGIN');
  if(website===api)throw Error('The public static site and the persistent CRM API must have separate origins.');
  const folder=resolve('dist');
  if(!existsSync(resolve(folder,'index.html')))throw Error('Vite build is missing dist/index.html');
@@ -22,8 +24,8 @@ try{
  if(!existsSync(resolve(folder,'sitemap.xml'))||!existsSync(robots))throw Error('SEO sitemap/robots missing; check the public origin.');
  // Preserve API paths ahead of the SPA rewrite. Netlify's proxy does not
  // convert the existing file-based Node server into a durable service.
- const redirects='/api/*  '+api+'/api/:splat  200!\n'+
-   Object.keys(MEDIA_FILES).map(p=>'/'+p.replace(/^public\//,'')+'  '+api+'/api/reviewed-media/'+p.split('/').at(-1)+'  200!\n').join('')+
+ const redirects=(firebase?'':'/api/*  '+api+'/api/:splat  200!\n')+
+   Object.keys(MEDIA_FILES).map(p=>'/'+p.replace(/^public\//,'')+'  '+(api||'')+'/api/reviewed-media/'+p.split('/').at(-1)+'  200!\n').join('')+
    '/admin  /admin/index.html  200\n'+
    '/*  /404.html  404\n';
  // Public pages have their own generated index.html; do not rewrite them to
@@ -34,7 +36,7 @@ try{
  }
  writeFileSync(resolve(folder,'_redirects'),redirects);
  console.log('[netlify] Gated static build prepared for '+website);
- console.log('[netlify] External CRM proxy configured. Verify backend authentication, persistent storage and CORS on the actual deployment.');
+ console.log('[netlify] '+(firebase?'Same-origin Firestore Function configured; release flag and provider secrets required.':'External CRM proxy configured.'));
 }catch(error){
  console.error('[netlify] REFUSED TO BUILD:',error instanceof Error?error.message:String(error));
  process.exitCode=1;

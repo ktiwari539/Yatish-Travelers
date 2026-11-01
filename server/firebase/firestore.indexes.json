@@ -1,0 +1,1 @@
+{"indexes":[{"collectionGroup":"mt_crm","queryScope":"COLLECTION","fields":[{"fieldPath":"kind","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"}]}],"fieldOverrides":[]}

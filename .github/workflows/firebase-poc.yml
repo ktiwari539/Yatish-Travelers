@@ -3,7 +3,7 @@ on:
   push:
     branches: [experiment/netlify-firebase-free-poc]
   pull_request:
-    paths: ['experiments/firebase/**', '.github/workflows/firebase-poc.yml']
+    paths: ['experiments/firebase/**', 'server/firebase/**', 'netlify/**', 'src/**', 'scripts/**', 'package*.json', '.github/workflows/firebase-poc.yml']
 permissions:
   contents: read
 jobs:
@@ -19,7 +19,13 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Install isolated POC only
+      - name: Install full CRM dependencies
+        run: npm ci
+      - name: Audit dependency locks
+        run: |
+          npm audit --audit-level=low
+          npm audit --prefix experiments/firebase/integration --package-lock-only --audit-level=low
+      - name: Install isolated POC tools
         run: npm ci --prefix experiments/firebase/integration
       - name: Original injected contracts
         run: node --test experiments/firebase/*.test.mjs
@@ -29,6 +35,10 @@ jobs:
         run: npm run build --prefix experiments/firebase/integration
       - name: Real Auth and Firestore emulator integration plus process restart/import
         run: npm run test:emulators --prefix experiments/firebase/integration
+      - name: Full CRM runtime and migration contracts
+        run: node --test server/firebase/tests/*.test.mjs
+      - name: Complete CRM emulator, local Blobs HTTP, encrypted restore and emulator process restart
+        run: node scripts/test-firebase-crm.mjs
       - name: Retain emulator diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

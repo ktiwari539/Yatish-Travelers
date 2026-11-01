@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {enquiryKey} from './crmApi';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
 import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
 
-import { AdminDashboard } from './AdminDashboard';
+const AdminDashboard=lazy(()=>import('./AdminDashboard').then(m=>({default:m.AdminDashboard})));
 import { TravelEditorial } from './TravelEditorial';
 import { JourneyAdventurePage } from './JourneyAdventurePage';
 import { ScenicImage } from './ScenicImage';
@@ -455,7 +456,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''}/>;
   const isStoriesPage = path === '/stories';
   if (isStoriesPage) return <StoriesPage />;
-  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <AdminDashboard />;
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <Suspense fallback={<main className="crm-page" aria-busy="true">Loading staff sign-in…</main>}><AdminDashboard /></Suspense>;
 
   return (
     <main>
@@ -836,7 +837,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                   try {
                     const response = await fetch('/api/enquiries', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': enquiryKey({fields:Object.fromEntries(data.entries()),vehicle:selected.name,passengers,days,distanceKm:estimate.chargeableKm,nightStay,quoteMode,quoteSource}) },
                       body: JSON.stringify({
                         mode: quoteMode,
                         sessionId: getVisitorSession(),

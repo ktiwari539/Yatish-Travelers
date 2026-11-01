@@ -1,0 +1,93 @@
+# Single-project Netlify + Firebase release candidate — 2 November 2026
+
+This supersedes the earlier requirement for separate hosted staging/development environments. Use one existing Netlify project (ID `20dab8cd-fdc1-4196-937f-7c779661cf47`) and existing Firebase project `mateshwari-travellers`. No second Firebase database, Netlify project, Firebase Storage, Firebase Cloud Functions or Blaze billing is required by this implementation. All offline tests use loopback emulators and synthetic records. The previous POC remains historical evidence and is not routed to `/api/*`.
+
+No deployment, real notification, business-data import, Firestore rules change or live-record mutation is authorized by this document. Keep the PR draft and `[skip netlify]` in commit messages/PR title. Do not enable repository auto-publishing during implementation.
+
+## Provider configuration before the single coordinated release
+
+Use Netlify **Project configuration → Environment variables** on this project only. Enter secrets directly into the provider, never GitHub/chat, `.env` source, frontend variables, build output or logs. Restrict privileged values to Functions and mark as secret where the account supports it; if these controls are unavailable, resolve the provider's supported secret-injection mechanism before release. Do not silently downgrade protection or paste credentials into tool calls.
+
+| Variable | Value / purpose | Exposure |
+|---|---|---|
+| `VITE_PUBLIC_SITE_ORIGIN` | Exact final HTTPS Netlify subdomain shown in the project's Domain management, without a trailing path | Public build |
+| `VITE_FIREBASE_CONFIG` | Existing Firebase Web app's public JSON: `apiKey`, `authDomain`, `projectId`, `appId` (optional messaging/measurement IDs). Project must be `mateshwari-travellers`. No privileged fields | Public build |
+| `CRM_BACKEND` | `firestore` (already in root netlify.toml) | Build |
+| `CRM_FIREBASE_PROJECT_ID` | `mateshwari-travellers` | Functions |
+| `CRM_RELEASE_ENABLED` | Keep absent/false until deployment approval; then `true` | Functions |
+| `CRM_RATE_SALT` | Independently generated 32 random bytes encoded as 64 lowercase hex characters | Functions secret |
+| `CRM_BACKUP_KEY` | Another independent 32 random bytes encoded as 64 lowercase hex characters. Escrow securely outside Netlify; losing it makes encrypted backups unusable | Functions secret |
+| `FIREBASE_CLIENT_EMAIL` | Restricted Google service account email | Functions |
+| `FIREBASE_PRIVATE_KEY` | That account's PEM private key, only if a supported keyless ADC integration is unavailable | Functions secret |
+| `CRM_EMAIL_TO`, `CRM_WHATSAPP_TO` | Owner-confirmed business notification destinations; no invented defaults in the new service | Functions |
+| `CRM_NOTIFICATIONS_MODE` | `disabled` | Functions |
+| `CRM_MIGRATION_APPROVAL` | Absent until owner explicitly approves import; temporarily `owner-approved` for the migration window | Functions |
+
+The runtime also accepts provider-provisioned Application Default Credentials instead of the PEM pair. **A working Netlify-to-Google WIF issuer/configuration has not been established.** Do not treat GitHub Actions OIDC or Netlify Identity as runtime Google credentials. This candidate supports provider-only PEM injection as the concrete fallback, subject to the owner's credential policy and rotation. Never bundle a service-account file. The old `MT_CRM_API_ORIGIN`, `CRM_ADMIN_TOKEN` and `POC_*` values are not required by the new hosted CRM.
+
+Use root base directory, build `npm run build:netlify`, publish `dist`, Functions `netlify/functions`, Node 22.12+ (build/runtime pinned to Node 22). Confirm the provider uses Node 22 at function runtime. The SDK packages and native Sharp binaries are externalized; verify the actual packaged Linux function in the one approved deployment. The function is pinned to this Netlify site ID, production deploy context and the owner Firebase project; previews and accidental projects fail closed. This is one environment: Netlify's “production context” may remain project-private for the initial mandatory verification.
+
+Google Cloud/Firebase, project `mateshwari-travellers`:
+
+1. Confirm Firestore Standard, Spark, intended existing region, and Email/Password Authentication. Do not recreate an existing database or change its region. Enable neither public registration in the UI nor anonymous staff login.
+2. Account `mateshwaritravellers@gmail.com`, UID `ejz9iejTasZMZSEc5nKnh7npNk72`, must remain active. Use the new **Send verification email** button and then **I've verified — refresh status**. Email verification is not MFA. Owner password stays with the owner.
+3. Add only the final chosen Netlify hostname under Authentication → Settings → Authorized domains. Review the Firebase email action handler/template domain. Restrict the public Firebase API key to the APIs/referrers needed for this Web app, checking sign-in still works.
+4. Keep direct-client Firestore rules deny-all. After owner approval, deploy `server/firebase/firestore.rules` and `server/firebase/firestore.indexes.json` using the exact project ID. `firebase deploy --only firestore:rules,firestore:indexes --project mateshwari-travellers --config server/firebase/firebase.json`. Wait for the `kind + createdAt desc` index to finish building before API verification. Admin SDK bypasses rules; IAM remains necessary.
+5. Give the runtime service identity project-scoped `roles/datastore.user` and only the Auth user-read permission needed for revocation/disabled-user checks (`firebaseauth.users.get`; Firebase Authentication Viewer is a broader predefined alternative). Do not grant Owner/Editor or Firebase Admin. Restrict identity creation/rotation to the owner. Verify permission sufficiency against the deployed SDK path.
+6. Confirm Spark quotas in the console and configure usage alerts/credit controls available on the Netlify account. Application limits are ceilings, not a guarantee against platform-credit exhaustion or a distributed denial-of-service attack. No free-tier production availability guarantee is implied.
+
+## Compatibility and storage
+
+`server/firebase/handler.mjs` implements the existing `/api/*` family on the same origin: public catalog/enquiries/events/media; staff session, manual enquiries, enquiries list, status, quotations, summary, engagement, outbox, catalog, images, GLB chunks, approved photo import/status. Original contact/trip/estimate/quote fields and legacy UUIDs survive migration. Lists use stable cursors; the Admin caller follows pages and never silently treats a partial page as the full dataset. Version checks are mandatory for record/catalog edits. Public/manual creation requires an idempotency key retained for retries; idempotency records are durable.
+
+Firestore collection `mt_crm` holds business records, append-only history, preview notifications, operational counters and catalog. Historical `enquiries_poc` is untouched. Server timestamps are used on new business writes. Each state transition plus history and relevant outbox jobs is atomic. Conflict responses require reload; the server never silently overwrites a competing edit. Staff authorization verifies the Firebase ID token with revocation checking, verified email, password sign-in provider, exact UID and exact owner email on **every** Admin request. Browser tokens use memory only; session denial unmounts the CRM.
+
+Netlify site-wide stores `mateshwari-crm-media` and `mateshwari-crm-backups` persist across deploys. These are shared by all deploy contexts, which is why preview API execution is refused. There is no Firebase Cloud Storage dependency. Images are decoded, bounded to 24 million input pixels and re-encoded to WebP with Sharp, stripping metadata. Image uploads retain the 3 MB limit. GLB keeps the 8 MB limit through 240 KB authenticated chunks; external GLB resources are refused. Chunk uploads do not become public media until final validation. Approved photo ZIPs must match the existing exact archive and per-file SHA-256 hashes. Public media reads allow only explicit media namespaces and verify checksums, with immutable caching; backup/chunk keys cannot be fetched through public media routes.
+
+New enquiries are capped at 100/day and 8/IP/minute; engagement at 1,000/day and 30/IP/minute; staff API calls at 600/day and 60/IP/minute, with an additional edge limit. These deliberately conservative bounds need observation in mandatory live verification. Rejected requests can still consume invocation/read budget. Counters contain HMACs, not raw IP addresses. An authorized `POST /api/admin/cleanup` removes expired operational counters and abandoned chunks older than 24 hours in bounded scans. It never deletes enquiries, quotes, history or original business media. Business-data deletion and retention need an owner-approved privacy policy; none is activated automatically.
+
+## Notification handling
+
+Enquiry and quotation operations atomically save email/WhatsApp outbox records in preview state. No real provider request occurs in disabled mode. No scheduled sender, registration-triggered notification, automatic retry or existing-preview backlog drain is enabled.
+
+If sending is later approved: configure `CRM_NOTIFICATION_APPROVAL=owner-approved`, `CRM_NOTIFICATIONS_MODE=live`, verified Resend sender (`RESEND_API_KEY`, `CRM_EMAIL_FROM`) and/or WhatsApp credentials, phone ID, approved reference template, template language and supported `WHATSAPP_GRAPH_VERSION`. An authorized explicit `POST /api/admin/notifications/:id/dispatch` claims a preview job transactionally. Resend receives a deterministic idempotency key. A concurrent/repeated attempt is refused. Provider acceptance is recorded as `accepted`, never “delivered”; uncertain network outcomes require reconciliation, especially for WhatsApp, before any resend. Enabling or sending requires separate approval, and provider delivery/receipt tests remain live-only.
+
+## Existing-data reconciliation (read-only preparation first)
+
+Keep the original CRM host/disk and `.data` tree untouched and available for rollback. The repository contains no customer-data export. On the owner's existing CRM machine, take the existing backup with `scripts/crm-backup.mjs`, verify its manifest, and retain enquiries.jsonl, notification-events.jsonl, events.jsonl, catalog.json, uploads and models. Include approved static/media assets separately. Do not upload any customer archive to GitHub or chat.
+
+`node scripts/prepare-crm-migration.mjs /secure/original-data /secure/.data/migration.json` prepares a restricted-permission local plan without writing Firestore. It strictly replays journals in order, keeps original IDs and quotations, retains all history, reconciles summary counts and hashes media. A malformed/orphan event aborts instead of silently discarding records. The output contains private customer data and must remain local/secured; the script only logs counts and checksum.
+
+Rehearse that plan against the loopback emulator before any approved import. During the separately approved migration window, freeze old-CRM writes, export a fresh final archive, set new-CRM maintenance, and use authenticated `/api/admin/migration` batches (at most 200 documents and one media object; JSON under 4.1 MB; the Admin migration uploader sends large GLBs through authenticated chunks and `/api/admin/migration/model`, retaining the original UUID filename). Inspect counts, stable IDs, quotations, history and media hashes before accepting the imported catalog. Conflicting existing documents are never overwritten; replaying an identical batch is safe. Clear the migration approval afterward. The Admin uploader automatically uses the chunk path for legacy GLBs above 3 MB. Never truncate an archive or individual asset.
+
+## Backup and recovery
+
+1. Enter maintenance via authenticated `POST /api/admin/maintenance` with `{enabled:true}`. This blocks business mutations, including notification claims. Do not leave a partially completed client upload running before capture.
+2. `POST /api/admin/backups` captures a consistent Firestore transaction snapshot and all permanent media, encrypts with AES-256-GCM and a random nonce, writes a uniquely named backup blob, reads it back and verifies SHA-256. The response contains only the manifest (ID/counts/hash/bytes), not customer data.
+3. Download that encrypted archive with authenticated `GET /api/admin/backups/:id`, independently hash it, and retain an encrypted copy **outside this Netlify account**. A backup kept only in the same provider is not disaster recovery. Store the backup decryption key separately in the owner's secure recovery vault. Close maintenance only after successful verification.
+4. Rehearse decryption/restore with `restoreBackup` against the local demo emulator and local Blobs server. Restore refuses non-empty targets and leaves maintenance enabled. It never overwrites a newer database. The automated suite verifies enquiry, quotation, confirmed status and image restoration, wrong-key/tamper rejection, and a second restore refusal.
+5. Real recovery is an explicitly approved operator action. First restore offline and reconcile manifests. Then temporarily configure `CRM_RESTORE_APPROVAL=owner-approved` in the provider and use Admin → Backup & recovery → Restore (or authenticated `POST /api/admin/restore` with `{id}`). The target must be empty and maintained in the same project, and the recovery key stays injected from the provider secret manager. For an off-provider archive up to 3 MB, the Admin upload control sends the encrypted archive to the same server-side restore path. Larger archives need a reviewed segmented operator recovery. Remove the restore approval after reconciliation. The CLI/browser must never hold Firebase Admin private keys. Do not delete the original database to make it empty; preserving/exporting current state and an approved restore plan come first.
+
+This implementation captures a small-business snapshot within a synchronous function's time/memory limits. Actual maximum dataset/media volume and provider execution time remain live verification gates. If export exceeds the 60-second function budget, do not claim that archive complete; use an operator-managed segmented export before launch. Managed Firestore backups/PITR are not claimed available on Spark. Until scheduling is explicitly configured and tested, backups are operator-run: take one before every migration/release/catalog replacement and daily on days with new enquiries. Restore/RPO/RTO ownership and off-provider retention must be accepted by the owner.
+
+## Exact release sequence — one coordinated deployment, no auto-deploy loop
+
+- [ ] Latest draft PR head: all CI checks green; inspect screenshot artifacts, emulator results, audit and function bundle. Do not merge.
+- [ ] Owner has configured runtime identity, secrets and domain in providers, with secrets excluded from build artifacts and logs.
+- [ ] Owner has supplied/reconciled the original CRM archive through a secure local workflow; approved photos/licences/business facts accepted. Do not mark them approved from synthetic screenshots.
+- [ ] Owner has designated backup/recovery responsibility and an off-provider destination and tested recovery access.
+- [ ] Freeze auto-publishing and retain current deploy ID, old CRM archive, manifest/checksums, source SHA and catalog/media baseline. Keep the one Netlify project private.
+- [ ] Obtain explicit approval for the exact candidate SHA, provider rules/index setup, one coordinated private deployment and any planned import. Do not activate real notifications.
+- [ ] Configure `CRM_RELEASE_ENABLED=true` only for that approved release. Build/deploy root config once into the single project's production context, still private. No additional project/environment is needed.
+- [ ] Mandatory live verification with synthetic-only records: public catalog; enquiry creation and deterministic retry; authorized account verification/refresh; wrong UID, unverified/expired/revoked token denial; manual enquiry; quote and version conflict; confirmed status; catalog reorder; image and complete 8 MB model upload/read; restart/cold invocation; locked Firestore direct-client access; disabled notifications; encrypted backup download and offline restore. Measure actual function latency/credits/read/write usage and image delivery. Never label emulator tests as this live check.
+- [ ] If a real-data migration is approved, import only the reconciled archive during maintenance and compare counts/hashes. Preserve the old CRM and write freeze until reconciliation succeeds.
+- [ ] Check the final hostname's canonical tags, five public page titles/descriptions, sitemap, robots, structured JSON, Admin noindex, true unknown-page 404, mobile overflow, keyboard and screen-reader paths. Real-device Safari/Chrome and field CWV remain distinct from browser emulation.
+- [ ] Public visibility and real notification activation require separate explicit approval. If any mandatory live check fails, remain private and roll back.
+
+## Rollback
+
+Stop new mutations first using maintenance. Preserve a new encrypted capture of any post-deploy records. Restore the prior immutable Netlify deploy on the **same project** or disable `CRM_RELEASE_ENABLED` to fail closed. A code rollback does not revert Firestore or Blobs; never restore an old database snapshot over newer enquiries. If reverting to the old JSONL backend, keep both sides maintained until post-cutover synthetic/real records are reconciled by stable ID; then restore the old approved proxy configuration and previous deploy. Preserve new Firestore history and media for investigation. No automatic downgrade of Firebase Admin authorization to a shared token is allowed.
+
+## Evidence and remaining verification
+
+See `docs/firebase-release-evidence.md` for executed checks and current CI links. Offline success is permission to request coordinated deployment approval, not proof of live readiness. Final launch GO requires mandatory provider-path verification and owner approvals above.
