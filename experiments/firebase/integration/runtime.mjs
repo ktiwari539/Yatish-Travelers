@@ -12,7 +12,7 @@ export function validateConfig(env) {
  if(emulator){
   if(env.NETLIFY==='true'||projectId!=='demo-mateshwari-poc'||![firestore,auth].every(v=>/^127\.0\.0\.1:\d+$/.test(v||'')))throw Error('Both loopback emulators and demo project are required locally');
  }else{
-  if(!['deploy-preview','branch-deploy'].includes(env.CONTEXT)||env.POC_ENABLE_STAGING!=='true'||!/^mateshwari-poc-[a-z0-9-]+$/.test(projectId||''))throw Error('Explicit isolated staging configuration required');
+  if(!['deploy-preview','branch-deploy'].includes(env.CONTEXT)||env.POC_ENABLE_STAGING!=='true'||env.POC_PROJECT_PURPOSE!=='development-only'||!(projectId==='mateshwari-travellers'||/^mateshwari-poc-[a-z0-9-]+$/.test(projectId||'')))throw Error('Explicit isolated staging configuration required');
  }
  const allowedUids=(env.POC_ADMIN_UIDS||'').split(',').map(v=>v.trim()).filter(Boolean);
  if(!allowedUids.length)throw Error('Server-only Admin UID allowlist required');

@@ -6,7 +6,7 @@ let auth,currentRecord,requestKey,previousPayload;
 function message(text){$('message').textContent=text;}
 try{
  const config=emulator?{apiKey:'fake-emulator-key',projectId:'demo-mateshwari-poc',authDomain:'localhost',appId:'demo'}:JSON.parse(import.meta.env.VITE_POC_WEB_CONFIG||'null');
- if(!config||(!emulator&&!/^mateshwari-poc-[a-z0-9-]+$/.test(config.projectId)))throw Error();
+ if(!config||(!emulator&&!(config.projectId==='mateshwari-travellers'||/^mateshwari-poc-[a-z0-9-]+$/.test(config.projectId))))throw Error();
  if(emulator&&!['localhost','127.0.0.1','terminal.local'].includes(location.hostname))throw Error();
  auth=getAuth(initializeApp(config));
  if(emulator)connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});
