@@ -1,0 +1,95 @@
+# Isolated Netlify + Firebase SDK integration
+
+This subproject is **not a migration or production release**. Root Netlify config, storefront, `/api/enquiries`, existing Admin and disk-backed CRM remain unchanged. The only function route is `/api/poc/*`, and the only data subtree is `enquiries_poc`. No Firebase Storage/Cloud Functions or billing changes are used.
+
+## Implemented
+
+- Actual modular Firebase Web Auth SDK sign-in, memory-only persistence, sign-out, manually requested email verification, bounded staff retrieval and synthetic enquiry/quote/status forms. No account creation UI; no MFA claim.
+- Modern Netlify `.mjs` function, actual Firebase Admin SDK ID-token verification with revocation/disabled-user checks, UID allowlist, password-provider check and **strict `email_verified === true`**. The older contract authorizer previously allowed a missing verification claim; that defect is fixed and regression tested.
+- Fail-closed configuration: production contexts rejected; local mode requires both loopback emulators and fixed `demo-mateshwari-poc`. Hosted mode requires explicit preview/branch context, staging enable flag and separate `mateshwari-poc-*` project. The supplied owner project `mateshwari-travellers` is intentionally not used by this integration.
+- Atomic Firestore transaction: normalized payload hash and deterministic document ID from high-entropy idempotency key; identical retry returns same ID, changed payload returns 409. Server timestamps; client pricing/status ignored. Versioned quote and status edits reject stale versions. Staff list limited to 20 records, no unlimited fetch.
+- Transactional synthetic write budgets: 100 new enquiries per UTC day and 10 per IP per ten-minute window. IP comes from Netlify `context.ip`, not request-supplied forwarding headers. IP is HMAC-hashed with a server-only salt. Native Netlify edge rate-limit config is also declared but its deployed enforcement is not tested. Replays do not consume new-write allowance. These controls **do not guarantee** a free quota under abusive reads, failed requests, transaction retries or large numbers of source IPs.
+- Deny-all direct-client Firestore rules fixture. Admin SDK bypasses rules; server authorization is independently mandatory. This fixture was not pushed to any real project.
+- Bounded emulator snapshot export/restore rehearsal with SHA-256 inventory/content verification, empty-target requirement and atomic create batch; plus Firebase CLI export/import across emulator process restart. This is **not** managed Firestore backup, scheduled off-host backup or production disaster recovery. Snapshot excludes rate-limit subcollection and Auth data; CLI emulator export/import independently covers Auth state. SHA-256 does not protect against an attacker rewriting both data and hash.
+
+## Run without real credentials
+
+Requires Node 22+ and Java 21+ (current Firebase CLI requires it). Emulator fixtures create only synthetic `example.invalid` accounts with test-only passwords. The fixed demo project has no live Firebase resources.
+
+```bash
+npm ci --prefix experiments/firebase/integration
+node --test experiments/firebase/*.test.mjs
+npm test --prefix experiments/firebase/integration
+npm run build --prefix experiments/firebase/integration
+npm run test:emulators --prefix experiments/firebase/integration
+```
+
+The last command starts Auth/Firestore emulators, exercises the real Web/Admin SDKs and the HTTP handler through a local Node HTTP adapter, exports state, stops both emulator processes, restarts with import and verifies enquiry/quotation/status/Auth persistence. It does not deploy or emulate Netlify's hosted runtime/CDN. CI has a separate Java 21 job for this workflow.
+
+For manual local use, start emulators, then an API adapter and preview in separate terminals from this directory:
+
+```bash
+npm run emulators
+# API terminal — synthetic fixtures only, never real credentials
+POC_FIREBASE_PROJECT_ID=demo-mateshwari-poc FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 POC_ADMIN_UIDS=poc-synthetic-admin POC_RATE_SALT=synthetic-local-only-rate-salt-00001 npm run dev:api
+# Browser preview terminal
+VITE_POC_USE_EMULATORS=true npm run dev
+```
+
+Manual emulators start empty; create a synthetic staff account with the Admin emulator SDK or run the tests. The Auth emulator is bound to loopback; a remote/cloud browser cannot use the user's own loopback endpoint. Do not expose the insecure emulator to the internet to work around that.
+
+## Private Netlify preview prerequisites (not deployed)
+
+Use a **dedicated** Netlify project, base/package directory `experiments/firebase/integration`, its own `netlify.toml`, and owner-private visibility. Never point the existing website at this config. Netlify Functions source remains outside `dist`.
+
+Server-only runtime values, entered through provider secret settings with Functions scope:
+
+- `POC_FIREBASE_PROJECT_ID`: separate staging project, named `mateshwari-poc-*`.
+- `POC_ENABLE_STAGING=true` and an actual preview/branch deploy context (production is refused).
+- `POC_ADMIN_UIDS`: staging staff UIDs, provisioned by owner. The owner-supplied UID belongs to the existing project; do not assume it exists in a new staging project.
+- `POC_RATE_SALT`: fresh random secret, at least 32 characters, never VITE-prefixed.
+- Firebase Admin **Application Default Credentials** via a restricted service identity/workload federation configured for the runtime. Netlify does not automatically supply Google ADC. Issuer/audience/IAM and secure credential injection must be designed and verified on the selected account. This code does not download/bundle service-account private keys or claim keyless federation is already working.
+- Never set emulator environment variables on a hosted project. No real credential is needed or accepted by the emulator tests.
+
+Browser-only build setting `VITE_POC_WEB_CONFIG` is the JSON **public Web app configuration**, allowing only `apiKey`, `authDomain`, `projectId`, `appId`, optional `messagingSenderId`/`measurementId`. A Firebase Web API key is not an Admin private key. Do not put any service-account JSON/private key/UID allowlist/rate salt here. Build validation rejects unknown public fields and unexpected VITE variables; compiled JS is checked for Admin SDK/config leakage. Do not set `VITE_POC_USE_EMULATORS=true` for a hosted build. Register a separate staging Web app and authorized preview domain only when ready for an approved private preview.
+
+This page can send verification emails only when a signed-in user explicitly clicks the button. No real emails are sent by automated tests. Existing user `mateshwaritravellers@gmail.com` and its verified status, Auth provider, database creation, region and project billing state were **not** inspected or changed.
+
+## Endpoint contracts
+
+| POC endpoint | Method | Authorization / response |
+| --- | --- | --- |
+| `/api/poc/health` | GET | Configured mode; no secrets |
+| `/api/poc/enquiries` | POST | JSON <=8 KiB; `Idempotency-Key` 16–100 letters/digits/underscore/hyphen; returns `{id,status,delivery:[],replay}` |
+| `/api/poc/admin/enquiries` | GET | Verified allowlisted staff; `{items,limit:20}` |
+| `/api/poc/admin/enquiries/:id` | GET | Same authorization; normalized record, server times, version |
+| `/api/poc/admin/enquiries/:id` | PATCH | Same authorization; `{status,expectedVersion}` |
+| `/api/poc/admin/enquiries/:id/quotation` | POST | Same authorization; `{amount,notes,expectedVersion}` |
+
+Errors are deterministic JSON codes: 400 malformed JSON/missing key/version, 401 unauthorized, 404 absent route/record, 409 key/version conflict, 413 size, 415 content type, 422 fields, 429 POC budget, 503 unavailable/unconfigured. Function responses carry no-store/noindex/nosniff and no added CORS. `config.path` is POC only; the legacy handler and this actual SDK integration are intentionally distinct.
+
+## Current limits and remaining parity
+
+Verified official docs on 1 Nov 2026:
+- Netlify **credit-based Free**: 300 credits/month hard limit, no recharge; function compute 10 credits/GB-hour, bandwidth 20 credits/GB, web requests 2 credits/10,000, production deployment 15 credits. Preview/branch deployments do not incur the production-deploy charge, but traffic/compute still meter. Existing accounts may be Legacy; actual account plan/usage has not been inspected. These are shared budgets, not unlimited free function invocations.
+- Netlify uses build Node version for functions with supported runtime/fallback rules. This project pins build Node 22; real function deployment/runtime invocation still requires a test. No speculative memory/region overrides.
+- Firestore Spark: one free database/project, 1 GiB, 50,000 reads/day, 20,000 writes/day, 20,000 deletes/day, 10 GiB outbound/month. Managed backup/restore/PITR/TTL billing is excluded from free quota. Firebase Storage and Firebase Cloud Functions are not part of this free-only POC.
+- Successful fresh enquiry uses at least 3 document reads + 3 writes (record and quota docs), plus retries. Identical replay uses a read. Auth revocation checks and list reads also have usage/latency implications. Quota exhaustion and billing behaviour require actual staging measurements; no uptime/free-forever claim.
+
+Still missing: production catalog/pricing compatibility, engagement and notification history adapters, durable media/uploads, real notification delivery/retries, complete JSONL reconciliation, retention/deletion workflows, production-grade scheduled encrypted backups/recovery, account-level free-budget observability/alerts and full production compatibility. Keep the old CRM for rollback. No live `/api/*` switchover, Firebase billing upgrade or public deployment is authorized by this work.
+
+Official sources:
+- https://firebase.google.com/docs/firestore/pricing
+- https://firebase.google.com/docs/auth/admin/verify-id-tokens
+- https://firebase.google.com/docs/emulator-suite/connect_firestore
+- https://firebase.google.com/support/release-notes/cli
+- https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/credit-based-pricing-plans/
+- https://docs.netlify.com/build/functions/configuration/
+
+## Dependency and test evidence notes
+
+Pinned Firebase Web 13.1.0 and Firebase Admin 14.5.0 (Apache-2.0), Firebase CLI 15.34.2 (MIT, development only), Vite 7.3.7 (MIT). The Web preview imports only app/auth; production Firestore writes use Admin SDK. Browser build measured about 110 kB JS / 33 kB gzip with no privileged SDK/config in the output. No package is added to the existing storefront manifest or lockfile.
+
+An executed audit found a vulnerable gRPC dependency pulled by the umbrella Web package. A scoped override selects patched `@grpc/grpc-js` 1.14.7 rather than accepting npm's proposed downgrade to Firebase 9. Additional transitive moderate advisories in Google transport/glob/rimraf and CLI dependencies need review; no broad breaking overrides or claim of zero vulnerabilities. Check latest audit output/CI before any hosted use.
+
+Local execution: original six contract tests, four new runtime/HTTP boundary tests, the POC Web build and existing 12 CRM tests/typecheck were run. Local emulator execution was attempted but blocked by Java 17; current Firebase CLI requires Java 21. Downloading Java 21 was unavailable in this environment. The dedicated CI workflow installs Java 21; its actual result must be checked before claiming emulator/restart tests pass. No real Firebase connectivity or deployed Netlify function test has been executed. API parity inventory: [compatibility.md](compatibility.md).

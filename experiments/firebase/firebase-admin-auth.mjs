@@ -11,7 +11,7 @@ export function createFirebaseAdminAuthorizer({verifyIdToken,allowedUids}){
   if(!match||match[1].length>8192)return false;
   try{
    const decoded=await verifyIdToken(match[1],true);
-   return Boolean(decoded?.uid&&ids.has(decoded.uid)&&decoded.firebase?.sign_in_provider==='password'&&decoded.email_verified!==false);
+   return Boolean(decoded?.uid&&ids.has(decoded.uid)&&decoded.firebase?.sign_in_provider==='password'&&decoded.email_verified===true);
   }catch{return false;}
  };
 }

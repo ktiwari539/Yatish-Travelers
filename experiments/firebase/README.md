@@ -1,5 +1,7 @@
 # Netlify + Firebase Spark — isolated proof of concept (2026-11-01)
 
+> **Engineering continuation:** [Actual SDK integration and isolated preview](integration/README.md) now lives in a separate subproject. The sections below describe the original injected-contract baseline; use the integration README and latest CI for current evidence. Nothing is deployed.
+
 **Branch:** experiment/netlify-firebase-free-poc, forked from feature/mateshwari-cinematic-crm at current head. Not deployed. Existing production and feature-branch CRM untouched.
 
 ## Decision under evaluation
