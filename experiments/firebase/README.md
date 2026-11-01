@@ -37,3 +37,19 @@ https://firebase.google.com/pricing
 https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024
 https://firebase.google.com/docs/admin/setup
 https://docs.netlify.com/build/functions/overview/
+
+## Owner Firebase project (provided 2026-11-01)
+- Firebase display name: Mateshwari Travellers
+- Firebase Project ID: `mateshwari-travellers`
+- Project number: `579339559923` (non-secret project identifier)
+- No web app registered yet; Firebase Firestore database and Authentication provider are not confirmed enabled.
+- Set Firebase environment type to **Development** while this remains an isolated POC.
+
+### Console actions before real integration
+1. In Firebase Console select **Build > Firestore Database > Create database**. Select **Standard edition** when presented and an appropriate region. Choose **Production mode** (deny client reads/writes by default); keep database security rules locked down. This code expects privileged server-side access, not public Firestore rules. Confirm Spark pricing in the console before finalizing.
+2. For Admin identity experiments select **Build > Authentication > Get started** and enable **Email/Password** only if individual staff login is desired. Do not enable public anonymous or self-registration Admin access. Admin authorization still requires server-side verification and an explicit allowlist/role design.
+3. **Project settings > General > Your apps > Web (</>)** is only necessary if we add Firebase client Authentication in the Admin web UI. Do not register a web app just to use server-side Firestore.
+4. No service-account credentials should be pasted into GitHub/chat. When actual integration is ready, configure workload identity/secured provider environment secrets and restrict IAM permissions. Prefer keyless identity where supported; avoid downloading a permanent JSON private key unless unavoidable.
+5. Do not enable Blaze billing or Firebase Storage/Cloud Functions for this free-only experiment. Firestore's managed backup and restore also require billing, so a separately tested data export/recovery process is essential.
+
+There is currently no real Firebase connectivity test or deployed Netlify Function. The POC's mock-based tests must not be presented as such.
