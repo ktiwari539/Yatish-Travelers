@@ -10,8 +10,10 @@ test('runtime refuses production, partial emulators and unconfigured staging',()
  for(const overrides of [{CONTEXT:'production'},{NETLIFY:'true'},{FIREBASE_AUTH_EMULATOR_HOST:''},{POC_FIREBASE_PROJECT_ID:'mateshwari-travellers'},{POC_ADMIN_UIDS:''},{POC_RATE_SALT:''},{FIRESTORE_EMULATOR_HOST:'remote:8080'}])assert.throws(()=>validateConfig({...env,...overrides}));
  assert.throws(()=>validateConfig({...env,FIRESTORE_EMULATOR_HOST:'',FIREBASE_AUTH_EMULATOR_HOST:''}));
  assert.equal(validateConfig({CONTEXT:'deploy-preview',POC_ENABLE_STAGING:'true',POC_PROJECT_PURPOSE:'development-only',POC_FIREBASE_PROJECT_ID:'mateshwari-poc-staging',POC_ADMIN_UIDS:'staging-only',POC_RATE_SALT:env.POC_RATE_SALT}).emulator,false);
- const owner={CONTEXT:'deploy-preview',POC_ENABLE_STAGING:'true',POC_PROJECT_PURPOSE:'development-only',POC_FIREBASE_PROJECT_ID:'mateshwari-travellers',POC_ADMIN_UIDS:'owner-staff',POC_RATE_SALT:env.POC_RATE_SALT};
- assert.equal(validateConfig(owner).emulator,false);assert.throws(()=>validateConfig({...owner,POC_PROJECT_PURPOSE:''}));
+ const owner={CONTEXT:'deploy-preview',POC_ENABLE_STAGING:'true',POC_PROJECT_PURPOSE:'development-only',POC_FIREBASE_PROJECT_ID:'mateshwari-travellers',POC_ADMIN_UIDS:'ejz9iejTasZMZSEc5nKnh7npNk72',POC_RATE_SALT:env.POC_RATE_SALT};
+ assert.equal(validateConfig(owner).emulator,false);
+ assert.deepEqual(validateConfig({...owner,POC_ADMIN_UIDS:''}).allowedUids,['ejz9iejTasZMZSEc5nKnh7npNk72']);
+ assert.throws(()=>validateConfig({...owner,POC_ADMIN_UIDS:'someone-else'}));assert.throws(()=>validateConfig({...owner,POC_PROJECT_PURPOSE:''}));
 });
 test('normalization rejects malformed fields and does not accept client pricing/status',()=>{
  const value=normalize({name:'Synthetic',phone:'0000000000',mode:'callback',estimatedMin:99999,status:'confirmed'});
@@ -22,6 +24,7 @@ test('HTTP boundary limits body, rejects missing authorization, never routes rea
  const handle=createHandler({emulator:true,authorize:async()=>false,repository:{create:async()=>({id:'fixture'})}});
  assert.equal((await handle(new Request('https://fixture.invalid/api/enquiries'))).status,404);
  assert.equal((await handle(new Request('https://fixture.invalid/api/poc/admin/enquiries'))).status,401);
+ assert.equal((await handle(new Request('https://fixture.invalid/api/poc/admin/session'))).status,401);
  const post=(body,type='application/json')=>handle(new Request('https://fixture.invalid/api/poc/enquiries',{method:'POST',headers:{'Content-Type':type},body}),{ip:'synthetic'});
  assert.equal((await post(' '.repeat(8193))).status,413);assert.equal((await post('broken')).status,400);assert.equal((await post('{}','text/plain')).status,415);
  assert.equal((await post('null')).status,422);

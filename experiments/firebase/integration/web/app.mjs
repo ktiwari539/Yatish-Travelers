@@ -1,36 +1,51 @@
 import {initializeApp} from 'firebase/app';
-import {getAuth,connectAuthEmulator,setPersistence,inMemoryPersistence,signInWithEmailAndPassword,signOut,sendEmailVerification,onAuthStateChanged,reload} from 'firebase/auth';
+import {initializeAuth,connectAuthEmulator,inMemoryPersistence,signInWithEmailAndPassword,signOut,sendEmailVerification,onAuthStateChanged,reload} from 'firebase/auth';
+import {createAdminLogin} from './admin-login.mjs';
 const $=id=>document.getElementById(id);
 const emulator=import.meta.env.VITE_POC_USE_EMULATORS==='true';
-let auth,currentRecord,requestKey,previousPayload;
+let auth,login,currentRecord,requestKey,previousPayload;
 function message(text){$('message').textContent=text;}
+function renderIdentity(state){
+ $('identity').textContent=state.email?(state.authorized?'Admin CRM access approved.':state.verified?'Email verified; Admin CRM is locked pending server approval.':'Email verification required. Admin CRM is locked.'):'Signed out. Tokens remain in memory.';
+ $('login').querySelector('button').disabled=state.busy;
+ $('login').hidden=Boolean(state.email);$('logout').hidden=!state.email;
+ $('verify').hidden=!state.email||state.verified;
+ $('refresh').hidden=!state.email;$('refresh').disabled=state.busy;
+ $('verify').disabled=state.busy||state.retryAfterMs>0;
+ $('verify').textContent=state.retryAfterMs>0?'Resend available in '+Math.ceil(state.retryAfterMs/1000)+'s':'Send verification email';
+ $('list').hidden=!state.authorized;$('list').disabled=state.busy;
+ $('admin-workspace').hidden=!state.authorized;$('admin-controls').disabled=!state.authorized||state.busy;
+ if(!state.authorized){currentRecord=null;$('record').textContent='No enquiry loaded';}
+ message(state.message);
+}
 try{
  const config=emulator?{apiKey:'fake-emulator-key',projectId:'demo-mateshwari-poc',authDomain:'localhost',appId:'demo'}:JSON.parse(import.meta.env.VITE_POC_WEB_CONFIG||'null');
  if(!config||(!emulator&&!(config.projectId==='mateshwari-travellers'||/^mateshwari-poc-[a-z0-9-]+$/.test(config.projectId))))throw Error();
  if(emulator&&!['localhost','127.0.0.1','terminal.local'].includes(location.hostname))throw Error();
- auth=getAuth(initializeApp(config));
+ auth=initializeAuth(initializeApp(config),{persistence:inMemoryPersistence});
  if(emulator)connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});
- await setPersistence(auth,inMemoryPersistence);
- $('environment').textContent=emulator?'Local Auth and Firestore emulator workflow':'Explicit staging Firebase project: '+config.projectId;
- const updateIdentity=user=>{
-  $('identity').textContent=user?(user.emailVerified?'Signed in; server authorization still required.':'Verify your email before Admin access.'):'Signed out. Tokens remain in memory.';
-  $('login').hidden=Boolean(user);$('logout').hidden=!user;$('verify').hidden=!user||user.emailVerified;$('refresh').hidden=!user||user.emailVerified;$('list').hidden=!user||!user.emailVerified;
- };
- onAuthStateChanged(auth,updateIdentity);
- auth.updatePreviewIdentity=updateIdentity;
-}catch{message('Preview not configured. Supply an isolated staging Web configuration or start the local emulators.');for(const button of document.querySelectorAll('button'))button.disabled=true;}
-async function run(button,work){button.disabled=true;try{await work();}catch{message('Operation refused or unavailable. Check sign-in, verification, allowlist, input, version and POC limits.');}finally{button.disabled=false;}}
+ $('environment').textContent=emulator?'Local Auth and Firestore emulator workflow':'Isolated staging sign-in — existing Firebase account';
+ login=createAdminLogin({auth,sdk:{signInWithEmailAndPassword,signOut,sendEmailVerification,onAuthStateChanged,reload},authorize:async token=>{
+  const response=await fetch('/api/poc/admin/session',{headers:{Authorization:'Bearer '+token},mode:'same-origin',credentials:'omit',cache:'no-store'});
+  return response.ok&&(await response.json()).authorized===true;
+ },onChange:renderIdentity});
+ login.start();
+ // Only updates the resend countdown; it never sends email automatically.
+ setInterval(()=>{const state=login.snapshot();$('verify').disabled=state.busy||state.retryAfterMs>0;$('verify').textContent=state.retryAfterMs>0?'Resend available in '+Math.ceil(state.retryAfterMs/1000)+'s':'Send verification email';},1000);
+}catch{message('Staging sign-in is not configured. Admin CRM remains locked.');for(const button of document.querySelectorAll('button'))button.disabled=true;}
+async function run(button,work){button.disabled=true;try{await work();}catch{message('Operation refused or unavailable. Admin access requires verified email and server approval.');}finally{button.disabled=false;}}
 async function api(path,options={},admin=false){
  const headers={'Content-Type':'application/json',...options.headers};
- if(admin){if(!auth?.currentUser)throw Error();headers.Authorization='Bearer '+await auth.currentUser.getIdToken(true);}
+ if(admin)headers.Authorization='Bearer '+await login.adminToken();
  const response=await fetch('/api/poc/'+path,{...options,headers,mode:'same-origin',credentials:'omit'});
- const data=await response.json();if(!response.ok)throw Error(data.error);return data;
+ const data=await response.json();
+ if(!response.ok){if(admin&&[401,403,503].includes(response.status))login.lock();throw Error(data.error);}return data;
 }
 function show(value){currentRecord=value;$('record').textContent=JSON.stringify(value,null,2);}
-$('login').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget,data=new FormData(form);void run(form.querySelector('button'),async()=>{await signInWithEmailAndPassword(auth,data.get('email'),data.get('password'));form.reset();message('Signed in. Privileged requests are checked server-side.');});});
-$('logout').onclick=()=>run($('logout'),async()=>{await signOut(auth);show(null);message('Signed out.');});
-$('verify').onclick=()=>run($('verify'),async()=>{await sendEmailVerification(auth.currentUser);message('Verification requested. Use your staging verification email; the local emulator prints verification links.');});
-$('refresh').onclick=()=>run($('refresh'),async()=>{await reload(auth.currentUser);await auth.currentUser.getIdToken(true);auth.updatePreviewIdentity(auth.currentUser);message('Verification refreshed. Server authorization is still required.');});
+$('login').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget,data=new FormData(form);void login?.signIn(data.get('email'),data.get('password')).finally(()=>{form.elements.namedItem('password').value='';});});
+$('logout').onclick=()=>login?.signOut();
+$('verify').onclick=()=>login?.sendVerification();
+$('refresh').onclick=()=>login?.refresh();
 $('list').onclick=()=>run($('list'),async()=>{const value=await api('admin/enquiries',{},true);$('record').textContent=JSON.stringify(value,null,2);currentRecord=null;message('Latest bounded list loaded.');});
 $('enquiry').onsubmit=event=>{event.preventDefault();const form=event.currentTarget;void run(form.querySelector('button'),async()=>{
  const payload=JSON.stringify({...Object.fromEntries(new FormData(form)),mode:'quote'});

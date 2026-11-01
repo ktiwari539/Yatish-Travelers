@@ -17,6 +17,7 @@ export function createHandler(runtime){
    if(path==='/api/poc/enquiries'&&request.method==='POST')return json(await runtime.repository.create(await body(request),request.headers.get('idempotency-key'),context.ip),201);
    if(path.startsWith('/api/poc/admin/')){
     if(!await runtime.authorize(request.headers.get('authorization')))return json({error:'UNAUTHORIZED'},401);
+    if(path==='/api/poc/admin/session'&&request.method==='GET')return json({authorized:true});
     if(path==='/api/poc/admin/enquiries'&&request.method==='GET')return json(await runtime.repository.list());
     const match=/^\/api\/poc\/admin\/enquiries\/([a-f0-9]{64})(?:\/(quotation))?$/.exec(path);
     if(match){

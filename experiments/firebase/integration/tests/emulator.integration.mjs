@@ -3,19 +3,20 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import {Readable} from 'node:stream';
 import {initializeApp as initializeWeb,deleteApp as deleteWebApp} from 'firebase/app';
-import {getAuth as webAuth,connectAuthEmulator,signInWithEmailAndPassword,signOut} from 'firebase/auth';
+import {getAuth as webAuth,connectAuthEmulator,signInWithEmailAndPassword,signOut,sendEmailVerification,applyActionCode,reload,onAuthStateChanged} from 'firebase/auth';
 import {Firestore,FieldValue} from 'firebase-admin/firestore';
 import {getRuntime} from '../runtime.mjs';
 import {createRepository} from '../repository.mjs';
 import {createHandler} from '../handler.mjs';
+import {createAdminLogin} from '../web/admin-login.mjs';
 import {exportSnapshot,restoreSnapshot} from '../snapshot.mjs';
 const uid='poc-synthetic-admin',password='synthetic-test-password-only-937',email='synthetic-admin@example.invalid';
 Object.assign(process.env,{POC_FIREBASE_PROJECT_ID:'demo-mateshwari-poc',POC_ADMIN_UIDS:uid,POC_RATE_SALT:'synthetic-emulator-rate-salt-'.repeat(2)});
 const runtime=getRuntime();
 if(!runtime.emulator)throw Error('Never run this suite against live Firebase');
 
-test('real Auth/Firestore emulators: SDK login -> HTTP function handler -> idempotency -> quote/status -> rules/revocation -> restore',async t=>{
- await runtime.auth.createUser({uid,email,password,emailVerified:true});
+test('real emulators: verification email -> action link -> refreshed token -> server authorization -> CRM/restart safety',async t=>{
+ await runtime.auth.createUser({uid,email,password,emailVerified:false});
  await runtime.auth.createUser({uid:'poc-unverified',email:'synthetic-unverified@example.invalid',password,emailVerified:false});
  await runtime.auth.createUser({uid:'poc-outsider',email:'synthetic-outsider@example.invalid',password,emailVerified:true});
  const app=initializeWeb({apiKey:'fake-key',projectId:'demo-mateshwari-poc',appId:'demo'},'poc-web-test');
@@ -38,7 +39,25 @@ test('real Auth/Firestore emulators: SDK login -> HTTP function handler -> idemp
  for(const address of ['synthetic-unverified@example.invalid','synthetic-outsider@example.invalid']){
   const login=await signInWithEmailAndPassword(auth,address,password);const token=await login.user.getIdToken();assert.equal((await fetch(url,{headers:{Authorization:'Bearer '+token}})).status,401);await signOut(auth);
  }
- const login=await signInWithEmailAndPassword(auth,email,password);const token=await login.user.getIdToken();const headers={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+ const login=await signInWithEmailAndPassword(auth,email,password);
+ const sessionUrl=base+'/api/poc/admin/session';
+ const staleToken=await login.user.getIdToken();
+ assert.equal((await fetch(sessionUrl,{headers:{Authorization:'Bearer '+staleToken}})).status,401);
+ const verification=createAdminLogin({auth,sdk:{reload,sendEmailVerification,signOut,onAuthStateChanged,signInWithEmailAndPassword},authorize:async token=>{
+  const response=await fetch(sessionUrl,{headers:{Authorization:'Bearer '+token}});return response.ok&&(await response.json()).authorized===true;
+ }});
+ await verification.refresh();assert.equal(verification.snapshot().authorized,false);
+ await verification.sendVerification();
+ // Auth emulator captures email without contacting a real email provider.
+ const outbox=await (await fetch('http://'+process.env.FIREBASE_AUTH_EMULATOR_HOST+'/emulator/v1/projects/demo-mateshwari-poc/oobCodes')).json();
+ const emailAction=outbox.oobCodes.find(item=>item.email===email&&item.requestType==='VERIFY_EMAIL');
+ assert.ok(emailAction?.oobCode,'sendEmailVerification must emit an actual emulator verification action');
+ await applyActionCode(auth,emailAction.oobCode);
+ assert.equal(verification.snapshot().authorized,false,'clicking email alone does not unlock stale UI');
+ assert.equal((await fetch(sessionUrl,{headers:{Authorization:'Bearer '+staleToken}})).status,401,'stale unverified token remains denied');
+ await verification.refresh();assert.equal(login.user.emailVerified,true);assert.equal(verification.snapshot().authorized,true);
+ const token=await verification.adminToken();const headers={Authorization:'Bearer '+token,'Content-Type':'application/json'};
+ assert.equal((await fetch(sessionUrl,{headers})).status,200);
  const initial=await (await fetch(url,{headers})).json();assert.equal(initial.status,'new');assert.equal(initial.version,1);assert.equal(initial.estimatedMin,0);assert.match(initial.createdAt,/^\d{4}-/);assert.equal(initial.requestHash,undefined);
  const quote=await fetch(url+'/quotation',{method:'POST',headers,body:JSON.stringify({amount:1500,notes:'Synthetic quote',expectedVersion:1})});assert.equal(quote.status,200);assert.equal((await quote.json()).version,2);
  assert.equal((await fetch(url,{method:'PATCH',headers,body:JSON.stringify({status:'confirmed',expectedVersion:1})})).status,409);

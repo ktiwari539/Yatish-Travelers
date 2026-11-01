@@ -2,6 +2,7 @@ import {initializeApp,getApps,applicationDefault} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {createFirebaseAdminAuthorizer} from '../firebase-admin-auth.mjs';
+import {identityPolicy} from './owner-policy.mjs';
 import {createRepository} from './repository.mjs';
 
 export function validateConfig(env) {
@@ -14,10 +15,9 @@ export function validateConfig(env) {
  }else{
   if(!['deploy-preview','branch-deploy'].includes(env.CONTEXT)||env.POC_ENABLE_STAGING!=='true'||env.POC_PROJECT_PURPOSE!=='development-only'||!(projectId==='mateshwari-travellers'||/^mateshwari-poc-[a-z0-9-]+$/.test(projectId||'')))throw Error('Explicit isolated staging configuration required');
  }
- const allowedUids=(env.POC_ADMIN_UIDS||'').split(',').map(v=>v.trim()).filter(Boolean);
- if(!allowedUids.length)throw Error('Server-only Admin UID allowlist required');
+ const {allowedUids,allowedEmail}=identityPolicy(projectId,env.POC_ADMIN_UIDS);
  if(!env.POC_RATE_SALT||env.POC_RATE_SALT.length<32)throw Error('Server-only rate salt of at least 32 characters required');
- return {projectId,emulator,allowedUids,rateSalt:env.POC_RATE_SALT};
+ return {projectId,emulator,allowedUids,allowedEmail,rateSalt:env.POC_RATE_SALT};
 }
 let cached;
 export function getRuntime(env=process.env){
@@ -25,7 +25,7 @@ export function getRuntime(env=process.env){
  if(cached){if(cached.projectId!==config.projectId||cached.emulator!==config.emulator)throw Error('Runtime project change refused');return cached;}
  const app=getApps().find(a=>a.name==='mateshwari-isolated-poc')||initializeApp({projectId:config.projectId,...(!config.emulator?{credential:applicationDefault()}:{})},'mateshwari-isolated-poc');
  const auth=getAuth(app),db=getFirestore(app);
- const authorize=createFirebaseAdminAuthorizer({verifyIdToken:(token,revoked)=>auth.verifyIdToken(token,revoked),allowedUids:config.allowedUids});
+ const authorize=createFirebaseAdminAuthorizer({verifyIdToken:(token,revoked)=>auth.verifyIdToken(token,revoked),allowedUids:config.allowedUids,allowedEmail:config.allowedEmail});
  cached={...config,db,auth,authorize,repository:createRepository(db,{serverTimestamp:()=>FieldValue.serverTimestamp(),rateSalt:config.rateSalt})};
  return cached;
 }
