@@ -15,7 +15,7 @@ export class ApiError extends Error {
   }
 }
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
-export const statuses = ["new", "contacted", "quoted", "confirmed", "closed"];
+export const statuses = ["new", "contacted", "quoted", "confirmed", "completed", "cancelled", "closed"];
 export const eventNames = [
   "quote_open",
   "callback_open",
