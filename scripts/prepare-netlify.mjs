@@ -1,6 +1,7 @@
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {MEDIA_FILES} from '../server/fleet-photo-import.mjs';
+import {reviewedMediaRedirects} from './reviewed-media-routing.mjs';
 
 const site=(process.env.VITE_PUBLIC_SITE_ORIGIN||'').trim().replace(/\/$/,'');
 const backend=(process.env.MT_CRM_API_ORIGIN||'').trim().replace(/\/$/,'');
@@ -25,7 +26,7 @@ try{
  // Preserve API paths ahead of the SPA rewrite. Netlify's proxy does not
  // convert the existing file-based Node server into a durable service.
  const redirects=(firebase?'':'/api/*  '+api+'/api/:splat  200!\n')+
-   Object.keys(MEDIA_FILES).map(p=>'/'+p.replace(/^public\//,'')+'  '+(api||'')+'/api/reviewed-media/'+p.split('/').at(-1)+'  200!\n').join('')+
+   reviewedMediaRedirects({manifest:MEDIA_FILES,distDir:folder,sourceDir:resolve('.'),apiOrigin:api||''})+
    '/admin  /admin/index.html  200\n'+
    '/*  /404.html  404\n';
  // Public pages have their own generated index.html; do not rewrite them to
