@@ -23,6 +23,9 @@ test("single owner project must be explicitly enabled; emulators never accepted 
     { ...base, CRM_FIREBASE_PROJECT_ID: "other" },
     { ...base, FIRESTORE_EMULATOR_HOST: "127.0.0.1:8080" },
     { ...base, CRM_NOTIFICATIONS_MODE: "live" },
+    { ...base, CRM_BACKUP_KEY: base.CRM_RATE_SALT },
+    { ...base, FIREBASE_CLIENT_EMAIL: "example@project.iam.gserviceaccount.com" },
+    { ...base, FIREBASE_PRIVATE_KEY: "synthetic-not-a-real-key" },
   ])
     assert.throws(() => validateCrmConfig(env, context));
   assert.throws(() =>
