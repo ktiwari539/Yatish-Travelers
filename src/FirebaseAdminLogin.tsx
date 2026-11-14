@@ -82,6 +82,15 @@ export function FirebaseAdminLogin({
           const r = await fetch("/api/admin/session", {
             headers: { Authorization: "Bearer " + value },
           });
+          const type = r.headers.get("content-type") || "";
+          if ((r.status === 404 || r.status === 200) && !type.includes("application/json")) {
+            setError("This static preview has no running CRM API. Open the approved Netlify site with its secure Functions backend to use Admin.");
+            return false;
+          }
+          if (r.status === 503) {
+            setError("The CRM API is release-disabled or missing secure server configuration. Admin cannot open until provider setup is complete.");
+            return false;
+          }
           return r.ok && (await r.json()).authorized === true;
         },
         onChange: (next: State) => {
