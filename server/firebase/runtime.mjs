@@ -38,6 +38,10 @@ export function validateCrmConfig(env, context = {}) {
     throw Error("Runtime rate salt required");
   if (!/^[a-f0-9]{64}$/.test(env.CRM_BACKUP_KEY || ""))
     throw Error("Runtime backup key required");
+  if (env.CRM_RATE_SALT === env.CRM_BACKUP_KEY)
+    throw Error("Runtime security keys must be independent");
+  if (!emulator && Boolean(env.FIREBASE_CLIENT_EMAIL) !== Boolean(env.FIREBASE_PRIVATE_KEY))
+    throw Error("Incomplete Firebase service account configuration");
   if (!["disabled", "live"].includes(env.CRM_NOTIFICATIONS_MODE || "disabled"))
     throw Error("Invalid notification mode");
   if (
