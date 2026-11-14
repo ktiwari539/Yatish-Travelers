@@ -8,6 +8,7 @@ import { WhyMateshwari } from './WhyMateshwari';
 const AdminDashboard=lazy(()=>import('./AdminDashboard').then(m=>({default:m.AdminDashboard})));
 import { TravelEditorial } from './TravelEditorial';
 import { JourneyAdventurePage } from './JourneyAdventurePage';
+import { usePublishedSiteContent } from './siteContent';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import { LuxuryInterlude } from './LuxuryInterlude';
@@ -192,16 +193,18 @@ type QuoteMode = 'quote' | 'callback' | 'corporate';
 
 
 function StoriesPage() {
-  const storySlots = [
+  const site = usePublishedSiteContent();
+  const fallbackStories = [
     { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:luxuryMedia.hero },
     { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:luxuryMedia.mountains },
     { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:luxuryMedia.airport }
   ];
+  const storySlots = site.stories.length ? site.stories.map((s) => ({ title: s.title, text: s.text, visual: { src: s.imageUrl || luxuryMedia.mountains.src, fallback: luxuryMedia.mountains.src, alt: s.title }, isPublished: true })) : fallbackStories.map((s) => ({ ...s, isPublished: false }));
 
   return (
     <main className="stories-page">
       <header className="stories-nav">
-        <a className="brand" href="/">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/">{site.brand.logoUrl&&<img src={site.brand.logoUrl} alt="" className="site-brand-logo"/>}{site.brand.name || <>MATESHWARI <span>TRAVELLERS</span></>}</a>
         <a className="secondary" href="/">Back to Home <ArrowRight size={16} /></a>
       </header>
 
@@ -228,15 +231,17 @@ function StoriesPage() {
               <span>0{index + 1}</span>
             </div>
             <div className="story-feature-copy">
-              <small>EDITORIAL JOURNEY INSPIRATION</small>
+              <small>{story.isPublished ? 'PUBLISHED JOURNEY' : 'EDITORIAL JOURNEY INSPIRATION'}</small>
               <h2>{story.title}</h2>
               <p>{story.text}</p>
-              <strong>Real customer stories: awaiting approved submissions</strong>
+              <strong>{story.isPublished ? 'Published by Mateshwari Travellers' : 'Real customer stories: awaiting approved submissions'}</strong>
             </div>
           </article>
         ))}
       </section>
 
+      {site.ambassadors.length>0&&<section className="site-published-people" aria-label="Our ambassadors"><h2>Our ambassadors</h2><div className="site-people-grid">{site.ambassadors.map((person,i)=><article key={i}>{person.imageUrl&&<img src={person.imageUrl} alt="" loading="lazy"/>}<h3>{person.name}</h3><p>{person.description}</p></article>)}</div></section>}
+      {site.testimonials.length>0&&<section className="site-published-people" aria-label="Customer testimonials"><h2>What our customers say</h2><div className="site-people-grid">{site.testimonials.map((review,i)=><blockquote key={i}><p>“{review.quote}”</p><cite>{review.name}</cite></blockquote>)}</div></section>}
       <TravelEditorial stories />
       <section className="story-submit" id="share-story">
         <div>
@@ -277,6 +282,7 @@ function StoriesPage() {
 }
 
 export function App() {
+  const site = usePublishedSiteContent();
   const [vehicle, setVehicle] = useState(fleet[1].name);
   const userSelectedVehicle=useRef(false);
   const [km, setKm] = useState(250);
@@ -461,7 +467,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   return (
     <main>
       <header className="nav">
-        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">{site.brand.logoUrl&&<img src={site.brand.logoUrl} alt="" className="site-brand-logo"/>}{site.brand.name || <>MATESHWARI <span>TRAVELLERS</span></>}</a>
         <nav>
           <a href="#route-playground">Journeys</a>
           <a href="#fleet">Fleet</a>
@@ -491,9 +497,9 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
         </div>
         <div className="hero-copy cinematic-landing-copy">
-          <div className="eyebrow"><Sparkles size={15}/> MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED</div>
-          <h1>Travel, arranged with <em>more thought.</em></h1>
-          <p>Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.</p>
+          <div className="eyebrow"><Sparkles size={15}/> {site.brand.tagline || 'MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED'}</div>
+          <h1>{site.brand.bannerTitle || <>Travel, arranged with <em>more thought.</em></>}</h1>
+          <p>{site.brand.bannerText || 'Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.'}</p>
           <div className="hero-actions">
             <button className="primary" type="button" onClick={()=>openQuote('quote','cinematic-hero')}>
               Request a Quote <ArrowRight size={17}/>
