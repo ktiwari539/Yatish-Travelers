@@ -60,6 +60,8 @@ export function createCrmHandler(runtime) {
           adminConfigured: true,
           notifications: runtime.notificationConfig.mode,
         });
+      if (p === "/api/site-content" && m === "GET")
+        return json(await runtime.siteContent.readPublic());
       if (p === "/api/catalog" && m === "GET") {
         const c = await r.catalog();
         return json({ ...c, vehicles: c.vehicles.filter((v) => v.enabled) });
@@ -114,6 +116,12 @@ export function createCrmHandler(runtime) {
             ),
             match[2] ? 201 : 200,
           );
+        if (p === "/api/admin/site-content" && m === "GET")
+          return json(await runtime.siteContent.readAdmin());
+        if (p === "/api/admin/site-content" && m === "PUT")
+          return json(await runtime.siteContent.saveDraft(await body(req, 32000)));
+        if (p === "/api/admin/site-content/publish" && m === "POST")
+          return json(await runtime.siteContent.publish(await body(req)));
         if (p === "/api/admin/catalog" && m === "GET")
           return json(await r.catalog());
         if (p === "/api/admin/catalog" && m === "PUT")
