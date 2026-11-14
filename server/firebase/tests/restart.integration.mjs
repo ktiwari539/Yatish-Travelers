@@ -10,6 +10,11 @@ test("new process after Firebase emulator export/import recovers complete CRM re
       .where("kind", "==", "enquiry")
       .get();
     assert.equal(records.size, 3);
+    const content = (await db.collection("mt_crm").doc("site_content").get()).data();
+    assert.equal(content.draft.stories[0].title, "Private only");
+    assert.equal(content.published.stories[0].title, "Synthetic story");
+    assert.equal(content.version, 3);
+    assert.equal(content.publishedVersion, 1);
     const confirmed = records.docs
       .map((d) => d.data())
       .find((x) => x.quote?.amount === 8000);

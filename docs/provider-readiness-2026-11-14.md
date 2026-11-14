@@ -57,6 +57,10 @@ Existing keys remain unchanged. Before any backup-key rotation, retain the curre
 
 Rotate the independent rate salt only at a planned release after reviewing quotas: IP bucket hashes change, while global daily limits remain. Rate-salt rotation does not decrypt backups. Neither rotation is needed merely to finish this review.
 
+## Recovery assertion correction
+
+The content assertions in the incoming emulator test ran before backup restoration. They have been moved after the actual restore, and the separate restarted-process test now checks both the unpublished draft and published content versions. The updated full emulator/Blobs HTTP recovery and restart suite passed locally. This verifies recovery without exposing a later private draft on the public endpoint.
+
 ## Remaining gates
 
 1. Live Google IAM inventory/verification in an accessible authenticated Console/Cloud Shell; inspect inherited grants and impersonation policy as well as direct bindings.

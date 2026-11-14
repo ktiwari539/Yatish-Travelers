@@ -187,8 +187,6 @@ test("complete CRM network contracts with actual Auth/Firestore emulators and lo
     conflict.documents[0].data.name = "Different";
     assert.equal((await call("admin/migration", "POST", conflict)).status, 409);
     assert.equal((await r.get(legacyId)).quote.id, "legacy-quote");
-    assert.equal((await rt.siteContent.readAdmin()).draft.stories[0].title, "Private only");
-    assert.equal((await rt.siteContent.readPublic()).content.stories[0].title, "Synthetic story");
     assert.equal(
       (await call("admin/migration/complete", "POST", {})).status,
       200,
@@ -441,6 +439,8 @@ test("complete CRM network contracts with actual Auth/Firestore emulators and lo
       ).status,
       200,
     );
+    assert.equal((await rt.siteContent.readAdmin()).draft.stories[0].title, "Private only");
+    assert.equal((await rt.siteContent.readPublic()).content.stories[0].title, "Synthetic story");
     assert.equal((await r.get(created.id)).quote.amount, 8000);
     assert.equal((await r.get(created.id)).status, "confirmed");
     assert.equal((await rt.media.read(url.slice(5))).status, 200);
