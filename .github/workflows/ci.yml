@@ -38,6 +38,9 @@ jobs:
           node --check scripts/install-complete-media.mjs
           node --check scripts/install-fleet-media.mjs
           node --check scripts/install-scorpio-media.mjs
+      - name: Validate reviewed fleet-media routing and checksums
+        run: node --test scripts/reviewed-media-routing.test.mjs
+
       - name: Validate guarded Netlify deployment script
         run: |
           node --check scripts/prepare-netlify.mjs
