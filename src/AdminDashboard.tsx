@@ -12,7 +12,7 @@ type Enquiry={
   tripType:string;notes:string;vehicle:string;passengers:number;days:number;
   distanceKm:number;estimatedMin:number;estimatedMax:number;email?:string;source?:string;sessionId?:string;quote?:{id:string;amount:number;notes:string;createdAt:string};
 };
-const statuses=['new','contacted','quoted','confirmed','closed'];
+const statuses=['new','contacted','quoted','confirmed','completed','cancelled','closed'];
 export function AdminDashboard(){return <FirebaseAdminLogin>{(token,logout)=><AdminWorkspace token={token} logout={logout}/>}</FirebaseAdminLogin>;}
 function AdminWorkspace({token,logout}:{token:string;logout:()=>void}) {
   const [items,setItems]=useState<Enquiry[]>([]);
