@@ -2,6 +2,7 @@ import {RecoveryPanel} from './RecoveryPanel';
 import {FirebaseAdminLogin} from './FirebaseAdminLogin';
 import {adminFetch,readAllPages} from './crmApi';
 import { FleetManager } from './FleetManager';
+import { SiteContentManager } from './siteContent';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, LogIn, LogOut, RefreshCw, Search, Users, Plus, Mail, Send, MessageCircle, FileText } from 'lucide-react';
 
@@ -22,7 +23,7 @@ function AdminWorkspace({token,logout}:{token:string;logout:()=>void}) {
   const [saving,setSaving]=useState<string|null>(null);
   const [manualOpen,setManualOpen]=useState(false);
   const [manualSaving,setManualSaving]=useState(false);
-  const [tab,setTab]=useState<'bookings'|'fleet'|'engagement'|'notifications'|'recovery'>('bookings');
+  const [tab,setTab]=useState<'bookings'|'fleet'|'engagement'|'notifications'|'recovery'|'content'>('bookings');
   const [delivery,setDelivery]=useState<{config:{mode:string;emailReady:boolean;whatsappReady:boolean;businessEmail:string;businessWhatsApp:string};items:Array<{id:string;createdAt:string;enquiryId:string;channel:string;purpose:string;recipient:string;status:string;detail:string}>}|null>(null);
   const [quoteEditing,setQuoteEditing]=useState<string|null>(null);
   const [quoteSaving,setQuoteSaving]=useState(false);
@@ -97,10 +98,11 @@ function AdminWorkspace({token,logout}:{token:string;logout:()=>void}) {
         <button type="button" className={tab==='bookings'?'active':''} onClick={()=>setTab('bookings')}>Enquiries & follow-ups</button>
         <button type="button" className={tab==='engagement'?'active':''} onClick={()=>setTab('engagement')}>Visitor activity</button>
         <button type="button" className={tab==='fleet'?'active':''} onClick={()=>setTab('fleet')}>Cars & pricing</button>
+        <button type="button" className={tab==='content'?'active':''} onClick={()=>setTab('content')}>Website content</button>
         <button type="button" className={tab==='notifications'?'active':''} onClick={()=>setTab('notifications')}>Email & WhatsApp outbox</button>
         <button type="button" className={tab==='recovery'?'active':''} onClick={()=>setTab('recovery')}>Backup & recovery</button>
       </div>
-      {tab==='recovery'?<RecoveryPanel token={token}/>:tab==='fleet' ? <FleetManager token={token}/> : tab==='notifications' ? (
+      {tab==='recovery'?<RecoveryPanel token={token}/>:tab==='fleet' ? <FleetManager token={token}/> : tab==='content' ? <SiteContentManager token={token}/> : tab==='notifications' ? (
         <div className="crm-notifications">
           <div className="crm-heading"><div><span className="crm-eyebrow">Messaging / Test Mode</span><h1>Email & WhatsApp outbox.</h1><p>See every email and WhatsApp notification prepared by the backend, with accurate delivery states.</p></div><button className="crm-refresh" type="button" onClick={()=>void load()}><RefreshCw size={16}/> Refresh</button></div>
           <div className="crm-delivery-config">
