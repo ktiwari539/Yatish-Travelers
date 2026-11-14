@@ -10,6 +10,7 @@ import { getStore } from "@netlify/blobs";
 import { identityPolicy } from "../../experiments/firebase/integration/owner-policy.mjs";
 import { createFirebaseAdminAuthorizer } from "../../experiments/firebase/firebase-admin-auth.mjs";
 import { createCrmRepository } from "./repository.mjs";
+import { createSiteContentStore } from "./site-content.mjs";
 import { createMedia } from "./media.mjs";
 export function validateCrmConfig(env, context = {}) {
   const emulator = Boolean(
@@ -96,6 +97,7 @@ export function createRuntime(env, context, { mediaStore, backupStore } = {}) {
     db,
     auth,
     repository,
+    siteContent: createSiteContentStore(db, () => FieldValue.serverTimestamp()),
     authorize,
     media,
     backups:
