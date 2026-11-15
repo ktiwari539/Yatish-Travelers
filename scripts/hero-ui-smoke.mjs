@@ -38,7 +38,8 @@ async function ready(){
 }
 async function smoke(){
  await ready();
- browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ browser=await chromium.launch({headless:true,args:['--no-sandbox'],
+  ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{})});
  const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'no-preference'});
  page.setDefaultTimeout(10000);
  await installSyntheticImages(page);
@@ -441,6 +442,28 @@ async function smoke(){
   'Authorized Admin dashboard starts in the first viewport; optional account linking cannot cover it');
  ensure(await page.getByRole('button',{name:'Link Google to this Admin account'}).count()===0,
   'Unconfigured optional Google linking is not offered on the launch Admin page');
+ ensure(await page.getByRole('heading',{name:'A clearer way to run every journey.'}).isVisible(),
+  'Authorized staff land on an actionable operations overview, not a blank panel');
+ ensure(await page.getByRole('button',{name:/Needs follow-up/}).count()===1,
+  'Overview provides a follow-up queue shortcut');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-ops-overview-desktop.png',animations:'disabled'});
+ await page.getByRole('button',{name:'Log an enquiry',exact:true}).click();
+ ensure(await page.getByRole('heading',{name:'Enquiries & follow-ups'}).isVisible(),
+  'Overview quick action opens the detailed staff pipeline');
+ ensure(await page.getByRole('heading',{name:'Log an enquiry received outside the website'}).isVisible(),
+  'Overview quick action opens the actual manual lead form');
+ await page.getByRole('button',{name:'Overview',exact:true}).click();
+ await page.getByRole('button',{name:/Needs follow-up/}).click();
+ ensure(await page.getByRole('combobox',{name:'Filter by status'}).inputValue()==='attention',
+  'Follow-up metric opens enquiry list filtered to new and contacted leads');
+ await page.getByRole('button',{name:'Overview',exact:true}).click();
+ await page.setViewportSize({width:390,height:844});
+ ensure(await page.getByRole('heading',{name:'A clearer way to run every journey.'}).isVisible(),
+  'Mobile staff overview is readable and accessible');
+ ensure(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),
+  'Mobile operations layout does not overflow the page horizontally');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-ops-overview-mobile.png',animations:'disabled'});
+ await page.setViewportSize({width:1440,height:900});
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  // Frontend cannot silently claim the user's ZIP is installed. Staff must
  // actively upload and confirm it before the server receives photo bytes.

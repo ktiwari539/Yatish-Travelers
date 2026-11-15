@@ -59,3 +59,4 @@ import './fleet-distinct-v28.css';
 import './accessibility.css';
 
 import './site-content.css';
+import './admin-workspace.css';
