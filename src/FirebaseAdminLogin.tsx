@@ -1,8 +1,13 @@
 import { setAdminTokenProvider } from "./crmApi";
 import { useEffect, useRef, useState } from "react";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApp } from "firebase/app";
 import {
   type Auth,
+  GoogleAuthProvider,
+  browserPopupRedirectResolver,
+  signInWithPopup,
+  linkWithCredential,
+  getAdditionalUserInfo,
   initializeAuth,
   inMemoryPersistence,
   onAuthStateChanged,
@@ -41,6 +46,8 @@ export function FirebaseAdminLogin({
   const [token, setToken] = useState(""),
     [password, setPassword] = useState(""),
     [error, setError] = useState("");
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const googlePending = useRef(false);
   const controller = useRef<ReturnType<typeof createAdminLogin>>(null);
   useEffect(() => {
     try {
@@ -60,7 +67,7 @@ export function FirebaseAdminLogin({
       const first = !staffAuth;
       const auth = (staffAuth ??= initializeAuth(
         initializeApp(config, "mateshwari-staff"),
-        { persistence: inMemoryPersistence },
+        { persistence: inMemoryPersistence, popupRedirectResolver: browserPopupRedirectResolver },
       ));
       if (first && config.projectId === "demo-mateshwari-poc") {
         if (!["127.0.0.1", "localhost"].includes(location.hostname))
@@ -113,9 +120,44 @@ export function FirebaseAdminLogin({
       setError("Admin sign-in is not configured. The CRM remains locked.");
     }
   }, []);
+  async function google(link = false) {
+    if (!staffAuth || googlePending.current) return;
+    googlePending.current = true;
+    setGoogleBusy(true);
+    setError("");
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    try {
+      if (link) {
+        await controller.current?.adminToken();
+        const user = staffAuth.currentUser;
+        if (!user) throw Error();
+        let linkAuth: Auth;
+        try { linkAuth = initializeAuth(getApp("mateshwari-google-link"), { persistence: inMemoryPersistence, popupRedirectResolver: browserPopupRedirectResolver }); }
+        catch {
+          linkAuth = initializeAuth(initializeApp(staffAuth.app.options, "mateshwari-google-link"), { persistence: inMemoryPersistence, popupRedirectResolver: browserPopupRedirectResolver });
+          if (staffAuth.app.options.projectId === "demo-mateshwari-poc") connectAuthEmulator(linkAuth, "http://127.0.0.1:9099", { disableWarnings: true });
+        }
+        try {
+          const result = await signInWithPopup(linkAuth, provider);
+          const profile = getAdditionalUserInfo(result)?.profile;
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          if (!credential || profile?.email !== user.email || profile?.verified_email !== true || staffAuth.currentUser !== user) throw Error();
+          await controller.current?.adminToken();
+          await linkWithCredential(user, credential);
+        } finally { await signOut(linkAuth); }
+      } else {
+        await signInWithPopup(staffAuth, provider);
+      }
+      await controller.current?.refresh();
+    } catch {
+      setError("Google sign-in or linking was not completed. Use your existing staff password to sign in and link the matching Google account.");
+    } finally { googlePending.current = false; setGoogleBusy(false); }
+  }
   if (state.authorized && token)
     return (
       <>
+        <div className="crm-page"><button type="button" disabled={googleBusy} onClick={() => void google(true)}>Link Google to this Admin account</button><p role="status">{error}</p></div>
         {children(token, () => {
           setToken("");
           void controller.current?.signOut();
@@ -137,6 +179,7 @@ export function FirebaseAdminLogin({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            setError("");
             const value = password;
             setPassword("");
             void controller.current?.signIn(
@@ -164,10 +207,11 @@ export function FirebaseAdminLogin({
               required
             />
           </label>
-          <button disabled={state.busy || !!error} type="submit">
+          <button disabled={state.busy || googleBusy} type="submit">
             {state.busy ? "Checking…" : "Sign in"}
           </button>
         </form>
+        <button type="button" disabled={state.busy || googleBusy} onClick={() => void google()}>Sign in with Google</button>
         {state.email && (
           <div>
             <button

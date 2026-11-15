@@ -22,3 +22,13 @@ test('configuration fails closed',()=>{
  assert.throws(()=>createFirebaseAdminAuthorizer({verifyIdToken:async()=>null,allowedUids:[]}),/allowed UID/);
  assert.throws(()=>createFirebaseAdminAuthorizer({allowedUids:[uid]}),/verifier/);
 });
+
+test('Google requires exact UID, verified matching email and revocation check',async()=>{
+ const base={uid,email:'mateshwaritravellers@gmail.com',email_verified:true,firebase:{sign_in_provider:'google.com'}};
+ for(const [claims,expected] of [[base,true],[{...base,uid:'other'},false],[{...base,email:'other@example.com'},false],[{...base,email_verified:false},false],[{...base,firebase:{sign_in_provider:'custom'}},false]]){
+  const check=createFirebaseAdminAuthorizer({allowedUids:[uid],allowedEmail:base.email,verifyIdToken:async(token,revoked)=>{assert.equal(revoked,true);return claims;}});
+  assert.equal(await check('Bearer token'),expected);
+ }
+ const check=createFirebaseAdminAuthorizer({allowedUids:[uid],verifyIdToken:async()=>{throw Error('revoked');}});
+ assert.equal(await check('Bearer token'),false);
+});

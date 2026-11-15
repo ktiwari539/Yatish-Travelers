@@ -11,7 +11,7 @@ export function createFirebaseAdminAuthorizer({verifyIdToken,allowedUids,allowed
   if(!match||match[1].length>8192)return false;
   try{
    const decoded=await verifyIdToken(match[1],true);
-   return Boolean(decoded?.uid&&ids.has(decoded.uid)&&decoded.firebase?.sign_in_provider==='password'&&decoded.email_verified===true&&(!allowedEmail||decoded.email?.toLowerCase()===allowedEmail.toLowerCase()));
+   return Boolean(decoded?.uid&&ids.has(decoded.uid)&&['password','google.com'].includes(decoded.firebase?.sign_in_provider)&&decoded.email_verified===true&&(!allowedEmail||decoded.email?.toLowerCase()===allowedEmail.toLowerCase()));
   }catch{return false;}
  };
 }
