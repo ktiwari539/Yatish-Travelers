@@ -537,6 +537,13 @@ async function smoke(){
  // Website Studio: photo selection and section visibility remain private until publish.
  await page.getByRole('button',{name:'Website content',exact:true}).click();
  await page.getByRole('heading',{name:'Website studio'}).waitFor();
+ await page.screenshot({path:'artifacts/visual-evidence/admin-website-studio-desktop.png',animations:'disabled'});
+ await page.locator('.crm-content-slot-group').first().screenshot({path:'artifacts/visual-evidence/admin-media-placements-desktop.png',animations:'disabled'});
+ await page.setViewportSize({width:390,height:844});
+ ensure(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),
+  'Mobile website publishing controls stay inside the viewport');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-website-studio-mobile.png',animations:'disabled'});
+ await page.setViewportSize({width:1440,height:900});
  const firstSlot=page.locator('.crm-content-slot-grid .crm-content-image-control').first();
  await firstSlot.getByLabel('Accessible image description').fill('Synthetic reviewed mountain trip image');
  await firstSlot.locator('input[type=file]').setInputFiles({name:'reviewed-test.png',mimeType:'image/png',buffer:Buffer.from(tinyPng.split(',')[1],'base64')});
@@ -563,11 +570,13 @@ async function smoke(){
  const journeyPage=await browser.newPage({viewport:{width:1280,height:800}});
  await journeyPage.route('**/api/site-content',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})}));
  await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
- await journeyPage.locator('.story-stack-1 img').waitFor();
+ await journeyPage.waitForFunction(expected => document.querySelector('.story-stack-1 img')?.getAttribute('src')===expected,
+   contentPublished.media.homeStoryMountain.imageUrl);
  ensure((await journeyPage.locator('.story-stack-1 img').getAttribute('src'))===contentPublished.media.homeStoryMountain.imageUrl,
    'Published homepage card uses staff-selected, slot-specific image');
  await journeyPage.goto('http://127.0.0.1:'+port+'/stories',{waitUntil:'domcontentloaded'});
  await journeyPage.getByRole('heading',{name:'Every trip has a story worth keeping.'}).waitFor();
+ await journeyPage.locator('.stories-gallery').waitFor({state:'detached'});
  ensure(await journeyPage.locator('.stories-gallery').count()===0,
    'Published section visibility hides only the selected Stories gallery');
  await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});

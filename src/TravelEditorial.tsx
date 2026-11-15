@@ -23,7 +23,7 @@ export function TravelEditorial({stories=false,media}:{stories?:boolean;media?:S
        <div className="route-tile-foot"><span>{trip.subtitle}</span>
          <a href={journeyUrl(trip.slug)} aria-label={'Open '+trip.place+' adventure'}><ArrowUpRight size={18}/></a>
        </div>
-       <span className="route-credit">{trip.credit} · Editorial reference, not a verified fleet journey</span>
+       <span className="route-credit">{override?.imageUrl?'Staff-approved editorial photograph':trip.credit} · Editorial reference, not a verified fleet journey</span>
      </article>;})}
    </div>
    <div className="route-editorial-bottom">

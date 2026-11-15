@@ -27,4 +27,4 @@ export const blankSiteVisibility = () => Object.fromEntries(siteVisibilitySectio
 
 /** Client-side preview only; server independently validates these same-origin paths. */
 export const safeSiteImagePath = (path: string) =>
-  /^\/(?:api\/uploads\/[a-f\d-]{36}\.webp|media\/[a-zA-Z0-9_-]{1,100}\.webp)$/.test(path);
+  /^\/(?:api\/uploads\/[a-f0-9-]{36}\.webp|media\/[a-zA-Z0-9_-]{1,100}\.webp)$/.test(path);

@@ -26,7 +26,7 @@ const string = (value, max) => {
 // website. Arbitrary remote URLs and javascript/data schemes are not published.
 const image = (value) => {
   const path = string(value ?? "", 256);
-  if (path && !/^\/(?:api\/uploads\/[a-zA-Z0-9_-]{8,100}\.webp|media\/[a-zA-Z0-9_-]{1,100}\.webp)$/.test(path))
+  if (path && !/^\/(?:api\/uploads\/[a-f0-9-]{36}\.webp|media\/[a-zA-Z0-9_-]{1,100}\.webp)$/.test(path))
     throw new ApiError("INVALID_CONTENT_IMAGE", 422);
   return path;
 };
@@ -93,7 +93,7 @@ export function normalizeSiteContent(value) {
   return safe;
 }
 
-export function createSiteContentStore(db, timestamp) {
+export function createSiteContentStore(db, timestamp, validateUpload) {
   const doc = db.collection("mt_crm").doc("site_content");
   const control = db.collection("mt_crm").doc("control");
   const initial = () => ({
@@ -110,6 +110,16 @@ export function createSiteContentStore(db, timestamp) {
     if (!Number.isInteger(expected) || expected !== actual)
       throw new ApiError("VERSION_CONFLICT_RELOAD", 409);
   };
+  const checkUploadedPhotos = async (content) => {
+    if (!validateUpload) return;
+    const paths = [
+      content.brand.logoUrl,
+      ...content.stories.map((s) => s.imageUrl),
+      ...content.ambassadors.map((person) => person.imageUrl),
+      ...Object.values(content.media).map((slot) => slot.imageUrl),
+    ];
+    await Promise.all([...new Set(paths.filter((path) => path?.startsWith('/api/uploads/')))].map(validateUpload));
+  };
   return {
     async readAdmin() {
       return plain(read((await doc.get()).data()));
@@ -121,6 +131,7 @@ export function createSiteContentStore(db, timestamp) {
     },
     async saveDraft(input) {
       const draft = normalizeSiteContent(input.content);
+      await checkUploadedPhotos(draft);
       return db.runTransaction(async (tx) => {
         const state = (await tx.get(control)).data();
         const current = read((await tx.get(doc)).data());
@@ -132,6 +143,10 @@ export function createSiteContentStore(db, timestamp) {
       });
     },
     async publish(input) {
+      // Fail before publishing if an uploaded image went missing after draft save.
+      const before = read((await doc.get()).data());
+      check(input.expectedVersion, before.version);
+      await checkUploadedPhotos(normalizeSiteContent(before.draft));
       return db.runTransaction(async (tx) => {
         const state = (await tx.get(control)).data();
         const current = read((await tx.get(doc)).data());

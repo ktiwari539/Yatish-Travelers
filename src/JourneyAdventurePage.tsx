@@ -38,7 +38,7 @@ export function JourneyAdventurePage({slug,media}:{slug:string;media?:SiteConten
          <small>0{index+1} / 03</small><h3>{chapter.title}</h3><p>{chapter.body}</p>
        </article>)}
      </div>
-     <p className="adventure-photo-disclaimer"><ShieldCheck size={17}/>{journey.vehicleNote} {journey.credit}. Every final route, assigned vehicle, image rights and fare require confirmation.</p>
+     <p className="adventure-photo-disclaimer"><ShieldCheck size={17}/>{override?.imageUrl?'Staff-approved editorial photograph; any vehicle shown is illustrative unless separately verified.':`${journey.vehicleNote} ${journey.credit}.`} Every final route, assigned vehicle, image rights and fare require confirmation.</p>
    </section>
    <section className="adventure-more">
      <div><span><MapPin size={16}/> MORE ROADS TO DISCOVER</span><h2>Keep exploring.</h2></div>

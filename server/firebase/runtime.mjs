@@ -9,7 +9,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getStore } from "@netlify/blobs";
 import { identityPolicy } from "../../experiments/firebase/integration/owner-policy.mjs";
 import { createFirebaseAdminAuthorizer } from "../../experiments/firebase/firebase-admin-auth.mjs";
-import { createCrmRepository } from "./repository.mjs";
+import { ApiError, createCrmRepository } from "./repository.mjs";
 import { createSiteContentStore } from "./site-content.mjs";
 import { createMedia } from "./media.mjs";
 export function validateCrmConfig(env, context = {}) {
@@ -97,7 +97,9 @@ export function createRuntime(env, context, { mediaStore, backupStore } = {}) {
     db,
     auth,
     repository,
-    siteContent: createSiteContentStore(db, () => FieldValue.serverTimestamp()),
+    siteContent: createSiteContentStore(db, () => FieldValue.serverTimestamp(), async (path) => {
+      if (!(await media.read(path.slice(5)))) throw new ApiError('CONTENT_IMAGE_NOT_FOUND', 422);
+    }),
     authorize,
     media,
     backups:
