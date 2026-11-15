@@ -94,8 +94,8 @@ export function FirebaseAdminLogin({
             setError("This static preview has no running CRM API. Open the approved Netlify site with its secure Functions backend to use Admin.");
             return false;
           }
-          if (r.status === 503) {
-            setError("The CRM API is release-disabled or missing secure server configuration. Admin cannot open until provider setup is complete.");
+          if (r.status >= 500) {
+            setError("The CRM server is unavailable (HTTP " + r.status + "). Admin remains locked until the server is available.");
             return false;
           }
           return r.ok && (await r.json()).authorized === true;
