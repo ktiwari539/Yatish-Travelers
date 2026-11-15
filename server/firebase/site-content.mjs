@@ -5,7 +5,18 @@ const defaults = Object.freeze({
   stories: [],
   ambassadors: [],
   testimonials: [],
+  media: {},
+  visibility: {},
 });
+// One curated key per editable placement. Unknown keys cannot create arbitrary
+// public page elements or inject remote images.
+const mediaSlotIds = [
+  "homeStoryMountain", "homeStorySunset", "homeStoryLandscape", "storiesHero",
+  "journeyMountain", "journeySunset", "journeyGreen",
+];
+const visibilityIds = [
+  "homeStories", "homeJourneys", "storiesGallery", "storiesAmbassadors", "storiesTestimonials",
+];
 
 const string = (value, max) => {
   if (typeof value !== "string" || value.length > max * 2) throw new ApiError("INVALID_SITE_CONTENT", 422);
@@ -29,6 +40,27 @@ export function normalizeSiteContent(value) {
   const brand = value.brand || {};
   if (!brand || typeof brand !== "object" || Array.isArray(brand))
     throw new ApiError("INVALID_SITE_CONTENT", 422);
+  const media = value.media ?? {};
+  const visibility = value.visibility ?? {};
+  if (!media || typeof media !== "object" || Array.isArray(media) ||
+      !visibility || typeof visibility !== "object" || Array.isArray(visibility) ||
+      Object.keys(media).some((id) => !mediaSlotIds.includes(id)) ||
+      Object.keys(visibility).some((id) => !visibilityIds.includes(id)))
+    throw new ApiError("INVALID_SITE_CONTENT", 422);
+  const safeMedia = Object.fromEntries(mediaSlotIds.map((id) => {
+    const slot = media[id] ?? {};
+    if (!slot || typeof slot !== "object" || Array.isArray(slot))
+      throw new ApiError("INVALID_SITE_CONTENT", 422);
+    const imageUrl = image(slot.imageUrl);
+    const alt = string(slot.alt ?? "", 180);
+    if (imageUrl && !alt) throw new ApiError("CONTENT_IMAGE_ALT_REQUIRED", 422);
+    return [id, { imageUrl, alt }];
+  }));
+  const safeVisibility = Object.fromEntries(visibilityIds.map((id) => {
+    if (visibility[id] !== undefined && typeof visibility[id] !== "boolean")
+      throw new ApiError("INVALID_SITE_CONTENT", 422);
+    return [id, visibility[id] !== false];
+  }));
   const safe = {
     brand: {
       name: string(brand.name ?? "", 70),
@@ -55,6 +87,8 @@ export function normalizeSiteContent(value) {
         consentConfirmed: true,
       };
     }),
+    media: safeMedia,
+    visibility: safeVisibility,
   };
   return safe;
 }

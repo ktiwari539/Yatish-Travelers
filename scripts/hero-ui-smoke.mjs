@@ -399,6 +399,9 @@ async function smoke(){
  let serverVehicles=[adminVehicle,nextVehicle];
  let packRequest=null;
  let imageUploads=0;
+ const contentBlank={brand:{name:'',tagline:'',bannerTitle:'',bannerText:'',logoUrl:''},stories:[],ambassadors:[],testimonials:[],media:{},visibility:{}};
+ let contentDraft=structuredClone(contentBlank),contentPublished=structuredClone(contentBlank),contentVersion=0,contentPublishedVersion=0;
+ await page.route('**/api/site-content',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})}));
  await page.route('**/api/admin/**',async route=>{
    const url=new URL(route.request().url());
    let response={};
@@ -421,6 +424,18 @@ async function smoke(){
      imageUploads++;
      editedImageUrl='/api/uploads/11111111-2222-4333-8444-55555555555'+imageUploads+'.webp';
      response={url:editedImageUrl};
+   }else if(url.pathname==='/api/admin/site-content'){
+     if(route.request().method()==='PUT'){
+       const input=route.request().postDataJSON();
+       ensure(input.expectedVersion===contentVersion,'Content updates require current server revision');
+       contentDraft=structuredClone(input.content);contentVersion++;
+     }
+     response={version:contentVersion,publishedVersion:contentPublishedVersion,draft:contentDraft,published:contentPublished};
+   }else if(url.pathname==='/api/admin/site-content/publish'){
+     const input=route.request().postDataJSON();
+     ensure(input.expectedVersion===contentVersion,'Content publishing requires saved current revision');
+     contentPublished=structuredClone(contentDraft);contentVersion++;contentPublishedVersion++;
+     response={version:contentVersion,publishedVersion:contentPublishedVersion,draft:contentDraft,published:contentPublished};
    }else if(url.pathname==='/api/admin/enquiries')response={items:[]};
    else if(url.pathname==='/api/admin/engagement')response={total:0,counts:{},sessions:0,recent:[]};
    else if(url.pathname==='/api/admin/notifications')response={config:{mode:'preview'},items:[]};
@@ -519,8 +534,42 @@ async function smoke(){
    'Admin order survives browser reload');
  ensure((await page.locator('.fleet-order-number').first().innerText()).includes('#01'),
    'Reloaded first vehicle retains priority #01');
+ // Website Studio: photo selection and section visibility remain private until publish.
+ await page.getByRole('button',{name:'Website content',exact:true}).click();
+ await page.getByRole('heading',{name:'Website studio'}).waitFor();
+ const firstSlot=page.locator('.crm-content-slot-grid .crm-content-image-control').first();
+ await firstSlot.getByLabel('Accessible image description').fill('Synthetic reviewed mountain trip image');
+ await firstSlot.locator('input[type=file]').setInputFiles({name:'reviewed-test.png',mimeType:'image/png',buffer:Buffer.from(tinyPng.split(',')[1],'base64')});
+ ensure(await firstSlot.getByRole('button',{name:'Upload reviewed photo'}).isDisabled(),
+   'Image uploads require explicit publication-rights and privacy review');
+ await firstSlot.getByRole('checkbox',{name:/I confirm publication rights/}).check();
+ await firstSlot.getByRole('button',{name:'Upload reviewed photo'}).click();
+ await firstSlot.getByRole('status').waitFor();
+ await page.getByRole('checkbox',{name:/Stories page \/ Gallery/}).uncheck();
+ await page.getByRole('button',{name:'Save private draft'}).click();
+ ensure(contentDraft.media.homeStoryMountain.imageUrl.startsWith('/api/uploads/'),
+   'Saved private draft assigns the uploaded photo to the selected homepage slot');
+ ensure(contentDraft.visibility.storiesGallery===false,
+   'Saved draft preserves the exact section visibility choice');
+ ensure(contentPublished.visibility.storiesGallery!==false,
+   'Private draft changes cannot affect the published website');
+ page.once('dialog',dialog=>void dialog.accept());
+ await page.getByRole('button',{name:'Publish saved draft'}).click();
+ ensure(contentPublished.visibility.storiesGallery===false,
+   'Staff authorization, save and explicit publish apply section visibility');
+ ensure(contentPublished.media.homeStoryMountain.alt==='Synthetic reviewed mountain trip image',
+   'Publication retains the photo description used by accessible page imagery');
  // Each editorial image navigates to its own detailed adventure page.
  const journeyPage=await browser.newPage({viewport:{width:1280,height:800}});
+ await journeyPage.route('**/api/site-content',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})}));
+ await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ await journeyPage.locator('.story-stack-1 img').waitFor();
+ ensure((await journeyPage.locator('.story-stack-1 img').getAttribute('src'))===contentPublished.media.homeStoryMountain.imageUrl,
+   'Published homepage card uses staff-selected, slot-specific image');
+ await journeyPage.goto('http://127.0.0.1:'+port+'/stories',{waitUntil:'domcontentloaded'});
+ await journeyPage.getByRole('heading',{name:'Every trip has a story worth keeping.'}).waitFor();
+ ensure(await journeyPage.locator('.stories-gallery').count()===0,
+   'Published section visibility hides only the selected Stories gallery');
  await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
  const adventureLinks=await journeyPage.locator('.route-tile-image-link').evaluateAll(links=>links.map(a=>a.getAttribute('href')));
  ensure(JSON.stringify(adventureLinks)===JSON.stringify([

@@ -1,21 +1,24 @@
 import { ArrowLeft, ArrowRight, Compass, MapPin, ShieldCheck } from 'lucide-react';
 import { findJourney, journeyAdventures, journeyUrl } from './journeyAdventures';
 import { ScenicImage } from './ScenicImage';
+import type { SiteContent } from './siteContent';
 
-export function JourneyAdventurePage({slug}:{slug:string}){
+export function JourneyAdventurePage({slug,media}:{slug:string;media?:SiteContent['media']}){
  const journey=findJourney(slug);
  if(!journey)return <main className="adventure-page">
    <header className="adventure-nav"><a href="/" aria-label="Return to Mateshwari home"><ArrowLeft size={16}/> MATESHWARI TRAVELLERS</a></header>
    <section className="adventure-not-found"><h1>Journey not found.</h1><p>Explore our three illustrated road-trip ideas instead.</p>
     <a href="/#journeys">Explore road trips <ArrowRight size={17}/></a></section>
  </main>;
+ const slot=journey.slug==='mountain-roads'?'journeyMountain':journey.slug==='sunset-drive'?'journeySunset':'journeyGreen';
+ const override=media?.[slot];
  return <main className="adventure-page">
    <header className="adventure-nav">
      <a href="/" aria-label="Return to Mateshwari home"><ArrowLeft size={17}/> MATESHWARI <span>TRAVELLERS</span></a>
      <a href="/#fare">Plan a trip <ArrowRight size={17}/></a>
    </header>
    <section className="adventure-hero" aria-label={journey.type+' journey inspiration'}>
-     <ScenicImage src={journey.hero} fallback={journey.fallback} alt={journey.alt} loading="eager"/>
+     <ScenicImage src={override?.imageUrl||journey.hero} fallback={journey.fallback} alt={override?.alt||journey.alt} loading="eager"/>
      <div className="adventure-shade"/>
      <div className="adventure-hero-copy">
        <span><Compass size={17}/> ADVENTURE {journey.index} / 03 · {journey.type}</span>

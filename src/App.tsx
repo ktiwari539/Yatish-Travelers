@@ -209,7 +209,7 @@ function StoriesPage() {
       </header>
 
       <section className="stories-hero cinematic-stories-hero">
-        <ScenicImage className="stories-hero-background" src={luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
+        <ScenicImage className="stories-hero-background" src={site.media.storiesHero.imageUrl || luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
         <div className="stories-hero-glow" />
         <span className="kicker">Stories from the Road</span>
         <h1>Every trip has a story worth keeping.</h1>
@@ -222,7 +222,7 @@ function StoriesPage() {
         </div>
       </section>
 
-      <section className="stories-gallery" aria-label="Future customer story gallery">
+      {site.visibility.storiesGallery!==false&&<section className="stories-gallery" aria-label="Future customer story gallery">
         {storySlots.map((story, index) => (
           <article className="story-feature" key={story.title}>
             <div className="story-feature-image">
@@ -238,11 +238,11 @@ function StoriesPage() {
             </div>
           </article>
         ))}
-      </section>
+      </section>}
 
-      {site.ambassadors.length>0&&<section className="site-published-people" aria-label="Our ambassadors"><h2>Our ambassadors</h2><div className="site-people-grid">{site.ambassadors.map((person,i)=><article key={i}>{person.imageUrl&&<img src={person.imageUrl} alt="" loading="lazy"/>}<h3>{person.name}</h3><p>{person.description}</p></article>)}</div></section>}
-      {site.testimonials.length>0&&<section className="site-published-people" aria-label="Customer testimonials"><h2>What our customers say</h2><div className="site-people-grid">{site.testimonials.map((review,i)=><blockquote key={i}><p>“{review.quote}”</p><cite>{review.name}</cite></blockquote>)}</div></section>}
-      <TravelEditorial stories />
+      {site.visibility.storiesAmbassadors!==false&&site.ambassadors.length>0&&<section className="site-published-people" aria-label="Our ambassadors"><h2>Our ambassadors</h2><div className="site-people-grid">{site.ambassadors.map((person,i)=><article key={i}>{person.imageUrl&&<img src={person.imageUrl} alt="" loading="lazy"/>}<h3>{person.name}</h3><p>{person.description}</p></article>)}</div></section>}
+      {site.visibility.storiesTestimonials!==false&&site.testimonials.length>0&&<section className="site-published-people" aria-label="Customer testimonials"><h2>What our customers say</h2><div className="site-people-grid">{site.testimonials.map((review,i)=><blockquote key={i}><p>“{review.quote}”</p><cite>{review.name}</cite></blockquote>)}</div></section>}
+      <TravelEditorial stories media={site.media}/>
       <section className="story-submit" id="share-story">
         <div>
           <span className="kicker">Share Your Journey</span>
@@ -459,7 +459,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   }, [quoteOpen]);
 
   const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
-  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''}/>;
+  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''} media={site.media}/>;
   const isStoriesPage = path === '/stories';
   if (isStoriesPage) return <StoriesPage />;
   if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <Suspense fallback={<main className="crm-page" aria-busy="true">Loading staff sign-in…</main>}><AdminDashboard /></Suspense>;
@@ -742,8 +742,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
 
 
-      <TravelEditorial />
-      <section className="stories-teaser reveal-3d" id="stories">
+      {site.visibility.homeJourneys!==false&&<TravelEditorial media={site.media}/>}
+      {site.visibility.homeStories!==false&&<section className="stories-teaser reveal-3d" id="stories">
         <div className="stories-teaser-copy">
           <span className="kicker">Stories from the Road</span>
           <h2>Real journeys deserve more than a small review card.</h2>
@@ -754,14 +754,18 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
 
         <div className="stories-teaser-stack cinematic-stories-stack" aria-label="Illustrative journeys">
-          {[{visual:luxuryMedia.mountains,title:'Mountain escapes'}, {visual:luxuryMedia.hero,title:'The golden-hour drive'}, {visual:luxuryMedia.landscape,title:'Places worth discovering'}].map(({visual,title},index)=>(
+          {[
+            {visual:{...luxuryMedia.mountains,src:site.media.homeStoryMountain.imageUrl||luxuryMedia.mountains.src,alt:site.media.homeStoryMountain.alt||luxuryMedia.mountains.alt},title:'Mountain escapes'},
+            {visual:{...luxuryMedia.hero,src:site.media.homeStorySunset.imageUrl||luxuryMedia.hero.src,alt:site.media.homeStorySunset.alt||luxuryMedia.hero.alt},title:'The golden-hour drive'},
+            {visual:{...luxuryMedia.landscape,src:site.media.homeStoryLandscape.imageUrl||luxuryMedia.landscape.src,alt:site.media.homeStoryLandscape.alt||luxuryMedia.landscape.alt},title:'Places worth discovering'},
+          ].map(({visual,title},index)=>(
             <article className={`story-stack-card story-stack-${index + 1}`} key={title}>
               <ScenicImage src={visual.src} fallback={visual.fallback ?? luxuryMedia.landscape.src} alt={visual.alt} loading="lazy" />
               <div><small>TRAVEL INSPIRATION</small><strong>{title}</strong><span>Imagine your next journey</span></div>
             </article>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section className="conversion-finale" aria-label="Start a journey">
         <div><span className="kicker">LET THE JOURNEY BEGIN</span>

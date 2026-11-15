@@ -122,24 +122,35 @@ test("complete CRM network contracts with actual Auth/Firestore emulators and lo
       stories: [{ title: "Synthetic story", text: "Synthetic travel narrative", imageUrl: "" }],
       ambassadors: [{ name: "Synthetic ambassador", description: "Synthetic role", imageUrl: "" }],
       testimonials: [{ name: "Synthetic reviewer", quote: "Synthetic testimonial", consentConfirmed: true }],
+      media: { journeyGreen: { imageUrl: "/media/mt-thar-grey-road.webp", alt: "Synthetic reviewed vehicle on a green road" } },
+      visibility: { homeStories: false },
     };
     const draft = await call("admin/site-content", "PUT", { expectedVersion: 0, content: draftContent });
     assert.equal(draft.status, 200);
     assert.equal((await draft.json()).draft.stories.length, 1);
     assert.equal((await (await call("site-content", "GET", null, false)).json()).content.stories.length, 0);
+    assert.notEqual((await (await call("site-content", "GET", null, false)).json()).content.visibility?.homeStories, false);
     assert.equal((await call("admin/site-content", "PUT", { expectedVersion: 0, content: draftContent })).status, 409);
     assert.equal((await call("admin/site-content", "PUT", {
       expectedVersion: 1,
       content: { ...draftContent, testimonials: [{ name: "No consent", quote: "Forbidden" }] },
     })).status, 422);
+    assert.equal((await call("admin/site-content", "PUT", {
+      expectedVersion: 1,
+      content: { ...draftContent, media: { journeyGreen: { imageUrl: "https://remote.example/image.webp", alt: "Remote" } } },
+    })).status, 422);
     const publish = await call("admin/site-content/publish", "POST", { expectedVersion: 1 });
     assert.equal(publish.status, 200);
     assert.equal((await (await call("site-content", "GET", null, false)).json()).content.stories[0].title, "Synthetic story");
+    const publishedMedia = (await (await call("site-content", "GET", null, false)).json()).content;
+    assert.equal(publishedMedia.visibility.homeStories, false);
+    assert.equal(publishedMedia.media.journeyGreen.alt, "Synthetic reviewed vehicle on a green road");
     assert.equal((await call("admin/site-content/publish", "POST", { expectedVersion: 1 })).status, 409);
     // A later private draft must not affect published content.
-    const privateDraft = { ...draftContent, stories: [{ title: "Private only", text: "Not approved", imageUrl: "" }] };
+    const privateDraft = { ...draftContent, stories: [{ title: "Private only", text: "Not approved", imageUrl: "" }], visibility: {homeStories: true} };
     assert.equal((await call("admin/site-content", "PUT", { expectedVersion: 2, content: privateDraft })).status, 200);
     assert.equal((await (await call("site-content", "GET", null, false)).json()).content.stories[0].title, "Synthetic story");
+    assert.equal((await (await call("site-content", "GET", null, false)).json()).content.visibility.homeStories, false);
     const legacyId = "11111111-2222-4333-8444-555555555555";
     const migration = {
       documents: [
