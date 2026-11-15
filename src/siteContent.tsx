@@ -57,6 +57,8 @@ function ContentImageControl({ label, hint, url, defaultUrl, alt, token, disable
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [failedPreview, setFailedPreview] = useState('');
+  const previewUrl = safeSiteImagePath(url) ? url : defaultUrl || '';
   const upload = async () => {
     if (!file || !reviewed || disabled) return;
     if (file.size > 3_000_000 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -84,7 +86,7 @@ function ContentImageControl({ label, hint, url, defaultUrl, alt, token, disable
     finally { setUploading(false); onUploadChange?.(false); }
   };
   return <div className="crm-content-image-control">
-    <div className="crm-content-image-preview">{safeSiteImagePath(url) ? <img src={url} alt="Selected website placement preview" loading="lazy" /> : defaultUrl ? <img src={defaultUrl} alt="Current default placement preview" loading="lazy" /> : <span><ImageOff size={24} aria-hidden="true"/> Default website image / no override</span>}</div>
+    <div className="crm-content-image-preview">{previewUrl && failedPreview !== previewUrl ? <img src={previewUrl} alt={url ? "Selected website placement preview" : "Current default placement preview"} loading="lazy" onError={() => setFailedPreview(previewUrl)} /> : <span><ImageOff size={24} aria-hidden="true"/> {previewUrl ? 'Preview unavailable — check the image before publishing' : 'Default website image / no override'}</span>}</div>
     <div className="crm-content-image-fields">
       <strong>{label}</strong><small>{hint}</small>
       <label>Approved image path<input type="text" maxLength={256} value={url} placeholder="/api/uploads/…webp or /media/…webp" disabled={disabled || uploading} onChange={(e) => onChange(e.target.value)} /></label>

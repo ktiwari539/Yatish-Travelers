@@ -8,6 +8,9 @@ export async function installSyntheticImages(page) {
   )
     .png()
     .toBuffer();
+  await page.route("**/api/uploads/*", async (route) => {
+    await route.fulfill({ contentType: "image/png", body: image });
+  });
   await page.route("https://**/*", async (route) => {
     if (route.request().resourceType() === "image")
       await route.fulfill({ contentType: "image/png", body: image });

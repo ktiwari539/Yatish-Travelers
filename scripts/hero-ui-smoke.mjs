@@ -568,12 +568,25 @@ async function smoke(){
    'Publication retains the photo description used by accessible page imagery');
  // Each editorial image navigates to its own detailed adventure page.
  const journeyPage=await browser.newPage({viewport:{width:1280,height:800}});
- await journeyPage.route('**/api/site-content',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})}));
+ await installSyntheticImages(journeyPage);
+ let releasePublishedContent;
+ const publishedContentGate=new Promise(resolve=>{releasePublishedContent=resolve;});
+ await journeyPage.route('**/api/site-content',async route=>{
+   await publishedContentGate;
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})});
+ });
  await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ const beforePublishImage=journeyPage.locator('.story-stack-1 img');
+ const initialImage=await beforePublishImage.getAttribute('src');
+ await beforePublishImage.dispatchEvent('error');
+ await journeyPage.waitForFunction(initial=>document.querySelector('.story-stack-1 img')?.getAttribute('src')!==initial,initialImage);
+ releasePublishedContent();
  await journeyPage.waitForFunction(expected => document.querySelector('.story-stack-1 img')?.getAttribute('src')===expected,
    contentPublished.media.homeStoryMountain.imageUrl);
  ensure((await journeyPage.locator('.story-stack-1 img').getAttribute('src'))===contentPublished.media.homeStoryMountain.imageUrl,
    'Published homepage card uses staff-selected, slot-specific image');
+ await journeyPage.locator('.story-stack-1 img').scrollIntoViewIfNeeded();
+ await journeyPage.waitForFunction(()=>{const img=document.querySelector('.story-stack-1 img');return img?.complete&&img.naturalWidth>0;});
  await journeyPage.goto('http://127.0.0.1:'+port+'/stories',{waitUntil:'domcontentloaded'});
  await journeyPage.getByRole('heading',{name:'Every trip has a story worth keeping.'}).waitFor();
  await journeyPage.locator('.stories-gallery').waitFor({state:'detached'});
