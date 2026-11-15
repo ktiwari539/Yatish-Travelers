@@ -20,6 +20,11 @@ import {
 // @ts-expect-error Shared JS controller has emulator and race-condition tests.
 import { createAdminLogin } from "../experiments/firebase/integration/web/admin-login.mjs";
 let staffAuth: Auth | undefined;
+// Google is optional: Firebase's Google provider must be explicitly enabled
+// by the owner before we offer a popup/linking path. Password login works
+// independently and is the supported launch authentication method.
+const googleStaffAuthEnabled = (import.meta as unknown as { env: Record<string, string> })
+  .env.VITE_GOOGLE_STAFF_AUTH_ENABLED === "true";
 type State = {
   phase: string;
   message: string;
@@ -121,7 +126,7 @@ export function FirebaseAdminLogin({
     }
   }, []);
   async function google(link = false) {
-    if (!staffAuth || googlePending.current) return;
+    if (!googleStaffAuthEnabled || !staffAuth || googlePending.current) return;
     googlePending.current = true;
     setGoogleBusy(true);
     setError("");
@@ -150,14 +155,24 @@ export function FirebaseAdminLogin({
         await signInWithPopup(staffAuth, provider);
       }
       await controller.current?.refresh();
-    } catch {
-      setError("Google sign-in or linking was not completed. Use your existing staff password to sign in and link the matching Google account.");
+    } catch (cause) {
+      const code = (cause as { code?: string })?.code;
+      setError(code === "auth/operation-not-allowed"
+        ? "Google sign-in is not enabled in Firebase Authentication. Continue with your verified staff password."
+        : code === "auth/popup-blocked"
+          ? "Safari blocked the Google sign-in popup. Allow popups for this site before retrying."
+          : code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request"
+            ? "Google sign-in was cancelled. Your existing staff password remains available."
+            : "Google sign-in or linking could not be completed. Use your verified staff password; the Admin CRM remains available.");
     } finally { googlePending.current = false; setGoogleBusy(false); }
   }
   if (state.authorized && token)
     return (
       <>
-        <div className="crm-page"><button type="button" disabled={googleBusy} onClick={() => void google(true)}>Link Google to this Admin account</button><p role="status">{error}</p></div>
+        {googleStaffAuthEnabled && <div className="crm-google-toolbar">
+          <button type="button" disabled={googleBusy} onClick={() => void google(true)}>Link Google to this Admin account</button>
+          {error && <p role="status">{error}</p>}
+        </div>}
         {children(token, () => {
           setToken("");
           void controller.current?.signOut();
@@ -211,7 +226,7 @@ export function FirebaseAdminLogin({
             {state.busy ? "Checking…" : "Sign in"}
           </button>
         </form>
-        <button type="button" disabled={state.busy || googleBusy} onClick={() => void google()}>Sign in with Google</button>
+        {googleStaffAuthEnabled && <button type="button" disabled={state.busy || googleBusy} onClick={() => void google()}>Sign in with Google</button>}
         {state.email && (
           <div>
             <button

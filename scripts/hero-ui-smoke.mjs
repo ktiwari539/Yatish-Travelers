@@ -435,6 +435,12 @@ async function smoke(){
  await page.getByLabel('Password',{exact:true}).fill('Synthetic-only123!');
  await page.getByRole('button',{name:'Sign in',exact:true}).click();
  ensure(await page.evaluate(()=>sessionStorage.getItem('mt-crm-token'))===null,'Admin bearer token is never persisted in browser storage');
+ await page.locator('.crm-main').waitFor();
+ const dashboardPosition=await page.locator('.crm-main').boundingBox();
+ ensure(Boolean(dashboardPosition&&dashboardPosition.y<600),
+  'Authorized Admin dashboard starts in the first viewport; optional account linking cannot cover it');
+ ensure(await page.getByRole('button',{name:'Link Google to this Admin account'}).count()===0,
+  'Unconfigured optional Google linking is not offered on the launch Admin page');
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  // Frontend cannot silently claim the user's ZIP is installed. Staff must
  // actively upload and confirm it before the server receives photo bytes.
