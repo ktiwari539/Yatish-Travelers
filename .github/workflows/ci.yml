@@ -27,6 +27,9 @@ jobs:
       - name: Isolated Firebase proof-of-concept tests
         run: node --test experiments/firebase/*.test.mjs
 
+      - name: Lambda module compatibility smoke
+        run: node scripts/test-function-bundle.mjs
+
       - name: CRM API tests
         run: npm run test:api
 

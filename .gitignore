@@ -15,3 +15,6 @@ artifacts/
 **/.firebase/
 **/*-debug.log
 **/.poc-artifacts/
+
+netlify/generated-functions/
+.function-smoke-*/

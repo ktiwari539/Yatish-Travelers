@@ -19,7 +19,7 @@
     "studio:install": "node scripts/install-studio-review.mjs",
     "audit:fleet:browser": "node scripts/inspect-fleet-preview.mjs",
     "seo:generate": "node scripts/generate-seo.mjs",
-    "build:netlify": "npm run build && node scripts/prepare-netlify.mjs",
+    "build:netlify": "npm run build && node scripts/prepare-netlify.mjs && node scripts/build-crm-function.mjs",
     "test:firebase": "node --test server/firebase/tests/*.test.mjs",
     "test:firebase:emulators": "node scripts/test-firebase-crm.mjs"
   },

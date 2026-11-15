@@ -8,9 +8,11 @@
 
 # Release stays blocked until offline review and explicit owner deployment approval.
 [functions]
-  directory = "netlify/functions"
+  directory = "netlify/generated-functions"
   node_bundler = "esbuild"
-  external_node_modules = ["firebase-admin", "sharp"]
+  # Bundle Firebase Auth and its ESM dependencies together for Lambda.
+# Keep native modules and Firestore runtime-loaded assets external.
+external_node_modules = ["@google-cloud/firestore", "@google-cloud/storage", "sharp"]
 
 # Never commit secrets, CRM tokens, or customer data in Netlify config.
 [[headers]]
