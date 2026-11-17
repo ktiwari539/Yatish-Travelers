@@ -569,6 +569,10 @@ async function smoke(){
  // Each editorial image navigates to its own detailed adventure page.
  const journeyPage=await browser.newPage({viewport:{width:1280,height:800}});
  await installSyntheticImages(journeyPage);
+ // Force the original locally packaged hero image to fail. The page may
+ // have already entered fallback mode before a synthetic `error` event;
+ // dispatching another one would not change its source and can deadlock CI.
+ await journeyPage.route('**/media/mt-mountain-sunset.webp',route=>route.abort());
  let releasePublishedContent;
  const publishedContentGate=new Promise(resolve=>{releasePublishedContent=resolve;});
  await journeyPage.route('**/api/site-content',async route=>{
@@ -577,9 +581,9 @@ async function smoke(){
  });
  await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
  const beforePublishImage=journeyPage.locator('.story-stack-1 img');
- const initialImage=await beforePublishImage.getAttribute('src');
- await beforePublishImage.dispatchEvent('error');
- await journeyPage.waitForFunction(initial=>document.querySelector('.story-stack-1 img')?.getAttribute('src')!==initial,initialImage);
+ await beforePublishImage.scrollIntoViewIfNeeded();
+ await journeyPage.waitForFunction(()=>document.querySelector('.story-stack-1 img')?.getAttribute('src')?.startsWith('https://images.unsplash.com/'));
+ await journeyPage.waitForFunction(()=>{const img=document.querySelector('.story-stack-1 img');return img?.complete&&img.naturalWidth>0;});
  releasePublishedContent();
  await journeyPage.waitForFunction(expected => document.querySelector('.story-stack-1 img')?.getAttribute('src')===expected,
    contentPublished.media.homeStoryMountain.imageUrl);
