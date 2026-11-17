@@ -4,8 +4,18 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  CRM_BACKEND = "firestore"
 
-# Fail closed unless the separately hosted, persistent CRM API is configured.
+# Release stays blocked until offline review and explicit owner deployment approval.
+[functions]
+  directory = "netlify/generated-functions"
+  node_bundler = "esbuild"
+# Bundle Firebase Auth and its ESM dependencies together for Lambda.
+# Keep native modules and Firestore runtime-loaded assets external.
+external_node_modules = ["@google-cloud/firestore", "@google-cloud/storage", "sharp"]
+# Native payloads must survive tracing when the build host is macOS.
+included_files = ["netlify/generated-functions/node_modules/**"]
+
 # Never commit secrets, CRM tokens, or customer data in Netlify config.
 [[headers]]
   for = "/*"

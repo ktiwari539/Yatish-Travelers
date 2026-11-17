@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {enquiryKey} from './crmApi';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
 import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
 
-import { AdminDashboard } from './AdminDashboard';
+const AdminDashboard=lazy(()=>import('./AdminDashboard').then(m=>({default:m.AdminDashboard})));
 import { TravelEditorial } from './TravelEditorial';
 import { JourneyAdventurePage } from './JourneyAdventurePage';
+import { usePublishedSiteContent } from './siteContent';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import { LuxuryInterlude } from './LuxuryInterlude';
@@ -191,21 +193,23 @@ type QuoteMode = 'quote' | 'callback' | 'corporate';
 
 
 function StoriesPage() {
-  const storySlots = [
+  const site = usePublishedSiteContent();
+  const fallbackStories = [
     { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:luxuryMedia.hero },
     { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:luxuryMedia.mountains },
     { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:luxuryMedia.airport }
   ];
+  const storySlots = site.stories.length ? site.stories.map((s) => ({ title: s.title, text: s.text, visual: { src: s.imageUrl || luxuryMedia.mountains.src, fallback: luxuryMedia.mountains.src, alt: s.title }, isPublished: true })) : fallbackStories.map((s) => ({ ...s, isPublished: false }));
 
   return (
     <main className="stories-page">
       <header className="stories-nav">
-        <a className="brand" href="/">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/">{site.brand.logoUrl&&<img src={site.brand.logoUrl} alt="" className="site-brand-logo"/>}{site.brand.name || <>MATESHWARI <span>TRAVELLERS</span></>}</a>
         <a className="secondary" href="/">Back to Home <ArrowRight size={16} /></a>
       </header>
 
       <section className="stories-hero cinematic-stories-hero">
-        <ScenicImage className="stories-hero-background" src={luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
+        <ScenicImage className="stories-hero-background" src={site.media.storiesHero.imageUrl || luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
         <div className="stories-hero-glow" />
         <span className="kicker">Stories from the Road</span>
         <h1>Every trip has a story worth keeping.</h1>
@@ -218,7 +222,7 @@ function StoriesPage() {
         </div>
       </section>
 
-      <section className="stories-gallery" aria-label="Future customer story gallery">
+      {site.visibility.storiesGallery!==false&&<section className="stories-gallery" aria-label="Future customer story gallery">
         {storySlots.map((story, index) => (
           <article className="story-feature" key={story.title}>
             <div className="story-feature-image">
@@ -227,16 +231,18 @@ function StoriesPage() {
               <span>0{index + 1}</span>
             </div>
             <div className="story-feature-copy">
-              <small>EDITORIAL JOURNEY INSPIRATION</small>
+              <small>{story.isPublished ? 'PUBLISHED JOURNEY' : 'EDITORIAL JOURNEY INSPIRATION'}</small>
               <h2>{story.title}</h2>
               <p>{story.text}</p>
-              <strong>Real customer stories: awaiting approved submissions</strong>
+              <strong>{story.isPublished ? 'Published by Mateshwari Travellers' : 'Real customer stories: awaiting approved submissions'}</strong>
             </div>
           </article>
         ))}
-      </section>
+      </section>}
 
-      <TravelEditorial stories />
+      {site.visibility.storiesAmbassadors!==false&&site.ambassadors.length>0&&<section className="site-published-people" aria-label="Our ambassadors"><h2>Our ambassadors</h2><div className="site-people-grid">{site.ambassadors.map((person,i)=><article key={i}>{person.imageUrl&&<img src={person.imageUrl} alt="" loading="lazy"/>}<h3>{person.name}</h3><p>{person.description}</p></article>)}</div></section>}
+      {site.visibility.storiesTestimonials!==false&&site.testimonials.length>0&&<section className="site-published-people" aria-label="Customer testimonials"><h2>What our customers say</h2><div className="site-people-grid">{site.testimonials.map((review,i)=><blockquote key={i}><p>“{review.quote}”</p><cite>{review.name}</cite></blockquote>)}</div></section>}
+      <TravelEditorial stories media={site.media}/>
       <section className="story-submit" id="share-story">
         <div>
           <span className="kicker">Share Your Journey</span>
@@ -276,6 +282,7 @@ function StoriesPage() {
 }
 
 export function App() {
+  const site = usePublishedSiteContent();
   const [vehicle, setVehicle] = useState(fleet[1].name);
   const userSelectedVehicle=useRef(false);
   const [km, setKm] = useState(250);
@@ -452,15 +459,15 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   }, [quoteOpen]);
 
   const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
-  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''}/>;
+  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''} media={site.media}/>;
   const isStoriesPage = path === '/stories';
   if (isStoriesPage) return <StoriesPage />;
-  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <AdminDashboard />;
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <Suspense fallback={<main className="crm-page" aria-busy="true">Loading staff sign-in…</main>}><AdminDashboard /></Suspense>;
 
   return (
     <main>
       <header className="nav">
-        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">{site.brand.logoUrl&&<img src={site.brand.logoUrl} alt="" className="site-brand-logo"/>}{site.brand.name || <>MATESHWARI <span>TRAVELLERS</span></>}</a>
         <nav>
           <a href="#route-playground">Journeys</a>
           <a href="#fleet">Fleet</a>
@@ -490,9 +497,9 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
             onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
         </div>
         <div className="hero-copy cinematic-landing-copy">
-          <div className="eyebrow"><Sparkles size={15}/> MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED</div>
-          <h1>Travel, arranged with <em>more thought.</em></h1>
-          <p>Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.</p>
+          <div className="eyebrow"><Sparkles size={15}/> {site.brand.tagline || 'MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED'}</div>
+          <h1>{site.brand.bannerTitle || <>Travel, arranged with <em>more thought.</em></>}</h1>
+          <p>{site.brand.bannerText || 'Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.'}</p>
           <div className="hero-actions">
             <button className="primary" type="button" onClick={()=>openQuote('quote','cinematic-hero')}>
               Request a Quote <ArrowRight size={17}/>
@@ -735,8 +742,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
 
 
-      <TravelEditorial />
-      <section className="stories-teaser reveal-3d" id="stories">
+      {site.visibility.homeJourneys!==false&&<TravelEditorial media={site.media}/>}
+      {site.visibility.homeStories!==false&&<section className="stories-teaser reveal-3d" id="stories">
         <div className="stories-teaser-copy">
           <span className="kicker">Stories from the Road</span>
           <h2>Real journeys deserve more than a small review card.</h2>
@@ -747,14 +754,18 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
 
         <div className="stories-teaser-stack cinematic-stories-stack" aria-label="Illustrative journeys">
-          {[{visual:luxuryMedia.mountains,title:'Mountain escapes'}, {visual:luxuryMedia.hero,title:'The golden-hour drive'}, {visual:luxuryMedia.landscape,title:'Places worth discovering'}].map(({visual,title},index)=>(
+          {[
+            {visual:{...luxuryMedia.mountains,src:site.media.homeStoryMountain.imageUrl||luxuryMedia.mountains.src,alt:site.media.homeStoryMountain.alt||luxuryMedia.mountains.alt},title:'Mountain escapes'},
+            {visual:{...luxuryMedia.hero,src:site.media.homeStorySunset.imageUrl||luxuryMedia.hero.src,alt:site.media.homeStorySunset.alt||luxuryMedia.hero.alt},title:'The golden-hour drive'},
+            {visual:{...luxuryMedia.landscape,src:site.media.homeStoryLandscape.imageUrl||luxuryMedia.landscape.src,alt:site.media.homeStoryLandscape.alt||luxuryMedia.landscape.alt},title:'Places worth discovering'},
+          ].map(({visual,title},index)=>(
             <article className={`story-stack-card story-stack-${index + 1}`} key={title}>
               <ScenicImage src={visual.src} fallback={visual.fallback ?? luxuryMedia.landscape.src} alt={visual.alt} loading="lazy" />
               <div><small>TRAVEL INSPIRATION</small><strong>{title}</strong><span>Imagine your next journey</span></div>
             </article>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section className="conversion-finale" aria-label="Start a journey">
         <div><span className="kicker">LET THE JOURNEY BEGIN</span>
@@ -836,7 +847,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                   try {
                     const response = await fetch('/api/enquiries', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': enquiryKey({fields:Object.fromEntries(data.entries()),vehicle:selected.name,passengers,days,distanceKm:estimate.chargeableKm,nightStay,quoteMode,quoteSource}) },
                       body: JSON.stringify({
                         mode: quoteMode,
                         sessionId: getVisitorSession(),

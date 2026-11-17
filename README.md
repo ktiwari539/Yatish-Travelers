@@ -1,3 +1,7 @@
+# Current release candidate
+
+The owner selected **one Netlify project + the existing Firebase project**, with offline/emulator testing before a single approved deployment. See [the exact provider/release/recovery checklist](docs/firebase-single-project-release.md) and [executed evidence](docs/firebase-release-evidence.md). Earlier separate-host/staging instructions below are historical; do not use them for this candidate. No public deployment or live notifications are authorized.
+
 # Mateshwari Travellers — local review
 
 Current launch evidence: [release report](docs/launch-readiness-2026-11-01.md) and [deployment/recovery runbook](docs/production-runbook.md). Public launch remains gated; existing design is preserved.

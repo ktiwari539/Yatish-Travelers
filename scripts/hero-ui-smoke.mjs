@@ -4,6 +4,7 @@ import { strict as assert } from 'node:assert';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { chromium } from 'playwright';
+import {installSyntheticImages} from './synthetic-browser-images.mjs';
 import { defaultCatalog } from '../server/catalog.mjs';
 
 const testVideo='public/media/mt-scorpio-arrival.mp4';
@@ -21,7 +22,7 @@ if(fixtureCreated){
 }
 const port=5173;
 const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{
- stdio:['ignore','pipe','pipe'],env:{...process.env}
+ stdio:['ignore','pipe','pipe'],env:{...process.env,VITE_FIREBASE_CONFIG:JSON.stringify({projectId:'demo-mateshwari-poc',apiKey:'synthetic-api-key',appId:'synthetic-app',authDomain:'demo-mateshwari-poc.firebaseapp.com'})}
 });
 let browser;
 let errors='';
@@ -37,9 +38,11 @@ async function ready(){
 }
 async function smoke(){
  await ready();
- browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ browser=await chromium.launch({headless:true,args:['--no-sandbox'],
+  ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{})});
  const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'no-preference'});
  page.setDefaultTimeout(10000);
+ await installSyntheticImages(page);
  const failures=[];
  page.on('pageerror',e=>failures.push(String(e)));
  await page.goto('http://127.0.0.1:'+port,{waitUntil:'domcontentloaded'});
@@ -396,10 +399,14 @@ async function smoke(){
  let serverVehicles=[adminVehicle,nextVehicle];
  let packRequest=null;
  let imageUploads=0;
+ const contentBlank={brand:{name:'',tagline:'',bannerTitle:'',bannerText:'',logoUrl:''},stories:[],ambassadors:[],testimonials:[],media:{},visibility:{}};
+ let contentDraft=structuredClone(contentBlank),contentPublished=structuredClone(contentBlank),contentVersion=0,contentPublishedVersion=0;
+ await page.route('**/api/site-content',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})}));
  await page.route('**/api/admin/**',async route=>{
    const url=new URL(route.request().url());
    let response={};
-   if(url.pathname==='/api/admin/fleet-media/status'){
+   if(url.pathname==='/api/admin/session')response={authorized:true};
+   else if(url.pathname==='/api/admin/fleet-media/status'){
      response={ready:false,installed:0,total:7,missing:['/media/mt-thar-red-front.webp']};
    }else if(url.pathname==='/api/admin/fleet-media/import'){
      packRequest=route.request().postDataJSON();
@@ -417,16 +424,61 @@ async function smoke(){
      imageUploads++;
      editedImageUrl='/api/uploads/11111111-2222-4333-8444-55555555555'+imageUploads+'.webp';
      response={url:editedImageUrl};
+   }else if(url.pathname==='/api/admin/site-content'){
+     if(route.request().method()==='PUT'){
+       const input=route.request().postDataJSON();
+       ensure(input.expectedVersion===contentVersion,'Content updates require current server revision');
+       contentDraft=structuredClone(input.content);contentVersion++;
+     }
+     response={version:contentVersion,publishedVersion:contentPublishedVersion,draft:contentDraft,published:contentPublished};
+   }else if(url.pathname==='/api/admin/site-content/publish'){
+     const input=route.request().postDataJSON();
+     ensure(input.expectedVersion===contentVersion,'Content publishing requires saved current revision');
+     contentPublished=structuredClone(contentDraft);contentVersion++;contentPublishedVersion++;
+     response={version:contentVersion,publishedVersion:contentPublishedVersion,draft:contentDraft,published:contentPublished};
    }else if(url.pathname==='/api/admin/enquiries')response={items:[]};
    else if(url.pathname==='/api/admin/engagement')response={total:0,counts:{},sessions:0,recent:[]};
    else if(url.pathname==='/api/admin/notifications')response={config:{mode:'preview'},items:[]};
    await route.fulfill({status:url.pathname==='/api/admin/images'?201:200,
      contentType:'application/json',body:JSON.stringify(response)});
  });
+ // UI-only Auth fixture. Real SDK verification/revocation runs separately in emulators.
+ const uid='synthetic-ui-owner',email='mateshwaritravellers@gmail.com';
+ const encode=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
+ const idToken=encode({alg:'none',typ:'JWT'})+'.'+encode({iss:'https://securetoken.google.com/demo-mateshwari-poc',aud:'demo-mateshwari-poc',sub:uid,user_id:uid,email,email_verified:true,iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600,auth_time:Math.floor(Date.now()/1000),firebase:{sign_in_provider:'password'}})+'.synthetic';
+ await page.route('http://127.0.0.1:9099/**',async route=>{const lookup=route.request().url().includes('accounts:lookup'),refresh=route.request().url().includes('securetoken');const user={localId:uid,email,emailVerified:true,passwordHash:'synthetic',providerUserInfo:[{providerId:'password',email,rawId:email}]};await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(refresh?{access_token:idToken,id_token:idToken,refresh_token:'synthetic-refresh',expires_in:'3600',user_id:uid,project_id:'demo-mateshwari-poc'}:lookup?{users:[user]}:{...user,idToken,refreshToken:'synthetic-refresh',expiresIn:'3600',registered:true})});});
  await page.goto('http://127.0.0.1:'+port+'/admin',{waitUntil:'domcontentloaded'});
- await page.getByLabel('Admin token').fill('smoke-test-local-only');
- await page.getByRole('button',{name:'Open dashboard',exact:true}).click();
+ await page.getByLabel('Password',{exact:true}).fill('Synthetic-only123!');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
  ensure(await page.evaluate(()=>sessionStorage.getItem('mt-crm-token'))===null,'Admin bearer token is never persisted in browser storage');
+ await page.locator('.crm-main').waitFor();
+ const dashboardPosition=await page.locator('.crm-main').boundingBox();
+ ensure(Boolean(dashboardPosition&&dashboardPosition.y<600),
+  'Authorized Admin dashboard starts in the first viewport; optional account linking cannot cover it');
+ ensure(await page.getByRole('button',{name:'Link Google to this Admin account'}).count()===0,
+  'Unconfigured optional Google linking is not offered on the launch Admin page');
+ ensure(await page.getByRole('heading',{name:'A clearer way to run every journey.'}).isVisible(),
+  'Authorized staff land on an actionable operations overview, not a blank panel');
+ ensure(await page.getByRole('button',{name:/Needs follow-up/}).count()===1,
+  'Overview provides a follow-up queue shortcut');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-ops-overview-desktop.png',animations:'disabled'});
+ await page.getByRole('button',{name:'Log an enquiry',exact:true}).click();
+ ensure(await page.getByRole('heading',{name:'Enquiries & follow-ups'}).isVisible(),
+  'Overview quick action opens the detailed staff pipeline');
+ ensure(await page.getByRole('heading',{name:'Log an enquiry received outside the website'}).isVisible(),
+  'Overview quick action opens the actual manual lead form');
+ await page.getByRole('button',{name:'Overview',exact:true}).click();
+ await page.getByRole('button',{name:/Needs follow-up/}).click();
+ ensure(await page.getByRole('combobox',{name:'Filter by status'}).inputValue()==='attention',
+  'Follow-up metric opens enquiry list filtered to new and contacted leads');
+ await page.getByRole('button',{name:'Overview',exact:true}).click();
+ await page.setViewportSize({width:390,height:844});
+ ensure(await page.getByRole('heading',{name:'A clearer way to run every journey.'}).isVisible(),
+  'Mobile staff overview is readable and accessible');
+ ensure(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),
+  'Mobile operations layout does not overflow the page horizontally');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-ops-overview-mobile.png',animations:'disabled'});
+ await page.setViewportSize({width:1440,height:900});
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  // Frontend cannot silently claim the user's ZIP is installed. Staff must
  // actively upload and confirm it before the server receives photo bytes.
@@ -462,28 +514,88 @@ async function smoke(){
  await saveSanitized.click();
  await editor.waitFor({state:'detached'});
  ensure(imageUploads===2,'Main and alternate images uploaded separately');
- await page.locator('.fleet-admin-head .fleet-save').click();
+ {const saved=page.waitForResponse(response=>response.url().endsWith('/api/admin/catalog')&&response.request().method()==='PUT');await page.locator('.fleet-admin-head .fleet-save').click();await saved;}
  ensure(savedCatalogName==='Toyota Innova','Fleet catalog save retains identity after privacy review');
  ensure(savedGallery.startsWith('/api/uploads/'),'Alternate gallery angle saved as sanitized local image');
  await page.getByRole('button',{name:'Move Maruti Ertiga to first'}).click();
  ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
    'Admin move-to-first visibly changes the first fleet card');
- await page.locator('.fleet-admin-head .fleet-save').click();
+ {const saved=page.waitForResponse(response=>response.url().endsWith('/api/admin/catalog')&&response.request().method()==='PUT');await page.locator('.fleet-admin-head .fleet-save').click();await saved;}
  ensure(savedVehicleOrder[0]==='Maruti Ertiga'&&savedVehicleOrder[1]==='Toyota Innova',
    'Admin save posts the exact vehicle ordering to backend');
  ensure(await page.locator('.fleet-order-number').first().innerText().then(x=>x.includes('#01')),
    'First priority is visibly labeled #01');
  await page.reload({waitUntil:'domcontentloaded'});
- await page.getByLabel('Admin token').fill('smoke-test-local-only');
- await page.getByRole('button',{name:'Open dashboard',exact:true}).click();
+ await page.getByLabel('Password',{exact:true}).fill('Synthetic-only123!');
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await page.getByRole('button',{name:'Cars & pricing'}).click();
  await page.waitForFunction(()=>document.querySelector('.fleet-editor-fields input')?.value==='Maruti Ertiga');
  ensure((await page.locator('.fleet-editor-fields input').first().inputValue())==='Maruti Ertiga',
    'Admin order survives browser reload');
  ensure((await page.locator('.fleet-order-number').first().innerText()).includes('#01'),
    'Reloaded first vehicle retains priority #01');
+ // Website Studio: photo selection and section visibility remain private until publish.
+ await page.getByRole('button',{name:'Website content',exact:true}).click();
+ await page.getByRole('heading',{name:'Website studio'}).waitFor();
+ await page.screenshot({path:'artifacts/visual-evidence/admin-website-studio-desktop.png',animations:'disabled'});
+ await page.locator('.crm-content-slot-group').first().screenshot({path:'artifacts/visual-evidence/admin-media-placements-desktop.png',animations:'disabled'});
+ await page.setViewportSize({width:390,height:844});
+ ensure(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),
+  'Mobile website publishing controls stay inside the viewport');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-website-studio-mobile.png',animations:'disabled'});
+ await page.setViewportSize({width:1440,height:900});
+ const firstSlot=page.locator('.crm-content-slot-grid .crm-content-image-control').first();
+ await firstSlot.getByLabel('Accessible image description').fill('Synthetic reviewed mountain trip image');
+ await firstSlot.locator('input[type=file]').setInputFiles({name:'reviewed-test.png',mimeType:'image/png',buffer:Buffer.from(tinyPng.split(',')[1],'base64')});
+ ensure(await firstSlot.getByRole('button',{name:'Upload reviewed photo'}).isDisabled(),
+   'Image uploads require explicit publication-rights and privacy review');
+ await firstSlot.getByRole('checkbox',{name:/I confirm publication rights/}).check();
+ await firstSlot.getByRole('button',{name:'Upload reviewed photo'}).click();
+ await firstSlot.getByRole('status').waitFor();
+ await page.getByRole('checkbox',{name:/Stories page \/ Gallery/}).uncheck();
+ await page.getByRole('button',{name:'Save private draft'}).click();
+ ensure(contentDraft.media.homeStoryMountain.imageUrl.startsWith('/api/uploads/'),
+   'Saved private draft assigns the uploaded photo to the selected homepage slot');
+ ensure(contentDraft.visibility.storiesGallery===false,
+   'Saved draft preserves the exact section visibility choice');
+ ensure(contentPublished.visibility.storiesGallery!==false,
+   'Private draft changes cannot affect the published website');
+ page.once('dialog',dialog=>void dialog.accept());
+ await page.getByRole('button',{name:'Publish saved draft'}).click();
+ ensure(contentPublished.visibility.storiesGallery===false,
+   'Staff authorization, save and explicit publish apply section visibility');
+ ensure(contentPublished.media.homeStoryMountain.alt==='Synthetic reviewed mountain trip image',
+   'Publication retains the photo description used by accessible page imagery');
  // Each editorial image navigates to its own detailed adventure page.
  const journeyPage=await browser.newPage({viewport:{width:1280,height:800}});
+ await installSyntheticImages(journeyPage);
+ // Force the original locally packaged hero image to fail. The page may
+ // have already entered fallback mode before a synthetic `error` event;
+ // dispatching another one would not change its source and can deadlock CI.
+ await journeyPage.route('**/media/mt-mountain-sunset.webp',route=>route.abort());
+ let releasePublishedContent;
+ const publishedContentGate=new Promise(resolve=>{releasePublishedContent=resolve;});
+ await journeyPage.route('**/api/site-content',async route=>{
+   await publishedContentGate;
+   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({content:contentPublished,publishedVersion:contentPublishedVersion})});
+ });
+ await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ const beforePublishImage=journeyPage.locator('.story-stack-1 img');
+ await beforePublishImage.scrollIntoViewIfNeeded();
+ await journeyPage.waitForFunction(()=>document.querySelector('.story-stack-1 img')?.getAttribute('src')?.startsWith('https://images.unsplash.com/'));
+ await journeyPage.waitForFunction(()=>{const img=document.querySelector('.story-stack-1 img');return img?.complete&&img.naturalWidth>0;});
+ releasePublishedContent();
+ await journeyPage.waitForFunction(expected => document.querySelector('.story-stack-1 img')?.getAttribute('src')===expected,
+   contentPublished.media.homeStoryMountain.imageUrl);
+ ensure((await journeyPage.locator('.story-stack-1 img').getAttribute('src'))===contentPublished.media.homeStoryMountain.imageUrl,
+   'Published homepage card uses staff-selected, slot-specific image');
+ await journeyPage.locator('.story-stack-1 img').scrollIntoViewIfNeeded();
+ await journeyPage.waitForFunction(()=>{const img=document.querySelector('.story-stack-1 img');return img?.complete&&img.naturalWidth>0;});
+ await journeyPage.goto('http://127.0.0.1:'+port+'/stories',{waitUntil:'domcontentloaded'});
+ await journeyPage.getByRole('heading',{name:'Every trip has a story worth keeping.'}).waitFor();
+ await journeyPage.locator('.stories-gallery').waitFor({state:'detached'});
+ ensure(await journeyPage.locator('.stories-gallery').count()===0,
+   'Published section visibility hides only the selected Stories gallery');
  await journeyPage.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
  const adventureLinks=await journeyPage.locator('.route-tile-image-link').evaluateAll(links=>links.map(a=>a.getAttribute('href')));
  ensure(JSON.stringify(adventureLinks)===JSON.stringify([
@@ -530,6 +642,11 @@ async function smoke(){
  ensure(await offlineStudio.locator('.ride-studio-thumb-pending').count()>=2,
   'Full-screen studio labels unavailable thumbnails instead of hiding them');
  await offlinePhotos.close();
+
+ // Backup and migration controls remain opt-in; this UI fixture never invokes them.
+ await page.getByRole('button',{name:'Backup & recovery',exact:true}).click();
+ ensure(await page.getByRole('button',{name:'Create encrypted backup',exact:true}).isDisabled(),'Recovery operations require explicit review confirmation');
+ await page.screenshot({path:'artifacts/visual-evidence/admin-recovery-locked.png',animations:'disabled'});
 
  // Independent deterministic test for the requested idle behaviour. The SVG
  // below is a TEST-ONLY delivery fixture, never a displayed fleet photograph.

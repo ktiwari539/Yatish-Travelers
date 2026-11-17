@@ -1,3 +1,4 @@
+import {adminFetch,uploadModelChunks} from './crmApi';
 import { useCallback, useEffect, useState } from 'react';
 import { ImagePlus, Plus, Save, Trash2, CheckCircle2, RefreshCw, ArrowUp, ArrowDown, ChevronsUp, ListOrdered, UploadCloud, Images } from 'lucide-react';
 import { PhotoPrivacyEditor } from './PhotoPrivacyEditor';
@@ -10,6 +11,7 @@ type Props={token:string};
 const blank=():CatalogVehicle=>({id:'',name:'',seats:'4+1',capacity:4,tag:'Comfortable travel',category:'Sedan',image:'',rateMin:15,rateMax:25,enabled:false,gallery:[],modelUrl:''});
 
 export function FleetManager({token}:Props) {
+ const [version,setVersion]=useState(0);
  const [vehicles,setVehicles]=useState<CatalogVehicle[]>([]);
  const [saving,setSaving]=useState(false);
  const [error,setError]=useState('');
@@ -27,11 +29,11 @@ export function FleetManager({token}:Props) {
  const load=useCallback(async()=>{
    setError('');
    try {
-     const response=await fetch('/api/admin/catalog',{headers:{Authorization:'Bearer '+token}});
+     const response=await adminFetch('/api/admin/catalog',{headers:{Authorization:'Bearer '+token}});
      const body=await response.json();
      if(!response.ok) throw new Error(body.error||'Failed to load fleet');
-     setVehicles(body.vehicles||[]);setLoaded(true);setDirty(false);
-     const status=await fetch('/api/admin/fleet-media/status',{headers:{Authorization:'Bearer '+token}});
+     setVersion(body.version??0);setVehicles(body.vehicles||[]);setLoaded(true);setDirty(false);
+     const status=await adminFetch('/api/admin/fleet-media/status',{headers:{Authorization:'Bearer '+token}});
      if(status.ok)setMediaStatus(await status.json());
    } catch(e){setError(e instanceof Error?e.message:'Failed to load fleet');}
  },[token]);
@@ -53,9 +55,9 @@ export function FleetManager({token}:Props) {
        reader.onerror=()=>reject(new Error('Could not read ZIP.'));
        reader.readAsDataURL(importFile);
      });
-     const response=await fetch('/api/admin/fleet-media/import',{
+     const response=await adminFetch('/api/admin/fleet-media/import',{
        method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-       body:JSON.stringify({zipBase64:encoded,confirmReplace:true})
+       body:JSON.stringify({zipBase64:encoded,confirmReplace:true,expectedVersion:version})
      });
      const result=await response.json();
      if(!response.ok)throw new Error(result.error||'Photo installation failed');
@@ -111,12 +113,12 @@ export function FleetManager({token}:Props) {
        reader.onerror=()=>reject(new Error('Could not read image file'));
        reader.readAsDataURL(file);
      });
-     const response=await fetch('/api/admin/images',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({mime:file.type,data:encoded})});
+     const response=await adminFetch('/api/admin/images',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({mime:file.type,data:encoded})});
      const body=await response.json();
      if(!response.ok)throw new Error(body.error||'Image upload failed');
      if(angleIndex===undefined)change(index,{image:body.url});
      else change(index,{gallery:(vehicles[index].gallery||[]).map((url,i)=>i===angleIndex?body.url:url)});
-     setSuccess((angleIndex===undefined?'Main photo':'Alternate angle '+(angleIndex+1))+' reviewed and uploaded locally. Press Save Changes to use the privacy-safe copy.');
+     setSuccess((angleIndex===undefined?'Main photo':'Alternate angle '+(angleIndex+1))+' reviewed and uploaded securely. Press Save Changes to use the privacy-safe copy.');
    }catch(e){setError(e instanceof Error?e.message:'Upload failed');throw e;}
    finally{setUploading(null);}
  };
@@ -128,33 +130,25 @@ export function FleetManager({token}:Props) {
    }
    setUploadingModel(index);
    try{
-     const encoded=await new Promise<string>((resolve,reject)=>{
-       const reader=new FileReader();
-       reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
-       reader.onerror=()=>reject(new Error('Unable to read GLB model.'));
-       reader.readAsDataURL(file);
-     });
-     const response=await fetch('/api/admin/models',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({data:encoded})});
-     const body=await response.json();
-     if(!response.ok)throw new Error(body.error||'GLB model upload failed.');
+     const body=await uploadModelChunks(file,token);
      change(index,{modelUrl:body.url});
-     setSuccess('3D model uploaded to this computer. Save fleet settings, then reload the public showroom.');
+     setSuccess('3D model uploaded to the media store. Save fleet settings, then reload the public showroom.');
    }catch(e){setError(e instanceof Error?e.message:'Upload failed.');}
    finally{setUploadingModel(null);}
  };
  const save=async()=>{
    setError('');setSuccess('');setSaving(true);
    try{
-     const response=await fetch('/api/admin/catalog',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({vehicles})});
+     const response=await adminFetch('/api/admin/catalog',{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({vehicles,expectedVersion:version})});
      const body=await response.json();
      if(!response.ok)throw new Error(body.error||'Unable to save fleet');
-     setVehicles(body.vehicles);setDirty(false);setSuccess('Vehicle priority, visibility, images and rates saved. Refresh the public website to see the new featured order.');
+     setVersion(body.version);setVehicles(body.vehicles);setDirty(false);setSuccess('Vehicle priority, visibility, images and rates saved. Refresh the public website to see the new featured order.');
    }catch(e){setError(e instanceof Error?e.message:'Save failed');}
    finally{setSaving(false);}
  };
  return <section className="fleet-admin">
    <div className="fleet-admin-head"><div><span className="crm-eyebrow">Fleet control · display priority</span><h2>Manage vehicles, prices & order.</h2>
-      <p>Arrange the cards in the exact order customers see them. Move a vehicle up, down or to the first position. Click <strong>Save Changes</strong> to publish the sequence to the local website.</p></div>
+      <p>Arrange the cards in the exact order customers see them. Move a vehicle up, down or to the first position. Click <strong>Save Changes</strong> to publish the sequence to the website.</p></div>
       <div><button className="crm-refresh" onClick={()=>void load()} type="button"><RefreshCw size={16}/> Reload</button>
         <button className="fleet-save" onClick={()=>void save()} type="button" disabled={saving}>{saving?'Saving...':<><Save size={16}/> Save Changes</>}</button></div>
    </div>
@@ -176,7 +170,7 @@ export function FleetManager({token}:Props) {
      {mediaStatus&&<div className="fleet-pack-status" role="status">
        <p>{mediaStatus.ready
          ?'All seven reviewed image files passed their SHA-256 integrity checks.'
-         :'Only '+mediaStatus.installed+' of '+mediaStatus.total+' reviewed images are verified on this computer.'}</p>
+         :'Only '+mediaStatus.installed+' of '+mediaStatus.total+' reviewed images are verified on the media store.'}</p>
        {!!mediaStatus.missing.length&&<p>Missing files: {mediaStatus.missing.join(', ')}</p>}
        {!!mediaStatus.invalid?.length&&<p>Incorrect or unreadable files: {mediaStatus.invalid.join(', ')}. Reinstall the original reviewed ZIP.</p>}
        {mediaStatus.ready&&!mediaStatus.catalogApplied&&<p>The images are installed, but not all three public vehicle entries use this pack. Import and confirm replacement below.</p>}
@@ -265,6 +259,6 @@ export function FleetManager({token}:Props) {
      <button type="button" className="fleet-save" disabled={saving} onClick={()=>void save()}><Save size={16}/> {saving?'Saving...':'Save fleet & pricing'}</button>
    </div>
    {editingPhoto&&<PhotoPrivacyEditor file={editingPhoto.file} onCancel={()=>setEditingPhoto(null)} onComplete={f=>uploadPhoto(editingPhoto.index,f,editingPhoto.angleIndex)}/>}
-   <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored only on your Mac) or linked using HTTPS URLs. Every existing external photo and every alternate angle must be reviewed separately before production. A link alone does not anonymize plate numbers. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay on this Mac during local testing.</p>
+   <p className="fleet-admin-note">Prices are indicative until your final commercial rules are approved. Images can be uploaded from your computer (stored in the configured durable media store) or linked using HTTPS URLs. Every existing external photo and every alternate angle must be reviewed separately before production. A link alone does not anonymize plate numbers. Use only images you are licensed to publish; externally hosted images may expose visitor requests to their hosting provider. Inventory updates stay in the CRM.</p>
  </section>;
 }

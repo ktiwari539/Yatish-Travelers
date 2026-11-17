@@ -10,3 +10,11 @@ dist
 .netlify/
 artifacts/
 *.backup.tar
+
+# Isolated Firebase emulator state and synthetic test exports
+**/.firebase/
+**/*-debug.log
+**/.poc-artifacts/
+
+netlify/generated-functions/
+.function-smoke-*/

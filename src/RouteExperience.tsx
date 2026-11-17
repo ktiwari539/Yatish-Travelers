@@ -62,7 +62,7 @@ export function RouteExperience({onPlan}:Props){
          <div className="route-experience-info"><span><MapPin size={15}/>{current.chip}</span><span>{current.dist}</span></div>
          <button type="button" className="route-book-button" onClick={()=>onPlan(active)}>Plan a similar journey <ArrowUpRight size={17}/></button>
        </div>
-       <div className={'route-illustration route-'+active} aria-label="Decorative animated route map" role="img">
+       <div className={'route-illustration route-'+active} aria-label="Route map controls" role="group">
          <div className="route-orbit orb-one"/><div className="route-orbit orb-two"/>
          <div className="route-mesh"/>
          <div className="route-illustration-title">{current.index} / <span>{current.label.toUpperCase()}</span></div>
