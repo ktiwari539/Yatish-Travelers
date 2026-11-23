@@ -213,7 +213,7 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
         </button>
       </div>
       <div className="cinema-director-vehicle-tabs cinema-gallery-action">
-        <a href="#motion-fleet">Explore all {vehicles.length} vehicles <ArrowUpRight size={15}/></a>
+        <a href="#fleet">Explore all {vehicles.length} vehicles <ArrowUpRight size={15}/></a>
       </div>
     </div>
 
