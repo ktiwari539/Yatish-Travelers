@@ -248,28 +248,16 @@ function StoriesPage() {
           <span className="kicker">Share Your Journey</span>
           <h2>Share the moments that made your journey memorable.</h2>
           <p>
-            Add your trip details, a short story and photos. Your submission stays private until it has been reviewed by Mateshwari Travellers.
+            Have a journey worth sharing? Send your story and photos directly to our team. Nothing will be published without review and your permission.
           </p>
         </div>
-        <form onSubmit={(event) => event.preventDefault()} className="story-submit-form">
-          <label>Your name<input type="text" placeholder="Name" /></label>
-          <label>Journey type
-            <select defaultValue="">
-              <option value="" disabled>Select journey type</option>
-              <option>Family / Outstation</option>
-              <option>Airport</option>
-              <option>Corporate</option>
-              <option>Wedding / Event</option>
-              <option>Group Travel</option>
-            </select>
-          </label>
-          <label>Your story<textarea rows={5} placeholder="Tell us about your journey..." /></label>
-          <label>Photos<input type="file" accept="image/*" multiple /></label>
-          <button type="button" className="story-submit-disabled" disabled>
-            Story submissions opening soon
-          </button>
-          <small>Nothing is published automatically. Every submission is reviewed first.</small>
-        </form>
+        <div className="story-submit-form">
+          <p>Send your journey details and photos by email. Our team reviews stories before considering them for publication.</p>
+          <a className="primary" href={contactEmail+'?subject='+encodeURIComponent('Share a journey — Mateshwari Travellers')}>
+            Email your journey <Mail size={16}/>
+          </a>
+          <small>Nothing is published automatically. We will request permission before publishing any customer story or image.</small>
+        </div>
       </section>
 
       <footer className="stories-footer">
