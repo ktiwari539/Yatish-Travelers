@@ -497,20 +497,23 @@ async function smoke(){
  ensure(typeof packRequest?.zipBase64==='string'&&packRequest.zipBase64.length>100,
    'Admin sent the selected zip bytes rather than a filename');
 
- await page.getByRole('button',{name:'Review current photo / hide plates'}).first().click();
+ await page.getByRole('button',{name:'Review existing cover / hide plates'}).first().click();
  const editor=page.getByRole('dialog',{name:'Vehicle photo privacy editor'});
  await editor.waitFor({state:'visible'});
  const saveSanitized=editor.getByRole('button',{name:'Save sanitized photo'});
  ensure(await saveSanitized.isDisabled(),'Privacy editor must block saving unchecked existing plates');
  await editor.getByRole('checkbox',{name:/No registration number is visible/}).check();
- ensure(await saveSanitized.isEnabled(),'Explicit no-plate review unlocks sanitized image export');
+ ensure(await saveSanitized.isDisabled(),'Commercial publishing permission is also required');
+ await editor.getByRole('checkbox',{name:/I have permission to publish/}).check();
+ ensure(await saveSanitized.isEnabled(),'Privacy and commercial-use review unlock the sanitized image');
  await saveSanitized.click();
  await editor.waitFor({state:'detached'});
  ensure(Boolean(editedImageUrl),'Sanitized local image uploaded after explicit review');
- await page.getByRole('button',{name:'Review / hide plates · angle 1'}).click();
+ await page.locator('.fleet-gallery-item').first().getByRole('button',{name:'Review',exact:true}).click();
  await editor.waitFor({state:'visible'});
  ensure(await saveSanitized.isDisabled(),'Alternate gallery image also requires privacy review');
  await editor.getByRole('checkbox',{name:/No registration number is visible/}).check();
+ await editor.getByRole('checkbox',{name:/I have permission to publish/}).check();
  await saveSanitized.click();
  await editor.waitFor({state:'detached'});
  ensure(imageUploads===2,'Main and alternate images uploaded separately');
