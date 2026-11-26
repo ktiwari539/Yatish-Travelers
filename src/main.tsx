@@ -61,3 +61,4 @@ import './accessibility.css';
 import './site-content.css';
 import './jabalpur.css';
 import './admin-workspace.css';
+import './fleet-management-v2.css';

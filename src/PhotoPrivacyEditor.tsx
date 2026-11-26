@@ -2,20 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import { ScanLine, CheckCircle2, RotateCcw, X } from 'lucide-react';
 
 type Rect={x:number;y:number;w:number;h:number};
-type Props={file:File;onCancel:()=>void;onComplete:(file:File)=>Promise<void>;context?:'vehicle'|'website'};
-export function PhotoPrivacyEditor({file,onCancel,onComplete,context='vehicle'}:Props){
+type Props={file:File;onCancel:()=>void;onComplete:(file:File)=>Promise<void>;context?:'vehicle'|'website';onSaved?:()=>void;requireRights?:boolean};
+export function PhotoPrivacyEditor({file,onCancel,onComplete,context='vehicle',onSaved,requireRights=false}:Props){
  const canvas=useRef<HTMLCanvasElement|null>(null);
  const original=useRef<ImageBitmap|null>(null);
  const [selection,setSelection]=useState<Rect|null>(null);
  const start=useRef<{x:number;y:number}|null>(null);
  const [applied,setApplied]=useState(0);
  const [noVisiblePlate,setNoVisiblePlate]=useState(false);
+ const [rightsApproved,setRightsApproved]=useState(false);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
  const [error,setError]=useState('');
  useEffect(()=>{
    let alive=true;
-   setLoading(true);setSelection(null);setApplied(0);setNoVisiblePlate(false);setError('');
+   setLoading(true);setSelection(null);setApplied(0);setNoVisiblePlate(false);setRightsApproved(false);setError('');
    createImageBitmap(file).then(image=>{
      if(!alive){image.close();return;}
      original.current?.close();original.current=image;
@@ -70,11 +71,12 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete,context='vehicle'}:
  const finish=async()=>{
    const c=canvas.current;if(!c)return;
    if(applied===0&&!noVisiblePlate){setError('Review the photo and pixelate visible registration plates, or confirm that no plate is visible.');return;}
+   if(requireRights&&!rightsApproved){setError('Confirm publication rights before uploading this photo.');return;}
    setSaving(true);setError('');
    try{
      const blob=await new Promise<Blob>((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error('Image export failed')),'image/webp',.82));
      await onComplete(new File([blob],file.name.replace(/\.[^.]+$/,'')+'-privacy.webp',{type:'image/webp'}));
-     onCancel();
+     if(onSaved)onSaved();else onCancel();
    }catch(e){setError(e instanceof Error?e.message:'Unable to save image');}
    finally{setSaving(false);}
  };
@@ -93,11 +95,12 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete,context='vehicle'}:
          onChange={event=>setNoVisiblePlate(event.target.checked)}/>
        <span>No registration number is visible in this photo (I reviewed the entire image)</span>
      </label>
+     {requireRights&&<label className="privacy-review-confirm"><input type="checkbox" checked={rightsApproved} onChange={e=>setRightsApproved(e.target.checked)}/><span>I have permission to publish this photograph commercially and have checked for other private details, including faces and background plates.</span></label>}
      <div className="privacy-toolbar">
        <span>{applied} region{applied===1?'':'s'} pixelated</span>
        <div><button type="button" onClick={reset}><RotateCcw size={15}/> Reset</button>
        <button type="button" disabled={!selection||selection.w<6||selection.h<6} onClick={mosaic}><ScanLine size={15}/> Pixelate selected area</button>
-       <button type="button" className="fleet-save" disabled={saving||loading||!!selection||(applied===0&&!noVisiblePlate)} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Processing...':context==='website'?'Use edited photo':'Save sanitized photo'}</button></div>
+       <button type="button" className="fleet-save" disabled={saving||loading||!!selection||(applied===0&&!noVisiblePlate)||(requireRights&&!rightsApproved)} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Processing...':context==='website'?'Use edited photo':'Save sanitized photo'}</button></div>
      </div>
      <small>Review every visible plate, including cars in the background and alternate angles. Redactions are baked into the new copy; the original photo remains unchanged. If no plate is visible, explicitly confirm it above.</small>
    </div>
