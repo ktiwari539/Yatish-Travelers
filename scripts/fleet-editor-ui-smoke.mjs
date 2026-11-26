@@ -72,8 +72,7 @@ try{
     {name:'interior.png',mimeType:'image/png',buffer:await png(160,70,70)}
   ]);
   await review(page);
-  await page.getByRole('dialog',{name:'Vehicle photo privacy editor'}).waitFor({state:'detached'});
-  await page.getByRole('dialog',{name:'Vehicle photo privacy editor'}).waitFor({state:'visible'});
+  await page.locator('.privacy-modal[data-review-file="interior.png"]').waitFor({state:'visible'});
   await review(page);
   await page.getByRole('dialog',{name:'Vehicle photo privacy editor'}).waitFor({state:'detached'});
   assert.equal(imageCount,3,'Main photo plus two gallery photos uploaded separately');

@@ -80,9 +80,10 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete,context='vehicle',o
    }catch(e){setError(e instanceof Error?e.message:'Unable to save image');}
    finally{setSaving(false);}
  };
- return <div className="privacy-modal" role="dialog" aria-modal="true" aria-label={context==='website'?'Website photo privacy editor':'Vehicle photo privacy editor'}>
+ return <div className="privacy-modal" data-review-file={file.name} role="dialog" aria-modal="true" aria-label={context==='website'?'Website photo privacy editor':'Vehicle photo privacy editor'}>
    <div className="privacy-sheet">
      <header><div><span className="crm-eyebrow">Photo studio / Privacy</span><h2>{context==='website'?'Review the website photograph.':'Remove registration details.'}</h2><p>Drag a rectangle over the actual number plate. Apply pixelation before saving the vehicle photo. Repeat for additional sensitive details.</p></div><button type="button" aria-label="Close editor" onClick={onCancel}><X size={19}/></button></header>
+     <small>Reviewing {file.name}</small>
      {error&&<p className="crm-error" role="alert">{error}</p>}
      <div className="privacy-canvas-wrap">
        <canvas ref={canvas} style={{width:'100%',height:'auto',display:'block',touchAction:'none',cursor:'crosshair'}}
