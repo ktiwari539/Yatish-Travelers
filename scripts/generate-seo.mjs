@@ -26,7 +26,7 @@ for(const [path,seo] of [...Object.entries(pages),['/admin',{title:'Staff access
  const file=resolve('dist',path==='/'?'index.html':path.slice(1)+'/index.html');mkdirSync(dirname(file),{recursive:true});writeFileSync(file,html);
 }
 writeFileSync('dist/sitemap.xml','<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+routes.map(p=>'  <url><loc>'+esc(origin+p)+'</loc></url>').join('\n')+'\n</urlset>\n');
-writeFileSync('dist/robots.txt','User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /dashboard\n\nSitemap: '+origin+'/sitemap.xml\n');
+writeFileSync('dist/robots.txt','User-agent: *\nAllow: /\nAllow: /api/uploads/\nDisallow: /api/\nDisallow: /dashboard\n\nSitemap: '+origin+'/sitemap.xml\n');
 // Let crawlers see Admin's noindex. Authorization is enforced by the API.
 writeFileSync('dist/404.html',template.replace(/content="index,follow,max-image-preview:large"/g,'content="noindex,nofollow"').replace(/<title>.*?<\/title>/,'<title>Page unavailable | Mateshwari Travellers</title>'));
 console.log('[SEO] Generated metadata, canonical HTML, sitemap, and noindex Admin for '+routes.length+' public pages.');
