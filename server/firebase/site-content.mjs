@@ -13,6 +13,7 @@ const defaults = Object.freeze({
 const mediaSlotIds = [
   "homeStoryMountain", "homeStorySunset", "homeStoryLandscape", "storiesHero",
   "journeyMountain", "journeySunset", "journeyGreen",
+  "heroSceneArrival", "heroSceneRoad", "heroSceneJourney", "heroForegroundArrival", "heroForegroundRoad", "serviceCity", "serviceOutstation", "serviceAirport", "serviceEvents", "corporateHero", "interludeScene", "storyFallbackRoad", "storyFallbackHighlands", "storyFallbackArrival", "jabalpurHero",
 ];
 const visibilityIds = [
   "homeStories", "homeJourneys", "storiesGallery", "storiesAmbassadors", "storiesTestimonials",

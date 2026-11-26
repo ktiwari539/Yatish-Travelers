@@ -14,6 +14,10 @@ for(const [path,seo] of [...Object.entries(pages),['/admin',{title:'Staff access
  let html=template.replace(/<title>.*?<\/title>/,'<title>'+esc(seo.title)+'</title>');
  for(const [key,value] of [['description',seo.description],['robots',seo.index?'index,follow,max-image-preview:large':'noindex,nofollow'],['googlebot',seo.index?'index,follow,max-image-preview:large':'noindex,nofollow']]) html=html.replace(new RegExp('<meta name="'+key+'"[^>]*>'),'<meta name="'+key+'" content="'+esc(value)+'" />');
  for(const key of ['title','description'])html=html.replace(new RegExp('<meta property="og:'+key+'"[^>]*>'),'<meta property="og:'+key+'" content="'+esc(seo[key])+'" />');
+ if(path==='/jabalpur-car-rental'){
+  const schema={'@context':'https://schema.org','@type':'Service',name:'Jabalpur chauffeur-driven car rental enquiries',serviceType:'Chauffeur-driven car rental and outstation trip planning',provider:{'@type':'Organization',name:'Mateshwari Travellers',url:origin,telephone:'+91-9340098177'},areaServed:{'@type':'City',name:'Jabalpur',containedInPlace:{'@type':'AdministrativeArea',name:'Madhya Pradesh'}},url:origin+path};
+  html=html.replace('</head>','<script type="application/ld+json">'+JSON.stringify(schema)+'</script>\n</head>');
+ }
  if(seo.index){
   const url=origin+path;
   html=html.replace('</head>','<link rel="canonical" href="'+esc(url)+'" />\n<meta property="og:url" content="'+esc(url)+'" />\n</head>');

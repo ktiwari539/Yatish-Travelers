@@ -3,12 +3,14 @@ import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-rea
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import type { FleetReelVehicle } from './PremiumFleetExperience';
+import type { SiteContent } from './siteContent';
 
 type Props={
   vehicles:FleetReelVehicle[];
   activeIndex:number;
   onChange:(index:number)=>void;
   onQuote:(name:string)=>void;
+  media?:SiteContent['media'];
 };
 const scenes=[
   {visual:luxuryMedia.hero, label:'THE SIGNATURE ARRIVAL', index:'01',
@@ -30,7 +32,7 @@ const SCENE_INTERVAL_MS=4800;
  * Scenic photographs are never described as photos of the selected fleet vehicle.
  * All scene layers remain mounted so transitions genuinely crossfade rather than flash.
  */
-export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
+export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote,media}:Props){
   const host=useRef<HTMLDivElement|null>(null);
   const raf=useRef(0);
   const [scene,setScene]=useState(0);
@@ -50,6 +52,8 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
   },[]);
   const [videoReady,setVideoReady]=useState(false);
   const video=useRef<HTMLVideoElement|null>(null);
+  const sceneOverrides=[media?.heroSceneArrival,media?.heroSceneRoad,media?.heroSceneJourney];
+  const foreground=(i:number,source:string)=>i===0?(media?.heroForegroundArrival?.imageUrl||source):i===1?(media?.heroForegroundRoad?.imageUrl||source):source;
   const active=vehicles[activeIndex]??vehicles[0];
   const featured=vehicles.find(item=>item.name==='Maruti Ertiga')??active;
   // Each full page mount runs the sequence once. Motion-sensitive clients skip it.
@@ -142,10 +146,10 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
 
     {!introDone&&<div className="cinema-arrival" aria-label="Mateshwari Travellers cinematic arrival">
       <div className="cinema-arrival-scene" aria-hidden="true">
-        <ScenicImage src={luxuryMedia.hero.src} fallback={luxuryMedia.hero.fallback} alt="" fetchPriority="high" />
+        <ScenicImage src={media?.heroSceneArrival?.imageUrl||luxuryMedia.hero.src} fallback={luxuryMedia.hero.fallback} alt="" fetchPriority="high" />
       </div>
       <div className="cinema-arrival-wash" aria-hidden="true"/>
-      <img src="/media/mt-hero-car-cutout.webp" className="cinema-arrival-vehicle" alt="" aria-hidden="true"
+      <img src={media?.heroForegroundArrival?.imageUrl||'/media/mt-hero-car-cutout.webp'} className="cinema-arrival-vehicle" alt="" aria-hidden="true"
         onError={event=>{event.currentTarget.style.visibility='hidden';}}/>
       <span className="cinema-arrival-wordmark">MATESHWARI <em>TRAVELLERS</em></span>
       <span className="cinema-arrival-subline">THE JOURNEY BEGINS HERE</span>
@@ -156,18 +160,18 @@ export function FleetHeroVisual({vehicles,activeIndex,onChange,onQuote}:Props){
         className={'cinema-director-scene '+(i===scene?'is-active':'')+(i===0&&videoReady?' has-video':'')}
         aria-hidden="true">
         <div className="cinema-director-backdrop">
-          <ScenicImage src={item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt=""
+          <ScenicImage src={sceneOverrides[i]?.imageUrl||item.visual.src} fallback={item.visual.fallback??luxuryMedia.forest.src} alt=""
             loading="eager" decoding="async" fetchPriority={i===0?'high':'low'}
             onLoad={()=>setSceneReady(previous=>previous[i]?previous:previous.map((ready,index)=>index===i?true:ready))}/>
-          {i===0&&!reduceMotion&&<video ref={video}
+          {i===0&&!reduceMotion&&!media?.heroSceneArrival?.imageUrl&&<video ref={video}
             className={'cinema-director-video '+(videoReady?'is-ready':'')} muted playsInline loop autoPlay
             preload="metadata" aria-hidden="true" poster="/media/mt-hero-sunset.webp"
             onCanPlay={()=>setVideoReady(true)} onError={()=>setVideoReady(false)}>
             <source src="/media/mt-cinematic-drive.mp4" type="video/mp4"/>
           </video>}
         </div>
-        {item.foreground&&<div className="cinema-director-foreground cinema-director-car-depth" aria-hidden="true">
-          <img src={item.foreground} alt="" loading="lazy" decoding="async"
+        {foreground(i,item.foreground)&&<div className="cinema-director-foreground cinema-director-car-depth" aria-hidden="true">
+          <img src={foreground(i,item.foreground)} alt="" loading="lazy" decoding="async"
             onError={event=>{event.currentTarget.style.display='none';}}/>
         </div>}
       </div>)}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminFetch } from "./crmApi";
+import { PhotoPrivacyEditor } from "./PhotoPrivacyEditor";
 import { ImagePlus, ImageOff, LayoutTemplate, ShieldCheck } from "lucide-react";
 import { blankSiteMedia, blankSiteVisibility, safeSiteImagePath, siteMediaSlots, siteVisibilitySections,
   type SiteMediaSlot, type SiteMediaPlacement, type SiteVisibilitySection } from "./siteMediaSlots";
@@ -53,6 +54,7 @@ function ContentImageControl({ label, hint, url, defaultUrl, alt, token, disable
   onUploadChange?: (active: boolean) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
+  const [editing, setEditing] = useState(false);
   const [reviewed, setReviewed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -93,9 +95,10 @@ function ContentImageControl({ label, hint, url, defaultUrl, alt, token, disable
       {onAltChange && <label>Accessible image description<input maxLength={180} value={alt || ''} placeholder="Describe what is actually visible in this photo" disabled={disabled || uploading} onChange={(e) => onAltChange(e.target.value)} /></label>}
       <label>Upload a replacement from your computer<input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || uploading} onChange={(e) => { setFile(e.target.files?.[0] || null); setReviewed(false); setNotice(''); setError(''); }} /></label>
       {file && <label className="crm-content-review"><input type="checkbox" checked={reviewed} disabled={disabled || uploading} onChange={(e) => setReviewed(e.target.checked)} /> I confirm publication rights and have checked for visible plates, faces and private information.</label>}
-      <div className="crm-content-image-actions"><button type="button" disabled={!file || !reviewed || disabled || uploading} onClick={() => void upload()}><ImagePlus size={15} aria-hidden="true"/>{uploading ? 'Uploading…' : 'Upload reviewed photo'}</button><button type="button" className="crm-content-reset" disabled={disabled || uploading || !url} onClick={() => { onClear(); setFile(null); setNotice(''); }}>Use default image</button></div>
+      <div className="crm-content-image-actions"><button type="button" disabled={!file || disabled || uploading} onClick={() => setEditing(true)}>Review / edit sensitive details</button><button type="button" disabled={!file || !reviewed || disabled || uploading} onClick={() => void upload()}><ImagePlus size={15} aria-hidden="true"/>{uploading ? 'Uploading…' : 'Upload reviewed photo'}</button><button type="button" className="crm-content-reset" disabled={disabled || uploading || !url} onClick={() => { onClear(); setFile(null); setNotice(''); }}>Use default image</button></div>
       {error && <small role="alert" className="crm-error">{error}</small>}{notice && <small role="status" className="crm-content-upload-ok">{notice}</small>}
     </div>
+    {editing && file && <PhotoPrivacyEditor context="website" file={file} onCancel={() => setEditing(false)} onComplete={async (sanitized) => {setFile(sanitized);setReviewed(false);setNotice('Edited photo ready. Confirm publication rights before uploading.');}}/>}
   </div>;
 }
 
@@ -191,13 +194,13 @@ export function SiteContentManager({ token }: { token: string }) {
     <p role="status">Draft revision {version} · Published revision {publishedVersion}{dirty ? " · Unsaved edits" : ""}</p>
     {error && <p role="alert" className="crm-error">{error}{error === "VERSION_CONFLICT_RELOAD" ? " Reload to review another Admin's changes." : ""}</p>}
     {notice && <p role="status">{notice}</p>}
-    <div className="crm-content-guide"><LayoutTemplate size={23} aria-hidden="true"/><div><strong>How image placement works</strong><p>Pick a section below, select an approved photo, check its rights and privacy, upload it, then save your draft. You can preview each selected image before publishing. Homepage hero vehicle photographs and fleet ordering are controlled separately under <b>Cars & pricing</b>.</p></div></div>
+    <div className="crm-content-guide"><LayoutTemplate size={23} aria-hidden="true"/><div><strong>How image placement works</strong><p>Pick a section below, select an approved photo, check its rights and privacy, upload it, then save your draft. You can preview each selected image before publishing. Hero backgrounds, photo cutouts, service images, stories and journey images are managed here. Vehicle catalogue photos, pricing and ordering remain under <b>Cars & pricing</b>.</p></div></div>
     <div className="crm-content-fields">
       <fieldset className="crm-content-visibility"><legend>Section visibility · Choose what appears</legend>
         <p>Turning a section off hides it from visitors after publishing; content and photos are kept for later reuse.</p>
         <div className="crm-content-visibility-grid">{siteVisibilitySections.map(section => <label key={section.id} className="crm-content-visibility-option"><input type="checkbox" disabled={busy || activeUploads>0} checked={draft.visibility[section.id] !== false} onChange={(e) => updateVisibility(section.id, e.target.checked)}/><span><strong>{section.label}</strong><small>{section.description}</small></span></label>)}</div>
       </fieldset>
-      <fieldset className="crm-content-media-slots"><legend>Image placement · Homepage, stories and journeys</legend>
+      <fieldset className="crm-content-media-slots"><legend>Image placement · All website sections</legend>
         <p>Each photo is linked to one named position. Uploaded photos are processed by the secure image service and stored in the existing project.</p>
         {Array.from(new Set(siteMediaSlots.map(slot => slot.section))).map(section => <div className="crm-content-slot-group" key={section}>
           <h2>{section}</h2><div className="crm-content-slot-grid">{siteMediaSlots.filter(slot => slot.section === section).map(slot =>

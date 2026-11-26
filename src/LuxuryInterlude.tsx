@@ -1,8 +1,9 @@
 import { ArrowDownRight, ArrowUpRight, Compass } from 'lucide-react';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
+import type { SiteContent } from './siteContent';
 
-export function LuxuryInterlude({compact=false}:{compact?:boolean}){
+export function LuxuryInterlude({compact=false,media}:{compact?:boolean;media?:SiteContent['media']}){
  return <section className={compact?'luxury-interlude is-compact':'luxury-interlude'} aria-label="Cinematic mountain travel inspiration"
   onPointerMove={event=>{
     if(event.pointerType==='touch')return;
@@ -11,7 +12,7 @@ export function LuxuryInterlude({compact=false}:{compact?:boolean}){
     event.currentTarget.style.setProperty('--landscape-y',String(((event.clientY-bounds.top)/bounds.height-.5).toFixed(3)));
   }}
   onPointerLeave={event=>{event.currentTarget.style.setProperty('--landscape-x','0');event.currentTarget.style.setProperty('--landscape-y','0');}}>
-  <div className="luxury-interlude-scene"><ScenicImage src={luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt={luxuryMedia.mountains.alt} loading="lazy"/></div>
+  <div className="luxury-interlude-scene"><ScenicImage src={media?.interludeScene?.imageUrl||luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt={media?.interludeScene?.alt||luxuryMedia.mountains.alt} loading="lazy"/></div>
   <div className="luxury-interlude-overlay"/>
   <div className="luxury-interlude-text">
     <span><Compass size={15}/> THE ART OF THE JOURNEY</span>
@@ -20,6 +21,6 @@ export function LuxuryInterlude({compact=false}:{compact?:boolean}){
     <div><a href="#route-playground">Explore journeys <ArrowUpRight size={17}/></a>
       <a href="#fare">Plan a trip <ArrowDownRight size={17}/></a></div>
   </div>
-  <div className="luxury-interlude-meta"><span>THE OPEN ROAD / VOL. 01</span><a href={luxuryMedia.mountains.source} target="_blank" rel="noreferrer">Illustrative photo: {luxuryMedia.mountains.credit}</a></div>
+  <div className="luxury-interlude-meta"><span>THE OPEN ROAD / VOL. 01</span>{media?.interludeScene?.imageUrl?<span>Staff-approved editorial photograph</span>:<a href={luxuryMedia.mountains.source} target="_blank" rel="noreferrer">Illustrative photo: {luxuryMedia.mountains.credit}</a>}</div>
  </section>;
 }

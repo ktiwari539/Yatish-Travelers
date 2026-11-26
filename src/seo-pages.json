@@ -23,5 +23,10 @@
     "title": "Green Adventure Journeys | Mateshwari Travellers",
     "description": "Explore nature-focused driving itineraries and request a vehicle quote from Mateshwari Travellers.",
     "index": true
+  },
+  "/jabalpur-car-rental": {
+    "title": "Car Rental in Jabalpur | Chauffeur-Driven Cabs | Mateshwari Travellers",
+    "description": "Request chauffeur-driven car rental for Jabalpur local travel, airport pickup, outstation trips and group journeys. Compare vehicles; availability and final rates are confirmed before booking.",
+    "index": true
   }
 }

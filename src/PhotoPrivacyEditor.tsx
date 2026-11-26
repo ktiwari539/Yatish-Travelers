@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ScanLine, CheckCircle2, RotateCcw, X } from 'lucide-react';
 
 type Rect={x:number;y:number;w:number;h:number};
-type Props={file:File;onCancel:()=>void;onComplete:(file:File)=>Promise<void>};
-export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
+type Props={file:File;onCancel:()=>void;onComplete:(file:File)=>Promise<void>;context?:'vehicle'|'website'};
+export function PhotoPrivacyEditor({file,onCancel,onComplete,context='vehicle'}:Props){
  const canvas=useRef<HTMLCanvasElement|null>(null);
  const original=useRef<ImageBitmap|null>(null);
  const [selection,setSelection]=useState<Rect|null>(null);
@@ -78,9 +78,9 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
    }catch(e){setError(e instanceof Error?e.message:'Unable to save image');}
    finally{setSaving(false);}
  };
- return <div className="privacy-modal" role="dialog" aria-modal="true" aria-label="Vehicle photo privacy editor">
+ return <div className="privacy-modal" role="dialog" aria-modal="true" aria-label={context==='website'?'Website photo privacy editor':'Vehicle photo privacy editor'}>
    <div className="privacy-sheet">
-     <header><div><span className="crm-eyebrow">Photo studio / Privacy</span><h2>Remove registration details.</h2><p>Drag a rectangle over the actual number plate. Apply pixelation before saving the vehicle photo. Repeat for additional sensitive details.</p></div><button type="button" aria-label="Close editor" onClick={onCancel}><X size={19}/></button></header>
+     <header><div><span className="crm-eyebrow">Photo studio / Privacy</span><h2>{context==='website'?'Review the website photograph.':'Remove registration details.'}</h2><p>Drag a rectangle over the actual number plate. Apply pixelation before saving the vehicle photo. Repeat for additional sensitive details.</p></div><button type="button" aria-label="Close editor" onClick={onCancel}><X size={19}/></button></header>
      {error&&<p className="crm-error" role="alert">{error}</p>}
      <div className="privacy-canvas-wrap">
        <canvas ref={canvas} style={{width:'100%',height:'auto',display:'block',touchAction:'none',cursor:'crosshair'}}
@@ -97,7 +97,7 @@ export function PhotoPrivacyEditor({file,onCancel,onComplete}:Props){
        <span>{applied} region{applied===1?'':'s'} pixelated</span>
        <div><button type="button" onClick={reset}><RotateCcw size={15}/> Reset</button>
        <button type="button" disabled={!selection||selection.w<6||selection.h<6} onClick={mosaic}><ScanLine size={15}/> Pixelate selected area</button>
-       <button type="button" className="fleet-save" disabled={saving||loading||!!selection||(applied===0&&!noVisiblePlate)} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Uploading...':'Save sanitized photo'}</button></div>
+       <button type="button" className="fleet-save" disabled={saving||loading||!!selection||(applied===0&&!noVisiblePlate)} onClick={()=>void finish()}><CheckCircle2 size={15}/>{saving?'Processing...':context==='website'?'Use edited photo':'Save sanitized photo'}</button></div>
      </div>
      <small>Review every visible plate, including cars in the background and alternate angles. Redactions are baked into the new copy; the original photo remains unchanged. If no plate is visible, explicitly confirm it above.</small>
    </div>

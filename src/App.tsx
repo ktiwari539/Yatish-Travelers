@@ -12,6 +12,7 @@ import { usePublishedSiteContent } from './siteContent';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import { LuxuryInterlude } from './LuxuryInterlude';
+import { JabalpurCarRentalPage } from './JabalpurCarRentalPage';
 import { RouteExperience } from './RouteExperience';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Menu, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
@@ -195,9 +196,9 @@ type QuoteMode = 'quote' | 'callback' | 'corporate';
 function StoriesPage() {
   const site = usePublishedSiteContent();
   const fallbackStories = [
-    { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:luxuryMedia.hero },
-    { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:luxuryMedia.mountains },
-    { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:luxuryMedia.airport }
+    { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:{...luxuryMedia.hero,src:site.media.storyFallbackRoad.imageUrl||luxuryMedia.hero.src,alt:site.media.storyFallbackRoad.alt||luxuryMedia.hero.alt} },
+    { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:{...luxuryMedia.mountains,src:site.media.storyFallbackHighlands.imageUrl||luxuryMedia.mountains.src,alt:site.media.storyFallbackHighlands.alt||luxuryMedia.mountains.alt} },
+    { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:{...luxuryMedia.airport,src:site.media.storyFallbackArrival.imageUrl||luxuryMedia.airport.src,alt:site.media.storyFallbackArrival.alt||luxuryMedia.airport.alt} }
   ];
   const storySlots = site.stories.length ? site.stories.map((s) => ({ title: s.title, text: s.text, visual: { src: s.imageUrl || luxuryMedia.mountains.src, fallback: luxuryMedia.mountains.src, alt: s.title }, isPublished: true })) : fallbackStories.map((s) => ({ ...s, isPublished: false }));
 
@@ -447,6 +448,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   }, [quoteOpen]);
 
   const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+  if (path === '/jabalpur-car-rental') return <JabalpurCarRentalPage media={site.media}/>;
   if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''} media={site.media}/>;
   const isStoriesPage = path === '/stories';
   if (isStoriesPage) return <StoriesPage />;
@@ -479,7 +481,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
       <section className="hero cinematic-landing" id="top" aria-label="Mateshwari Travellers signature journeys">
         <div className="car-stage fleet-hero-slot">
-          <FleetHeroVisual vehicles={liveFleet}
+          <FleetHeroVisual media={site.media} vehicles={liveFleet}
             activeIndex={Math.max(0,liveFleet.findIndex(item=>item.name===vehicle))}
             onChange={index=>{const car=liveFleet[index];if(car)selectFeatured(car.name);}}
             onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
@@ -640,13 +642,13 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
         <div className="service-grid">
           {[
-            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides', visual: luxuryMedia.forest },
-            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity', visual: luxuryMedia.mountains },
-            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport', visual: luxuryMedia.airport },
-            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events', visual: luxuryMedia.hero },
+            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides', visual: luxuryMedia.forest, slot: 'serviceCity' as const },
+            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity', visual: luxuryMedia.mountains, slot: 'serviceOutstation' as const },
+            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport', visual: luxuryMedia.airport, slot: 'serviceAirport' as const },
+            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events', visual: luxuryMedia.hero, slot: 'serviceEvents' as const },
           ].map((item) => (
             <article key={item.title} className="cinematic-service-card">
-              <div className="cinematic-service-media"><ScenicImage src={item.visual.src} fallback={item.visual.fallback ?? luxuryMedia.landscape.src} alt={item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
+              <div className="cinematic-service-media"><ScenicImage src={site.media[item.slot].imageUrl||item.visual.src} fallback={item.visual.fallback ?? luxuryMedia.landscape.src} alt={site.media[item.slot].alt||item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
               <div className="service-icon">{item.icon}</div>
               <small>{item.meta}</small>
               <h3>{item.title}</h3>
@@ -658,7 +660,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
 
-      <LuxuryInterlude compact/>
+      <LuxuryInterlude compact media={site.media}/>
       <RouteExperience onPlan={(kind)=>{
         const suggestions:Record<string,string[]>={
           mountains:['Mahindra TUV','Mahindra Bolero','Toyota Innova'],
@@ -675,7 +677,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
         <div className="corporate-orbit corporate-orbit-two" aria-hidden="true" />
         <div className="corporate-image-panel">
-          <ScenicImage src={luxuryMedia.airport.src} fallback={luxuryMedia.forest.src} alt={luxuryMedia.airport.alt} loading="lazy"/>
+          <ScenicImage src={site.media.corporateHero.imageUrl||luxuryMedia.airport.src} fallback={luxuryMedia.forest.src} alt={site.media.corporateHero.alt||luxuryMedia.airport.alt} loading="lazy"/>
           <div className="corporate-image-overlay">
             <small>ARRIVE IN YOUR ELEMENT</small>
             <strong>Business travel, thoughtfully coordinated.</strong>
@@ -774,7 +776,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         onQuote={name=>{selectFeatured(name);setStudioVehicle(null);openQuote('quote','car-studio',name);}}/>}
       <footer id="contact">
         <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
-        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
+        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><a href="/jabalpur-car-rental">Jabalpur car rental enquiries</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
         <div><span>Travel</span><p>Local city rides · Outstation trips · Airport transfers · Family journeys · Corporate mobility</p></div>
         <div className="image-credits">
           <span>Image credits</span>
