@@ -74,6 +74,9 @@ jobs:
       - name: Chromium interaction smoke
         run: node scripts/hero-ui-smoke.mjs
 
+      - name: Cars and pricing CMS multi-image upload browser test
+        run: node scripts/fleet-editor-ui-smoke.mjs
+
       - name: Mobile WCAG checks and local timing evidence
         run: node scripts/accessibility-smoke.mjs
 
