@@ -14,6 +14,10 @@ for(const [path,seo] of [...Object.entries(pages),['/admin',{title:'Staff access
  let html=template.replace(/<title>.*?<\/title>/,'<title>'+esc(seo.title)+'</title>');
  for(const [key,value] of [['description',seo.description],['robots',seo.index?'index,follow,max-image-preview:large':'noindex,nofollow'],['googlebot',seo.index?'index,follow,max-image-preview:large':'noindex,nofollow']]) html=html.replace(new RegExp('<meta name="'+key+'"[^>]*>'),'<meta name="'+key+'" content="'+esc(value)+'" />');
  for(const key of ['title','description'])html=html.replace(new RegExp('<meta property="og:'+key+'"[^>]*>'),'<meta property="og:'+key+'" content="'+esc(seo[key])+'" />');
+ if(path==='/jabalpur-car-rental'){
+  const schema={'@context':'https://schema.org','@type':'Service',name:'Jabalpur chauffeur-driven car rental enquiries',serviceType:'Chauffeur-driven car rental and outstation trip planning',provider:{'@type':'Organization',name:'Mateshwari Travellers',url:origin,telephone:'+91-9340098177'},areaServed:{'@type':'City',name:'Jabalpur',containedInPlace:{'@type':'AdministrativeArea',name:'Madhya Pradesh'}},url:origin+path};
+  html=html.replace('</head>','<script type="application/ld+json">'+JSON.stringify(schema)+'</script>\n</head>');
+ }
  if(seo.index){
   const url=origin+path;
   html=html.replace('</head>','<link rel="canonical" href="'+esc(url)+'" />\n<meta property="og:url" content="'+esc(url)+'" />\n</head>');
@@ -22,7 +26,7 @@ for(const [path,seo] of [...Object.entries(pages),['/admin',{title:'Staff access
  const file=resolve('dist',path==='/'?'index.html':path.slice(1)+'/index.html');mkdirSync(dirname(file),{recursive:true});writeFileSync(file,html);
 }
 writeFileSync('dist/sitemap.xml','<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+routes.map(p=>'  <url><loc>'+esc(origin+p)+'</loc></url>').join('\n')+'\n</urlset>\n');
-writeFileSync('dist/robots.txt','User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /dashboard\n\nSitemap: '+origin+'/sitemap.xml\n');
+writeFileSync('dist/robots.txt','User-agent: *\nAllow: /\nAllow: /api/uploads/\nDisallow: /api/\nDisallow: /dashboard\n\nSitemap: '+origin+'/sitemap.xml\n');
 // Let crawlers see Admin's noindex. Authorization is enforced by the API.
 writeFileSync('dist/404.html',template.replace(/content="index,follow,max-image-preview:large"/g,'content="noindex,nofollow"').replace(/<title>.*?<\/title>/,'<title>Page unavailable | Mateshwari Travellers</title>'));
 console.log('[SEO] Generated metadata, canonical HTML, sitemap, and noindex Admin for '+routes.length+' public pages.');

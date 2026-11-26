@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {enquiryKey} from './crmApi';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { FleetHeroVisual } from './FleetHeroVisual';
 import { FleetCatalogCard } from './FleetCatalogCard';
 import { RideShowroom } from './RideShowroom';
 import { WhyMateshwari } from './WhyMateshwari';
 
-import { AdminDashboard } from './AdminDashboard';
+const AdminDashboard=lazy(()=>import('./AdminDashboard').then(m=>({default:m.AdminDashboard})));
 import { TravelEditorial } from './TravelEditorial';
 import { JourneyAdventurePage } from './JourneyAdventurePage';
+import { usePublishedSiteContent } from './siteContent';
 import { ScenicImage } from './ScenicImage';
 import { luxuryMedia } from './luxuryMedia';
 import { LuxuryInterlude } from './LuxuryInterlude';
+import { JabalpurCarRentalPage } from './JabalpurCarRentalPage';
 import { RouteExperience } from './RouteExperience';
 import { ArrowRight, Calculator, CarFront, Check, CheckCircle2, Copy, MapPin, MessageCircle, Mail, Menu, Phone, Plane, Route, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 
@@ -191,21 +194,23 @@ type QuoteMode = 'quote' | 'callback' | 'corporate';
 
 
 function StoriesPage() {
-  const storySlots = [
-    { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:luxuryMedia.hero },
-    { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:luxuryMedia.mountains },
-    { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:luxuryMedia.airport }
+  const site = usePublishedSiteContent();
+  const fallbackStories = [
+    { title:'Roads to remember',text:'Scenic drives and family escapes provide inspiration for future journeys. Authentic customer road stories will appear after review.',visual:{...luxuryMedia.hero,src:site.media.storyFallbackRoad.imageUrl||luxuryMedia.hero.src,alt:site.media.storyFallbackRoad.alt||luxuryMedia.hero.alt} },
+    { title:'Into the highlands',text:'Mountain views, remarkable bends and the beauty of the journey itself. Verified customer mountain-trip stories will appear here.',visual:{...luxuryMedia.mountains,src:site.media.storyFallbackHighlands.imageUrl||luxuryMedia.mountains.src,alt:site.media.storyFallbackHighlands.alt||luxuryMedia.mountains.alt} },
+    { title:'The art of arriving',text:'A more considered way to plan airport arrivals, business journeys and special moments. Real stories will be published after moderation.',visual:{...luxuryMedia.airport,src:site.media.storyFallbackArrival.imageUrl||luxuryMedia.airport.src,alt:site.media.storyFallbackArrival.alt||luxuryMedia.airport.alt} }
   ];
+  const storySlots = site.stories.length ? site.stories.map((s) => ({ title: s.title, text: s.text, visual: { src: s.imageUrl || luxuryMedia.mountains.src, fallback: luxuryMedia.mountains.src, alt: s.title }, isPublished: true })) : fallbackStories.map((s) => ({ ...s, isPublished: false }));
 
   return (
     <main className="stories-page">
       <header className="stories-nav">
-        <a className="brand" href="/">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/">{site.brand.logoUrl&&<img src={site.brand.logoUrl} alt="" className="site-brand-logo"/>}{site.brand.name || <>MATESHWARI <span>TRAVELLERS</span></>}</a>
         <a className="secondary" href="/">Back to Home <ArrowRight size={16} /></a>
       </header>
 
       <section className="stories-hero cinematic-stories-hero">
-        <ScenicImage className="stories-hero-background" src={luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
+        <ScenicImage className="stories-hero-background" src={site.media.storiesHero.imageUrl || luxuryMedia.mountains.src} fallback={luxuryMedia.mountains.fallback} alt="" loading="eager"/>
         <div className="stories-hero-glow" />
         <span className="kicker">Stories from the Road</span>
         <h1>Every trip has a story worth keeping.</h1>
@@ -218,7 +223,7 @@ function StoriesPage() {
         </div>
       </section>
 
-      <section className="stories-gallery" aria-label="Future customer story gallery">
+      {site.visibility.storiesGallery!==false&&<section className="stories-gallery" aria-label="Future customer story gallery">
         {storySlots.map((story, index) => (
           <article className="story-feature" key={story.title}>
             <div className="story-feature-image">
@@ -227,43 +232,33 @@ function StoriesPage() {
               <span>0{index + 1}</span>
             </div>
             <div className="story-feature-copy">
-              <small>EDITORIAL JOURNEY INSPIRATION</small>
+              <small>{story.isPublished ? 'PUBLISHED JOURNEY' : 'EDITORIAL JOURNEY INSPIRATION'}</small>
               <h2>{story.title}</h2>
               <p>{story.text}</p>
-              <strong>Real customer stories: awaiting approved submissions</strong>
+              <strong>{story.isPublished ? 'Published by Mateshwari Travellers' : 'Real customer stories: awaiting approved submissions'}</strong>
             </div>
           </article>
         ))}
-      </section>
+      </section>}
 
-      <TravelEditorial stories />
+      {site.visibility.storiesAmbassadors!==false&&site.ambassadors.length>0&&<section className="site-published-people" aria-label="Our ambassadors"><h2>Our ambassadors</h2><div className="site-people-grid">{site.ambassadors.map((person,i)=><article key={i}>{person.imageUrl&&<img src={person.imageUrl} alt="" loading="lazy"/>}<h3>{person.name}</h3><p>{person.description}</p></article>)}</div></section>}
+      {site.visibility.storiesTestimonials!==false&&site.testimonials.length>0&&<section className="site-published-people" aria-label="Customer testimonials"><h2>What our customers say</h2><div className="site-people-grid">{site.testimonials.map((review,i)=><blockquote key={i}><p>“{review.quote}”</p><cite>{review.name}</cite></blockquote>)}</div></section>}
+      <TravelEditorial stories media={site.media}/>
       <section className="story-submit" id="share-story">
         <div>
           <span className="kicker">Share Your Journey</span>
           <h2>Share the moments that made your journey memorable.</h2>
           <p>
-            Add your trip details, a short story and photos. Your submission stays private until it has been reviewed by Mateshwari Travellers.
+            Have a journey worth sharing? Send your story and photos directly to our team. Nothing will be published without review and your permission.
           </p>
         </div>
-        <form onSubmit={(event) => event.preventDefault()} className="story-submit-form">
-          <label>Your name<input type="text" placeholder="Name" /></label>
-          <label>Journey type
-            <select defaultValue="">
-              <option value="" disabled>Select journey type</option>
-              <option>Family / Outstation</option>
-              <option>Airport</option>
-              <option>Corporate</option>
-              <option>Wedding / Event</option>
-              <option>Group Travel</option>
-            </select>
-          </label>
-          <label>Your story<textarea rows={5} placeholder="Tell us about your journey..." /></label>
-          <label>Photos<input type="file" accept="image/*" multiple /></label>
-          <button type="button" className="story-submit-disabled" disabled>
-            Story submissions opening soon
-          </button>
-          <small>Nothing is published automatically. Every submission is reviewed first.</small>
-        </form>
+        <div className="story-submit-form">
+          <p>Send your journey details and photos by email. Our team reviews stories before considering them for publication.</p>
+          <a className="primary" href={contactEmail+'?subject='+encodeURIComponent('Share a journey — Mateshwari Travellers')}>
+            Email your journey <Mail size={16}/>
+          </a>
+          <small>Nothing is published automatically. We will request permission before publishing any customer story or image.</small>
+        </div>
       </section>
 
       <footer className="stories-footer">
@@ -276,6 +271,7 @@ function StoriesPage() {
 }
 
 export function App() {
+  const site = usePublishedSiteContent();
   const [vehicle, setVehicle] = useState(fleet[1].name);
   const userSelectedVehicle=useRef(false);
   const [km, setKm] = useState(250);
@@ -452,15 +448,16 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
   }, [quoteOpen]);
 
   const path = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
-  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''}/>;
+  if (path === '/jabalpur-car-rental') return <JabalpurCarRentalPage media={site.media}/>;
+  if (path.startsWith('/journeys/')) return <JourneyAdventurePage slug={path.split('/')[2]||''} media={site.media}/>;
   const isStoriesPage = path === '/stories';
   if (isStoriesPage) return <StoriesPage />;
-  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <AdminDashboard />;
+  if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin') return <Suspense fallback={<main className="crm-page" aria-busy="true">Loading staff sign-in…</main>}><AdminDashboard /></Suspense>;
 
   return (
     <main>
       <header className="nav">
-        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">MATESHWARI <span>TRAVELLERS</span></a>
+        <a className="brand" href="/" aria-label="Mateshwari Travellers — return to homepage">{site.brand.logoUrl&&<img src={site.brand.logoUrl} alt="" className="site-brand-logo"/>}{site.brand.name || <>MATESHWARI <span>TRAVELLERS</span></>}</a>
         <nav>
           <a href="#route-playground">Journeys</a>
           <a href="#fleet">Fleet</a>
@@ -484,15 +481,15 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
       <section className="hero cinematic-landing" id="top" aria-label="Mateshwari Travellers signature journeys">
         <div className="car-stage fleet-hero-slot">
-          <FleetHeroVisual vehicles={liveFleet}
+          <FleetHeroVisual media={site.media} vehicles={liveFleet}
             activeIndex={Math.max(0,liveFleet.findIndex(item=>item.name===vehicle))}
             onChange={index=>{const car=liveFleet[index];if(car)selectFeatured(car.name);}}
             onQuote={name=>{selectFeatured(name);openQuote('quote','hero-featured',name);}}/>
         </div>
         <div className="hero-copy cinematic-landing-copy">
-          <div className="eyebrow"><Sparkles size={15}/> MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED</div>
-          <h1>Travel, arranged with <em>more thought.</em></h1>
-          <p>Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.</p>
+          <div className="eyebrow"><Sparkles size={15}/> {site.brand.tagline || 'MATESHWARI TRAVELLERS / YOUR JOURNEY, ELEVATED'}</div>
+          <h1>{site.brand.bannerTitle || <>Travel, arranged with <em>more thought.</em></>}</h1>
+          <p>{site.brand.bannerText || 'Thoughtfully coordinated local, outstation, airport and group journeys. Find the right vehicle, plan your route and travel on your terms.'}</p>
           <div className="hero-actions">
             <button className="primary" type="button" onClick={()=>openQuote('quote','cinematic-hero')}>
               Request a Quote <ArrowRight size={17}/>
@@ -645,13 +642,13 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
         <div className="service-grid">
           {[
-            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides', visual: luxuryMedia.forest },
-            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity', visual: luxuryMedia.mountains },
-            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport', visual: luxuryMedia.airport },
-            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events', visual: luxuryMedia.hero },
+            { title: 'Local City Travel', text: 'Point-to-point rides and flexible city packages for everyday movement.', icon: <MapPin size={24}/>, meta: 'City rides', visual: luxuryMedia.forest, slot: 'serviceCity' as const },
+            { title: 'Outstation', text: 'One-way, round-trip and multi-day intercity journeys with planned stops.', icon: <Route size={24}/>, meta: 'Intercity', visual: luxuryMedia.mountains, slot: 'serviceOutstation' as const },
+            { title: 'Airport Transfer', text: 'Scheduled pickups and drops with room for flight-time coordination.', icon: <Plane size={24}/>, meta: 'Airport', visual: luxuryMedia.airport, slot: 'serviceAirport' as const },
+            { title: 'Wedding & Events', text: 'Coordinated guest, family and event transport with the right fleet mix.', icon: <Users size={24}/>, meta: 'Events', visual: luxuryMedia.hero, slot: 'serviceEvents' as const },
           ].map((item) => (
             <article key={item.title} className="cinematic-service-card">
-              <div className="cinematic-service-media"><ScenicImage src={item.visual.src} fallback={item.visual.fallback ?? luxuryMedia.landscape.src} alt={item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
+              <div className="cinematic-service-media"><ScenicImage src={site.media[item.slot].imageUrl||item.visual.src} fallback={item.visual.fallback ?? luxuryMedia.landscape.src} alt={site.media[item.slot].alt||item.visual.alt} loading="lazy"/><span>{item.meta.toUpperCase()}</span></div>
               <div className="service-icon">{item.icon}</div>
               <small>{item.meta}</small>
               <h3>{item.title}</h3>
@@ -663,7 +660,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
       </section>
 
 
-      <LuxuryInterlude compact/>
+      <LuxuryInterlude compact media={site.media}/>
       <RouteExperience onPlan={(kind)=>{
         const suggestions:Record<string,string[]>={
           mountains:['Mahindra TUV','Mahindra Bolero','Toyota Innova'],
@@ -680,7 +677,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         <div className="corporate-orbit corporate-orbit-one" aria-hidden="true" />
         <div className="corporate-orbit corporate-orbit-two" aria-hidden="true" />
         <div className="corporate-image-panel">
-          <ScenicImage src={luxuryMedia.airport.src} fallback={luxuryMedia.forest.src} alt={luxuryMedia.airport.alt} loading="lazy"/>
+          <ScenicImage src={site.media.corporateHero.imageUrl||luxuryMedia.airport.src} fallback={luxuryMedia.forest.src} alt={site.media.corporateHero.alt||luxuryMedia.airport.alt} loading="lazy"/>
           <div className="corporate-image-overlay">
             <small>ARRIVE IN YOUR ELEMENT</small>
             <strong>Business travel, thoughtfully coordinated.</strong>
@@ -735,8 +732,8 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
 
 
 
-      <TravelEditorial />
-      <section className="stories-teaser reveal-3d" id="stories">
+      {site.visibility.homeJourneys!==false&&<TravelEditorial media={site.media}/>}
+      {site.visibility.homeStories!==false&&<section className="stories-teaser reveal-3d" id="stories">
         <div className="stories-teaser-copy">
           <span className="kicker">Stories from the Road</span>
           <h2>Real journeys deserve more than a small review card.</h2>
@@ -747,14 +744,18 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         </div>
 
         <div className="stories-teaser-stack cinematic-stories-stack" aria-label="Illustrative journeys">
-          {[{visual:luxuryMedia.mountains,title:'Mountain escapes'}, {visual:luxuryMedia.hero,title:'The golden-hour drive'}, {visual:luxuryMedia.landscape,title:'Places worth discovering'}].map(({visual,title},index)=>(
+          {[
+            {visual:{...luxuryMedia.mountains,src:site.media.homeStoryMountain.imageUrl||luxuryMedia.mountains.src,alt:site.media.homeStoryMountain.alt||luxuryMedia.mountains.alt},title:'Mountain escapes'},
+            {visual:{...luxuryMedia.hero,src:site.media.homeStorySunset.imageUrl||luxuryMedia.hero.src,alt:site.media.homeStorySunset.alt||luxuryMedia.hero.alt},title:'The golden-hour drive'},
+            {visual:{...luxuryMedia.landscape,src:site.media.homeStoryLandscape.imageUrl||luxuryMedia.landscape.src,alt:site.media.homeStoryLandscape.alt||luxuryMedia.landscape.alt},title:'Places worth discovering'},
+          ].map(({visual,title},index)=>(
             <article className={`story-stack-card story-stack-${index + 1}`} key={title}>
               <ScenicImage src={visual.src} fallback={visual.fallback ?? luxuryMedia.landscape.src} alt={visual.alt} loading="lazy" />
               <div><small>TRAVEL INSPIRATION</small><strong>{title}</strong><span>Imagine your next journey</span></div>
             </article>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section className="conversion-finale" aria-label="Start a journey">
         <div><span className="kicker">LET THE JOURNEY BEGIN</span>
@@ -775,7 +776,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
         onQuote={name=>{selectFeatured(name);setStudioVehicle(null);openQuote('quote','car-studio',name);}}/>}
       <footer id="contact">
         <div><strong>Mateshwari Travellers</strong><p>Premium chauffeur-driven travel for local and outstation journeys.</p></div>
-        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
+        <div><span>Booking</span><a href="#fare">Calculate Fare</a><a href="/stories">Stories from the Road</a><a href="/jabalpur-car-rental">Jabalpur car rental enquiries</a><WhatsappLink label="WhatsApp us" source="footer"/><a href={contactEmail}>Email: ktiwari539@gmail.com</a><a href="tel:+919340098177">Call: +91 93400 98177</a><button className="footer-action" type="button" onClick={() => openQuote('callback','footer')}>Request a callback</button></div>
         <div><span>Travel</span><p>Local city rides · Outstation trips · Airport transfers · Family journeys · Corporate mobility</p></div>
         <div className="image-credits">
           <span>Image credits</span>
@@ -836,7 +837,7 @@ Night stay: ${nightStay ? 'Yes' : 'No'}`;
                   try {
                     const response = await fetch('/api/enquiries', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': enquiryKey({fields:Object.fromEntries(data.entries()),vehicle:selected.name,passengers,days,distanceKm:estimate.chargeableKm,nightStay,quoteMode,quoteSource}) },
                       body: JSON.stringify({
                         mode: quoteMode,
                         sessionId: getVisitorSession(),

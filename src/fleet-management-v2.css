@@ -1,0 +1,33 @@
+
+/* Cars & Pricing — photo-first editor; existing CRM layout and theme retained. */
+.crm-admin-layout .fleet-admin-media-workspace{display:grid;gap:18px;background:#f7faf7;border:1px solid #d6e5db;border-radius:15px;padding:16px;margin:14px 0}
+.crm-admin-layout .fleet-admin-media-heading{display:flex;gap:10px;align-items:flex-start;color:#174836}
+.crm-admin-layout .fleet-admin-media-heading strong{font-size:15px}
+.crm-admin-layout .fleet-admin-media-heading p{font-size:12px;line-height:1.6;margin:4px 0 0;color:#536b5e}
+.crm-admin-layout .fleet-cover-manager,.crm-admin-layout .fleet-gallery-manager{min-width:0;display:grid;gap:9px}
+.crm-admin-layout .fleet-media-section-title{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.crm-admin-layout .fleet-media-section-title strong{font-size:13px;color:#173e31}
+.crm-admin-layout .fleet-media-section-title small{font-size:11px;color:#617568}
+.crm-admin-layout .fleet-cover-preview{height:172px;max-width:330px;border-radius:12px;overflow:hidden;background:#e7eeea;border:1px solid #d7e1da}
+.crm-admin-layout .fleet-cover-preview img{display:block;height:100%;width:100%;object-fit:cover}
+.crm-admin-layout .fleet-empty-photo{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:12px;color:#5b7265}
+.crm-admin-layout .fleet-photo-upload,.crm-admin-layout .fleet-gallery-actions label{display:inline-flex;align-items:center;justify-content:center;gap:9px;position:relative;border:1px solid #1f5c43;border-radius:10px;background:#174b37;color:#fff;padding:11px 14px;font-weight:650;font-size:12px;cursor:pointer;max-width:max-content;min-height:41px}
+.crm-admin-layout .fleet-photo-upload input,.crm-admin-layout .fleet-gallery-actions label input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.crm-admin-layout .fleet-photo-upload:has(input:disabled),.crm-admin-layout .fleet-gallery-actions label:has(input:disabled){opacity:.5;cursor:not-allowed}
+.crm-admin-layout .fleet-photo-upload:focus-within,.crm-admin-layout .fleet-gallery-actions label:focus-within{outline:3px solid #a7d7b5;outline-offset:2px}
+.crm-admin-layout .fleet-media-secondary{border:1px solid #c3d5c8;color:#1c513b;background:white;border-radius:9px;padding:9px 11px;font-size:12px;cursor:pointer;max-width:max-content}
+.crm-admin-layout .fleet-gallery-list{display:grid;gap:12px}
+.crm-admin-layout .fleet-gallery-item{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;background:#fff;border:1px solid #dce9df;border-radius:12px;padding:10px;min-width:0}
+.crm-admin-layout .fleet-gallery-item>img{width:110px;height:100px;object-fit:cover;background:#e6ece8;border-radius:8px}
+.crm-admin-layout .fleet-gallery-item>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.crm-admin-layout .fleet-gallery-item strong{font-size:12px;color:#163d2e}
+.crm-admin-layout .fleet-gallery-item small,.crm-admin-layout .fleet-gallery-empty,.crm-admin-layout .fleet-gallery-manager>small{font-size:11px;color:#577367;line-height:1.5}
+.crm-admin-layout .fleet-gallery-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+.crm-admin-layout .fleet-gallery-actions button,.crm-admin-layout .fleet-gallery-actions label{font-size:11px;border:1px solid #bdd4c5;border-radius:8px;padding:7px 9px;min-height:32px;background:#fff;color:#224f3b;cursor:pointer}
+.crm-admin-layout .fleet-gallery-actions .fleet-gallery-remove{color:#9b352a;border-color:#e5cac6}
+.crm-admin-layout .fleet-gallery-actions button:disabled{opacity:.5;cursor:not-allowed}
+.crm-admin-layout .fleet-editor-fields select,.crm-admin-layout .fleet-editor-fields input[list]{min-height:42px;max-width:100%}
+.crm-admin-layout .fleet-editor-fields label>small{display:block;font-size:11px;color:#5f766a;margin-top:5px}
+.crm-admin-layout .fleet-new-tip{padding:10px;border:1px solid #ebdca7;background:#fcf8e9;color:#75611c;border-radius:9px;font-size:11px;margin:0}
+.crm-admin-layout .fleet-media-uploading{font-weight:650;color:#155b44}
+@media(max-width:560px){.crm-admin-layout .fleet-admin-media-workspace{padding:12px}.crm-admin-layout .fleet-gallery-item{grid-template-columns:80px minmax(0,1fr)}.crm-admin-layout .fleet-gallery-item>img{width:80px;height:94px}}

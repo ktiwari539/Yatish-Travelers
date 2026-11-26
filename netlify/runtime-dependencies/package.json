@@ -1,0 +1,7 @@
+{
+  "name": "mateshwari-netlify-native-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Locked Linux x64 Sharp dependencies for Netlify, independent of the build host",
+  "dependencies": { "sharp": "0.35.5" }
+}
